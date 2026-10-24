@@ -3,7 +3,6 @@
 namespace Fleetbase\EnhancedPricing\Profile;
 
 use Fleetbase\EnhancedPricing\Profile\Schema as S;
-use Fleetbase\EnhancedPricing\Support\Exact;
 
 /**
  * Checks between the parts of a profile whose shape is already valid: unique keys, references to
@@ -18,17 +17,29 @@ final class ProfileReferences
     /** @var array<string, array<string, mixed>> */
     private array $tables = [];
 
+    private readonly RuleKindReferences $kinds;
+
     /**
      * @param array<string, mixed> $profile a profile whose shape has no problems
      */
     public function __construct(private readonly S $schema, private readonly array $profile)
     {
+        $this->kinds = new RuleKindReferences($schema, $profile);
     }
 
     public function check(): void
     {
         $this->products = $this->unique(self::items($this->profile['products']), 'code', 'products');
-        foreach (['attributes', 'entity_types', 'rate_tables', 'service_rates', 'fees', 'subtotal_fees', 'manual_charges'] as $section) {
+        $sections       = [
+            'attributes',
+            'entity_types',
+            'rate_tables',
+            'service_rates',
+            'fees',
+            'subtotal_fees',
+            'manual_charges',
+        ];
+        foreach ($sections as $section) {
             $this->unique(self::items($this->profile[$section]), 'key', $section);
         }
         foreach (self::items($this->profile['rate_tables']) as $table) {
@@ -43,7 +54,8 @@ final class ProfileReferences
         }
         $this->rules();
         foreach (self::items($this->profile['manual_charges']) as $index => $charge) {
-            $this->manualCharge($charge, "manual_charges.$index");
+            $this->product($charge['product'], "manual_charges.$index.product");
+            $this->kinds->manualCharge($charge, "manual_charges.$index");
         }
     }
 
@@ -54,9 +66,13 @@ final class ProfileReferences
             foreach (self::strings($table['row_key']) as $position => $key) {
                 $path = "rate_tables.$index.row_key.$position";
                 if (isset($columns[$key]) === false) {
-                    $this->schema->add(Problem::at($path, 'unknown-reference', ['kind' => 'column', 'key' => $key]));
+                    $this->schema->add(Problem::atPath(
+                        $path,
+                        'unknown-reference',
+                        ['kind' => 'column', 'key' => $key],
+                    ));
                 } elseif (($this->column(self::text($table['key']), $key)['required'] ?? false) !== true) {
-                    $this->schema->add(Problem::at($path, 'row-key-not-required', ['column' => $key]));
+                    $this->schema->add(Problem::atPath($path, 'row-key-not-required', ['column' => $key]));
                 }
             }
         }
@@ -72,7 +88,11 @@ final class ProfileReferences
             if (is_array($attribute['required'])) {
                 foreach (self::strings($attribute['required']) as $position => $key) {
                     if (isset($rates[$key]) === false) {
-                        $this->schema->add(Problem::at("attributes.$index.required.$position", 'unknown-reference', ['kind' => 'service rate', 'key' => $key]));
+                        $this->schema->add(Problem::atPath(
+                            "attributes.$index.required.$position",
+                            'unknown-reference',
+                            ['kind' => 'service rate', 'key' => $key],
+                        ));
                     }
                 }
             }
@@ -84,7 +104,11 @@ final class ProfileReferences
         $types   = $this->keys('entity_types');
         $default = self::text($this->profile['default_entity_type']);
         if (isset($types[$default]) === false) {
-            $this->schema->add(Problem::at('default_entity_type', 'unknown-reference', ['kind' => 'entity type', 'key' => $default]));
+            $this->schema->add(Problem::atPath(
+                'default_entity_type',
+                'unknown-reference',
+                ['kind' => 'entity type', 'key' => $default],
+            ));
         }
         foreach (self::items($this->profile['entity_types']) as $index => $type) {
             if ($type['priced'] !== 'column') {
@@ -92,8 +116,17 @@ final class ProfileReferences
             }
             $this->product($type['product'], "entity_types.$index.product");
             foreach (self::items($this->profile['service_rates']) as $rate) {
-                if ($rate['method'] === 'tiers' && is_string($rate['rate_table']) && isset($this->tables[$rate['rate_table']])) {
-                    $this->columnOfType($rate['rate_table'], self::text($type['column']), 'money', "entity_types.$index.column");
+                if (
+                    $rate['method'] === 'tiers'
+                    && is_string($rate['rate_table'])
+                    && isset($this->tables[$rate['rate_table']])
+                ) {
+                    $this->columnOfType(
+                        $rate['rate_table'],
+                        self::text($type['column']),
+                        'money',
+                        "entity_types.$index.column",
+                    );
                 }
             }
         }
@@ -107,18 +140,32 @@ final class ProfileReferences
         $this->product($rate['product'], "$path.product");
         $table = $rate['rate_table'];
         if (is_string($table) && isset($this->tables[$table]) === false) {
-            $this->schema->add(Problem::at("$path.rate_table", 'unknown-reference', ['kind' => 'rate table', 'key' => $table]));
+            $this->schema->add(Problem::atPath(
+                "$path.rate_table",
+                'unknown-reference',
+                ['kind' => 'rate table', 'key' => $table],
+            ));
 
             return;
         }
         if ($rate['method'] === 'tiers' && $table === null && $this->hasColumnTypes()) {
-            $this->schema->add(Problem::at("$path.rate_table", 'tiers-need-rate-table'));
+            $this->schema->add(Problem::atPath("$path.rate_table", 'tiers-need-rate-table'));
         }
         $this->reference($rate['line_name'], is_string($table) ? $table : null, 'text', "$path.line_name");
         match ($rate['method']) {
             'tiers'      => $this->tiers(self::items($rate['tiers']), is_string($table) ? $table : null, "$path.tiers"),
-            'per_meter'  => $this->limits(self::map($rate['per_meter']), 'minimum_distance', 'maximum_distance', "$path.per_meter"),
-            default      => $this->reference(self::map($rate['fixed_rate'])['amount'] ?? null, is_string($table) ? $table : null, 'money', "$path.fixed_rate.amount"),
+            'per_meter'  => $this->kinds->limits(
+                self::map($rate['per_meter']),
+                'minimum_distance',
+                'maximum_distance',
+                "$path.per_meter",
+            ),
+            default      => $this->reference(
+                self::map($rate['fixed_rate'])['amount'] ?? null,
+                is_string($table) ? $table : null,
+                'money',
+                "$path.fixed_rate.amount",
+            ),
         };
     }
 
@@ -132,11 +179,11 @@ final class ProfileReferences
         foreach ($tiers as $index => $tier) {
             $upTo = $tier['up_to'];
             if ($upTo === null && $index !== $last) {
-                $this->schema->add(Problem::at("$path.$index.up_to", 'open-tier-not-last'));
+                $this->schema->add(Problem::atPath("$path.$index.up_to", 'open-tier-not-last'));
             }
             if (is_array($upTo) && is_int($upTo['value'] ?? null)) {
                 if ($upTo['value'] <= $previous) {
-                    $this->schema->add(Problem::at("$path.$index.up_to", 'not-increasing'));
+                    $this->schema->add(Problem::atPath("$path.$index.up_to", 'not-increasing'));
                 }
                 $previous = $upTo['value'];
             }
@@ -170,16 +217,12 @@ final class ProfileReferences
         foreach ($fees as $index => $fee) {
             $path = "fees.$index";
             $this->ruleCommon($fee, $path, ['applies_to'], $laterOf[$path]);
-            match ($fee['kind']) {
-                'peak_hours' => $this->peakHours($fee, $path),
-                'parcel'     => $this->parcel($fee, $path),
-                default      => $this->additional($fee, $path),
-            };
+            $this->kinds->fee($fee, $path);
         }
         foreach ($subtotals as $index => $subtotal) {
             $path = "subtotal_fees.$index";
             $this->ruleCommon($subtotal, $path, ['applies_to', 'requires', 'skipped_for'], $laterOf[$path]);
-            $this->subtotal($subtotal, $path);
+            $this->kinds->subtotal($subtotal, $path);
         }
     }
 
@@ -196,158 +239,26 @@ final class ProfileReferences
         $seen  = [];
         foreach ($lists as $list) {
             foreach (self::strings($rule[$list]) as $position => $code) {
-                $at = "$path.$list.$position";
+                $where = "$path.$list.$position";
                 if (isset($this->products[$code]) === false) {
-                    $this->schema->add(Problem::at($at, 'unknown-product', ['code' => $code]));
+                    $this->schema->add(Problem::atPath($where, 'unknown-product', ['code' => $code]));
                 } elseif ($code === $own) {
-                    $this->schema->add(Problem::at($at, 'own-product', ['code' => $code]));
+                    $this->schema->add(Problem::atPath($where, 'own-product', ['code' => $code]));
                 } elseif (isset($later[$code])) {
-                    $this->schema->add(Problem::at($at, 'later-product', ['code' => $code]));
+                    $this->schema->add(Problem::atPath($where, 'later-product', ['code' => $code]));
                 } elseif (isset($seen[$code]) && $seen[$code] === $list) {
-                    $this->schema->add(Problem::at($at, 'duplicate', ['value' => $code]));
+                    $this->schema->add(Problem::atPath($where, 'duplicate', ['value' => $code]));
                 } elseif (isset($seen[$code])) {
-                    $this->schema->add(Problem::at($at, 'product-in-two-lists', ['code' => $code]));
+                    $this->schema->add(Problem::atPath($where, 'product-in-two-lists', ['code' => $code]));
                 }
                 $seen[$code] ??= $list;
             }
         }
-        $this->limits($rule, 'minimum', 'maximum', $path);
+        $this->kinds->limits($rule, 'minimum', 'maximum', $path);
         $from  = $rule['effective_from'] ?? null;
         $until = $rule['effective_until'] ?? null;
         if (is_string($from) && is_string($until) && $until < $from) {
-            $this->schema->add(Problem::at("$path.effective_until", 'until-before-from'));
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $fee
-     */
-    private function peakHours(array $fee, string $path): void
-    {
-        $this->charge($fee, ['per_entity', 'per_order'], $path);
-        if ($fee['window'] === null && $fee['weekdays'] === null && $fee['holidays'] === null) {
-            $this->schema->add(Problem::at($path, 'needs-one-of', ['fields' => 'window, weekdays, holidays']));
-        }
-        $window = $fee['window'];
-        if (is_array($window) && $window['from'] === $window['to']) {
-            $this->schema->add(Problem::at("$path.window.to", 'window-empty'));
-        }
-        $holidays = $fee['holidays'];
-        if (is_string($holidays) && array_key_exists($holidays, self::map($this->profile['holiday_lists'])) === false) {
-            $this->schema->add(Problem::at("$path.holidays", 'unknown-reference', ['kind' => 'holiday list', 'key' => $holidays]));
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $fee
-     */
-    private function parcel(array $fee, string $path): void
-    {
-        $this->charge($fee, $fee['scope'] === 'entity' ? ['per_entity', 'per_unit'] : ['per_order', 'per_unit'], $path);
-        $weight = $fee['basis'] === 'weight';
-        $units  = $weight ? ProfileShapes::WEIGHT_UNITS : ProfileShapes::VOLUME_UNITS;
-        if (in_array($fee['unit'], $units, true) === false) {
-            $this->schema->add(Problem::at("$path.unit", 'not-one-of', ['choices' => implode(', ', $units)]));
-        }
-        $measure = $fee['measure'];
-        if ($weight && $measure === null) {
-            $this->schema->add(Problem::at("$path.measure", 'missing-field', ['field' => 'measure']));
-        }
-        if ($weight === false && $measure !== null) {
-            $this->schema->add(Problem::at("$path.measure", 'measure-not-allowed'));
-        }
-        $needsDivisor = in_array($measure, ['dimensional', 'greater'], true);
-        if ($needsDivisor && $fee['divisor'] === null) {
-            $this->schema->add(Problem::at("$path.divisor", 'missing-field', ['field' => 'divisor']));
-        }
-        if ($needsDivisor === false && $fee['divisor'] !== null) {
-            $this->schema->add(Problem::at("$path.divisor", 'divisor-not-allowed'));
-        }
-        $previous = null;
-        foreach (self::items($fee['thresholds']) as $index => $threshold) {
-            $over = Exact::of(self::text($threshold['over']));
-            if ($previous !== null && $over->isLessThanOrEqualTo($previous)) {
-                $this->schema->add(Problem::at("$path.thresholds.$index.over", 'not-increasing'));
-            }
-            $previous = $over;
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $fee
-     */
-    private function additional(array $fee, string $path): void
-    {
-        $this->charge($fee, ['per_entity', 'per_order', 'per_unit'], $path);
-        $attribute = null;
-        foreach (self::items($this->profile['attributes']) as $candidate) {
-            if ($candidate['key'] === $fee['attribute']) {
-                $attribute = $candidate;
-            }
-        }
-        if ($attribute === null) {
-            $this->schema->add(Problem::at("$path.attribute", 'unknown-reference', ['kind' => 'attribute', 'key' => self::text($fee['attribute'])]));
-
-            return;
-        }
-        if ($attribute['type'] === 'choice') {
-            $choices = array_map(static fn (array $choice): string => self::text($choice['key']), self::items($attribute['choices']));
-            if ($fee['equals'] === null) {
-                $this->schema->add(Problem::at("$path.equals", 'missing-field', ['field' => 'equals']));
-            } elseif (in_array($fee['equals'], $choices, true) === false) {
-                $this->schema->add(Problem::at("$path.equals", 'unknown-reference', ['kind' => 'choice', 'key' => self::text($fee['equals'])]));
-            }
-        } elseif ($fee['equals'] !== null) {
-            $this->schema->add(Problem::at("$path.equals", 'equals-not-allowed'));
-        }
-        if ($fee['charge'] === 'per_unit' && $attribute['type'] !== 'number') {
-            $this->schema->add(Problem::at("$path.charge", 'per-unit-needs-number'));
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $subtotal
-     */
-    private function subtotal(array $subtotal, string $path): void
-    {
-        $percentage = $subtotal['mode'] === 'percentage';
-        if ($percentage && $subtotal['amount'] !== null) {
-            $this->schema->add(Problem::at("$path.amount", 'not-allowed-for-mode', ['mode' => 'percentage']));
-        }
-        if ($percentage === false && $subtotal['percentage'] !== null) {
-            $this->schema->add(Problem::at("$path.percentage", 'not-allowed-for-mode', ['mode' => 'flat']));
-        }
-        if ($percentage && $subtotal['charge'] !== 'per_order') {
-            $this->schema->add(Problem::at("$path.charge", 'not-one-of', ['choices' => 'per_order']));
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $charge
-     */
-    private function manualCharge(array $charge, string $path): void
-    {
-        $this->product($charge['product'], "$path.product");
-        if (($charge['amount'] === null) === ($charge['entered'] === null)) {
-            $this->schema->add(Problem::at($path, 'needs-exactly-one', ['fields' => 'amount, entered']));
-        }
-        if ($charge['entered'] !== null) {
-            if ($charge['quantity'] !== null) {
-                $this->schema->add(Problem::at("$path.quantity", 'entered-takes-no-quantity'));
-            }
-            $this->limits(self::map($charge['entered']), 'minimum', 'maximum', "$path.entered");
-        }
-        $quantity = $charge['quantity'];
-        if (is_array($quantity)) {
-            $steps = Exact::of(self::text($quantity['maximum']))->dividedBy(self::text($quantity['step']));
-            if (Exact::isWhole($steps) === false) {
-                $this->schema->add(Problem::at("$path.quantity.maximum", 'not-a-step'));
-            }
-        }
-        $from  = $charge['effective_from'];
-        $until = $charge['effective_until'];
-        if (is_string($from) && is_string($until) && $until < $from) {
-            $this->schema->add(Problem::at("$path.effective_until", 'until-before-from'));
+            $this->schema->add(Problem::atPath("$path.effective_until", 'until-before-from'));
         }
     }
 
@@ -360,7 +271,7 @@ final class ProfileReferences
             return;
         }
         if ($table === null) {
-            $this->schema->add(Problem::at("$path.column", 'column-needs-rate-table'));
+            $this->schema->add(Problem::atPath("$path.column", 'column-needs-rate-table'));
 
             return;
         }
@@ -371,9 +282,9 @@ final class ProfileReferences
     {
         $definition = $this->column($table, $column);
         if ($definition === null) {
-            $this->schema->add(Problem::at($path, 'unknown-reference', ['kind' => 'column', 'key' => $column]));
+            $this->schema->add(Problem::atPath($path, 'unknown-reference', ['kind' => 'column', 'key' => $column]));
         } elseif ($definition['type'] !== $type) {
-            $this->schema->add(Problem::at($path, 'column-wrong-type', ['column' => $column, 'expected' => $type]));
+            $this->schema->add(Problem::atPath($path, 'column-wrong-type', ['column' => $column, 'expected' => $type]));
         }
     }
 
@@ -402,36 +313,10 @@ final class ProfileReferences
         return false;
     }
 
-    /**
-     * @param array<string, mixed> $rule
-     * @param list<string>         $allowed
-     */
-    private function charge(array $rule, array $allowed, string $path): void
-    {
-        if (in_array($rule['charge'], $allowed, true) === false) {
-            $this->schema->add(Problem::at("$path.charge", 'not-one-of', ['choices' => implode(', ', $allowed)]));
-        }
-    }
-
-    /**
-     * Reports a minimum above its maximum, for money or numbers.
-     *
-     * @param array<string, mixed> $values
-     */
-    private function limits(array $values, string $minimum, string $maximum, string $path): void
-    {
-        $low  = $values[$minimum] ?? null;
-        $high = $values[$maximum] ?? null;
-        if ((is_int($low) || is_string($low)) && (is_int($high) || is_string($high))
-            && Exact::of($low)->isGreaterThan(Exact::of($high))) {
-            $this->schema->add(Problem::at(S::join($path, $minimum), 'minimum-above-maximum'));
-        }
-    }
-
     private function product(mixed $code, string $path): void
     {
         if (is_string($code) && isset($this->products[$code]) === false) {
-            $this->schema->add(Problem::at($path, 'unknown-product', ['code' => $code]));
+            $this->schema->add(Problem::atPath($path, 'unknown-product', ['code' => $code]));
         }
     }
 
@@ -448,7 +333,7 @@ final class ProfileReferences
         foreach ($items as $index => $item) {
             $value = self::text($item[$field] ?? '');
             if (isset($seen[$value])) {
-                $this->schema->add(Problem::at("$path.$index.$field", 'duplicate', ['value' => $value]));
+                $this->schema->add(Problem::atPath("$path.$index.$field", 'duplicate', ['value' => $value]));
             }
             $seen[$value] = true;
         }

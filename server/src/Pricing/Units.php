@@ -45,6 +45,6 @@ final class Units
 
     public static function distance(int $meters, string $unit): BigRational
     {
-        return Exact::of($meters)->dividedBy(self::DISTANCE[$unit]);
+        return Exact::rational($meters)->dividedBy(self::DISTANCE[$unit]);
     }
 }

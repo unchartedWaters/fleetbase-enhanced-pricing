@@ -55,7 +55,7 @@ final class Schema
             if (($spec['nullable'] ?? false) === true) {
                 return null;
             }
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => self::string($spec['type'] ?? '')]));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => self::string($spec['type'] ?? '')]));
 
             return null;
         }
@@ -63,7 +63,13 @@ final class Schema
         return match ($spec['type'] ?? null) {
             'money'    => $this->integerIn($value, 0, self::MAX_MONEY, $path, 'money'),
             'percent'  => $this->integerIn($value, 0, self::MAX_PERCENT, $path, 'percent'),
-            'integer'  => $this->integerIn($value, self::int($spec['min'] ?? 0), self::int($spec['max'] ?? PHP_INT_MAX), $path, 'integer'),
+            'integer'  => $this->integerIn(
+                $value,
+                self::int($spec['min'] ?? 0),
+                self::int($spec['max'] ?? PHP_INT_MAX),
+                $path,
+                'integer',
+            ),
             'number'   => $this->checkNumber($value, $spec, $path),
             'boolean'  => $this->boolean($value, $path),
             'text'     => $this->text($value, $path),
@@ -93,15 +99,19 @@ final class Schema
     public function fields(mixed $value, array $fields, string $path): ?array
     {
         if (is_array($value) === false || ($value !== [] && array_is_list($value))) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'object']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'object']));
 
             return null;
         }
 
         $normalized = [];
-        foreach ($value as $name => $item) {
+        foreach (array_keys($value) as $name) {
             if (array_key_exists((string) $name, $fields) === false) {
-                $this->add(Problem::at(self::join($path, (string) $name), 'unknown-field', ['field' => (string) $name]));
+                $this->add(Problem::atPath(
+                    self::join($path, (string) $name),
+                    'unknown-field',
+                    ['field' => (string) $name],
+                ));
             }
         }
         foreach ($fields as $name => $spec) {
@@ -111,7 +121,7 @@ final class Schema
                     $normalized[$name] = $spec['default'] ?? null;
                     continue;
                 }
-                $this->add(Problem::at($fieldPath, 'missing-field', ['field' => $name]));
+                $this->add(Problem::atPath($fieldPath, 'missing-field', ['field' => $name]));
                 $normalized[$name] = null;
                 continue;
             }
@@ -159,13 +169,13 @@ final class Schema
     }
 
     /**
-     * @param array<string, mixed> $of
+     * @param array<string, mixed> $item
      *
      * @return array<string, mixed>
      */
-    public static function listOf(array $of, int $min = 0, int $max = 50): array
+    public static function listOf(array $item, int $min = 0, int $max = 50): array
     {
-        return ['type' => 'list', 'of' => $of, 'min' => $min, 'max' => $max];
+        return ['type' => 'list', 'of' => $item, 'min' => $min, 'max' => $max];
     }
 
     /**
@@ -203,12 +213,12 @@ final class Schema
     private function integerIn(mixed $value, int $min, int $max, string $path, string $expected): ?int
     {
         if (is_int($value) === false) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => $expected]));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => $expected]));
 
             return null;
         }
         if ($value < $min || $value > $max) {
-            $this->add(Problem::at($path, 'out-of-range', ['min' => $min, 'max' => $max]));
+            $this->add(Problem::atPath($path, 'out-of-range', ['min' => $min, 'max' => $max]));
 
             return null;
         }
@@ -223,16 +233,16 @@ final class Schema
     {
         $canonical = Exact::canonical($value);
         if ($canonical === null) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'number']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'number']));
 
             return null;
         }
-        $number = Exact::of($canonical);
+        $number = Exact::rational($canonical);
         $min    = self::string($spec['min'] ?? '0');
         $max    = isset($spec['max']) ? self::string($spec['max']) : null;
         $below  = ($spec['above'] ?? false) === true ? $number->isLessThanOrEqualTo($min) : $number->isLessThan($min);
         if ($below || ($max !== null && $number->isGreaterThan($max))) {
-            $this->add(Problem::at($path, 'out-of-range', ['min' => $min, 'max' => $max]));
+            $this->add(Problem::atPath($path, 'out-of-range', ['min' => $min, 'max' => $max]));
 
             return null;
         }
@@ -243,7 +253,7 @@ final class Schema
     private function boolean(mixed $value, string $path): ?bool
     {
         if (is_bool($value) === false) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'boolean']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'boolean']));
 
             return null;
         }
@@ -254,18 +264,18 @@ final class Schema
     private function text(mixed $value, string $path): ?string
     {
         if (is_string($value) === false) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'text']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'text']));
 
             return null;
         }
         $length = mb_strlen($value);
         if ($length === 0) {
-            $this->add(Problem::at($path, 'too-short', ['min' => 1]));
+            $this->add(Problem::atPath($path, 'too-short', ['min' => 1]));
 
             return null;
         }
         if ($length > self::MAX_TEXT) {
-            $this->add(Problem::at($path, 'too-long', ['max' => self::MAX_TEXT]));
+            $this->add(Problem::atPath($path, 'too-long', ['max' => self::MAX_TEXT]));
 
             return null;
         }
@@ -276,7 +286,7 @@ final class Schema
     private function pattern(mixed $value, string $pattern, string $path, string $expected): ?string
     {
         if (is_string($value) === false || preg_match($pattern, $value) !== 1) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => $expected]));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => $expected]));
 
             return null;
         }
@@ -286,11 +296,14 @@ final class Schema
 
     private function date(mixed $value, string $path): ?string
     {
-        if (is_string($value) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts) === 1
-            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
+        if (
+            is_string($value)
+            && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts) === 1
+            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+        ) {
             return $value;
         }
-        $this->add(Problem::at($path, 'wrong-type', ['expected' => 'date']));
+        $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'date']));
 
         return null;
     }
@@ -303,7 +316,7 @@ final class Schema
         if (is_string($value) && isset(self::$timezones[$value])) {
             return $value;
         }
-        $this->add(Problem::at($path, 'wrong-type', ['expected' => 'timezone']));
+        $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'timezone']));
 
         return null;
     }
@@ -317,7 +330,11 @@ final class Schema
         if (is_string($value) && in_array($value, $choices, true)) {
             return $value;
         }
-        $this->add(Problem::at($path, 'not-one-of', ['choices' => implode(', ', array_map(self::string(...), $choices))]));
+        $this->add(Problem::atPath(
+            $path,
+            'not-one-of',
+            ['choices' => implode(', ', array_map(self::string(...), $choices))],
+        ));
 
         return null;
     }
@@ -330,26 +347,26 @@ final class Schema
     private function checkList(mixed $value, array $spec, string $path): ?array
     {
         if (is_array($value) === false || array_is_list($value) === false) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'list']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'list']));
 
             return null;
         }
         $min = self::int($spec['min'] ?? 0);
         $max = self::int($spec['max'] ?? 50);
         if (count($value) < $min) {
-            $this->add(Problem::at($path, 'too-few', ['min' => $min]));
+            $this->add(Problem::atPath($path, 'too-few', ['min' => $min]));
         }
         if (count($value) > $max) {
             // Items past the limit are not checked, so an oversized list costs nothing more.
-            $this->add(Problem::at($path, 'too-many', ['max' => $max]));
+            $this->add(Problem::atPath($path, 'too-many', ['max' => $max]));
 
             return null;
         }
-        /** @var array<string, mixed> $of */
-        $of    = is_array($spec['of'] ?? null) ? $spec['of'] : [];
-        $items = [];
+        /** @var array<string, mixed> $itemSpec */
+        $itemSpec = is_array($spec['of'] ?? null) ? $spec['of'] : [];
+        $items    = [];
         foreach ($value as $index => $item) {
-            $items[] = $this->value($item, $of, self::join($path, $index));
+            $items[] = $this->value($item, $itemSpec, self::join($path, $index));
         }
 
         return $items;
@@ -363,26 +380,26 @@ final class Schema
     private function checkMap(mixed $value, array $spec, string $path): ?array
     {
         if (is_array($value) === false || ($value !== [] && array_is_list($value))) {
-            $this->add(Problem::at($path, 'wrong-type', ['expected' => 'object']));
+            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => 'object']));
 
             return null;
         }
         $max = self::int($spec['max'] ?? 10);
         if (count($value) > $max) {
-            $this->add(Problem::at($path, 'too-many', ['max' => $max]));
+            $this->add(Problem::atPath($path, 'too-many', ['max' => $max]));
 
             return null;
         }
-        /** @var array<string, mixed> $of */
-        $of    = is_array($spec['of'] ?? null) ? $spec['of'] : [];
-        $items = [];
+        /** @var array<string, mixed> $itemSpec */
+        $itemSpec = is_array($spec['of'] ?? null) ? $spec['of'] : [];
+        $items    = [];
         foreach ($value as $name => $item) {
             $itemPath = self::join($path, (string) $name);
             if (preg_match(self::KEY, (string) $name) !== 1) {
-                $this->add(Problem::at($itemPath, 'wrong-type', ['expected' => 'key']));
+                $this->add(Problem::atPath($itemPath, 'wrong-type', ['expected' => 'key']));
                 continue;
             }
-            $items[(string) $name] = $this->value($item, $of, $itemPath);
+            $items[(string) $name] = $this->value($item, $itemSpec, $itemPath);
         }
 
         return $items;

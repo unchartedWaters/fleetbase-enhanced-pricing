@@ -48,7 +48,11 @@ test('requires and skipped for', function (array $fields, bool $charged) {
 ]);
 
 test('a flat subtotal fee per line counts the combined lines', function () {
-    $profile = ($this->with)($this->profile, 1, ['applies_to' => ['TIERED'], 'skipped_for' => [], 'charge' => 'per_line']);
+    $profile = ($this->with)($this->profile, 1, [
+        'applies_to'  => ['TIERED'],
+        'skipped_for' => [],
+        'charge'      => 'per_line',
+    ]);
 
     $quote = Orders::price(['profile' => $profile, 'entities' => array_fill(0, 6, Orders::entity(5))]);
 
@@ -56,9 +60,16 @@ test('a flat subtotal fee per line counts the combined lines', function () {
 });
 
 test('a flat subtotal fee per entity counts entities on its chosen products', function () {
-    $profile = ($this->with)($this->profile, 1, ['applies_to' => ['TIERED'], 'skipped_for' => [], 'charge' => 'per_entity']);
+    $profile = ($this->with)($this->profile, 1, [
+        'applies_to'  => ['TIERED'],
+        'skipped_for' => [],
+        'charge'      => 'per_entity',
+    ]);
 
-    $quote = Orders::price(['profile' => $profile, 'entities' => [Orders::entity(5), Orders::entity(5), Orders::entity(5, 'separate')]]);
+    $quote = Orders::price([
+        'profile'  => $profile,
+        'entities' => [Orders::entity(5), Orders::entity(5), Orders::entity(5, 'separate')],
+    ]);
 
     expect(array_slice(Orders::lines($quote), 2))->toBe([['FLAT_A', 'Flat subtotal fee A', 2, 400, 800]]);
 });
@@ -66,14 +77,23 @@ test('a flat subtotal fee per entity counts entities on its chosen products', fu
 test('a manual charge can make a flat subtotal fee apply', function () {
     $profile = ($this->with)($this->profile, 1, ['applies_to' => ['HOURLY'], 'skipped_for' => []]);
 
-    $quote = Orders::price(['profile' => $profile, 'manual' => [new ManualChargeInput(key: 'hourly', quantity: '0.5')]]);
+    $quote = Orders::price([
+        'profile' => $profile,
+        'manual'  => [new ManualChargeInput(key: 'hourly', quantity: '0.5')],
+    ]);
 
     expect(Orders::lines($quote)[2])->toBe(['FLAT_A', 'Flat subtotal fee A', 1, 400, 400]);
 });
 
 test('a later subtotal fee sees an earlier one', function () {
     $profile = ($this->with)($this->profile, 0, []);
-    $profile = ($this->with)($profile, 1, ['mode' => 'percentage', 'percentage' => 1000, 'amount' => null, 'applies_to' => ['PERCENT'], 'skipped_for' => []]);
+    $profile = ($this->with)($profile, 1, [
+        'mode'        => 'percentage',
+        'percentage'  => 1000,
+        'amount'      => null,
+        'applies_to'  => ['PERCENT'],
+        'skipped_for' => [],
+    ]);
 
     $quote = Orders::price(['profile' => $profile]);
 
@@ -87,7 +107,8 @@ test('a later subtotal fee sees an earlier one', function () {
 test('a missing percentage stops pricing, or is skipped', function () {
     $profile = ($this->with)($this->profile, 0, ['percentage' => null]);
 
-    expect(fn () => Orders::price(['profile' => $profile]))->toThrow(PricingFailed::class, 'enhanced-pricing.pricing.missing-amount');
+    expect(fn () => Orders::price(['profile' => $profile]))
+        ->toThrow(PricingFailed::class, 'enhanced-pricing.pricing.missing-amount');
 
     $skipping = Profiles::set($profile, 'subtotal_fees.0.if_missing', 'skip');
 
@@ -97,13 +118,15 @@ test('a missing percentage stops pricing, or is skipped', function () {
 test('a customer override sets a missing percentage', function () {
     $profile = ($this->with)($this->profile, 0, ['percentage' => null]);
 
-    expect(Orders::price(['profile' => $profile, 'overrides' => ['subtotal_fees.percent.percentage' => 1000]])->total())->toBe(2970);
+    expect(Orders::price(['profile' => $profile, 'overrides' => ['subtotal_fees.percent.percentage' => 1000]])->total())
+        ->toBe(2970);
 });
 
 test('minimum and maximum on a subtotal fee', function (array $fields, int $amount) {
     $profile = ($this->with)($this->profile, 0, $fields);
 
-    expect(Orders::lines(Orders::price(['profile' => $profile]))[1])->toBe(['PERCENT', 'Percentage subtotal fee', 1, $amount, $amount]);
+    expect(Orders::lines(Orders::price(['profile' => $profile]))[1])
+        ->toBe(['PERCENT', 'Percentage subtotal fee', 1, $amount, $amount]);
 })->with([
     'minimum' => [['minimum' => 500], 500],
     'maximum' => [['maximum' => 200], 200],

@@ -27,12 +27,14 @@ final class Orders
 
     /**
      * @param array<string, mixed> $options profile, overrides, changes, service_rate, row, entities,
-     *                                      attributes, pickup (local), pickup_utc, timezone, distance_meters, manual, labels
+     *                                      attributes, pickup (local), pickup_utc, timezone,
+     *                                      distance_meters, manual, labels
      */
     public static function request(array $options = []): PricingRequest
     {
         $timezone = is_string($options['timezone'] ?? null) ? $options['timezone'] : 'UTC';
-        $pickup   = new \DateTimeImmutable(is_string($options['pickup'] ?? null) ? $options['pickup'] : self::WEEKDAY, new \DateTimeZone($timezone));
+        $local    = is_string($options['pickup'] ?? null) ? $options['pickup'] : self::WEEKDAY;
+        $pickup   = new \DateTimeImmutable($local, new \DateTimeZone($timezone));
         if (is_string($options['pickup_utc'] ?? null)) {
             $pickup = new \DateTimeImmutable($options['pickup_utc'], new \DateTimeZone('UTC'));
         }

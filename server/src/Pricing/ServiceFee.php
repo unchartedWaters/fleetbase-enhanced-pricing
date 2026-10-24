@@ -59,7 +59,13 @@ final class ServiceFee
         $drafts = match ($this->rate['method']) {
             'tiers'     => $this->tiers(),
             'per_meter' => $this->perMeter(),
-            default     => [$this->draft(1, $this->amount(R::map($this->rate['fixed_rate'])['amount'] ?? null, R::text($this->rate['key'])), $this->lineName())],
+            default     => [
+                $this->draft(
+                    1,
+                    $this->amount(R::map($this->rate['fixed_rate'])['amount'] ?? null, R::text($this->rate['key'])),
+                    $this->lineName(),
+                ),
+            ],
         };
 
         $minimum = $this->rate['minimum'];
@@ -81,7 +87,10 @@ final class ServiceFee
         if ($this->order->entities === []) {
             throw $this->order->fail('no-entities');
         }
-        $counted = count(array_filter($this->order->entities, static fn (PricedEntity $entity): bool => $entity->type['priced'] === 'tiers'));
+        $counted = count(array_filter(
+            $this->order->entities,
+            static fn (PricedEntity $entity): bool => $entity->type['priced'] === 'tiers',
+        ));
         $tiers   = R::items($this->rate['tiers']);
         $drafts  = [];
         $start   = 0;
@@ -90,7 +99,11 @@ final class ServiceFee
             $limit = $tier['up_to'] === null ? null : $this->tierLimit(R::map($tier['up_to']), $start);
             $end   = $limit === null ? $counted : min($counted, $limit);
             if ($end > $start) {
-                $drafts[] = $this->draft($end - $start, $this->amount($tier['price'], R::text($this->rate['key'])), $name);
+                $drafts[] = $this->draft(
+                    $end - $start,
+                    $this->amount($tier['price'], R::text($this->rate['key'])),
+                    $name,
+                );
             }
             $start = $limit ?? $counted;
         }
@@ -111,7 +124,11 @@ final class ServiceFee
             $column = R::text($upTo['column']);
             $limit  = $this->cell($column);
             if ($limit === null) {
-                throw $this->order->fail('missing-amount', ['rule' => R::text($this->rate['key']), 'column' => $column]);
+                $missing = $this->order->fail('missing-amount', [
+                    'rule'   => R::text($this->rate['key']),
+                    'column' => $column,
+                ]);
+                throw $missing;
             }
         }
         if (is_int($limit) === false || $limit <= $previous) {
@@ -131,7 +148,10 @@ final class ServiceFee
             if ($type['priced'] !== 'column') {
                 continue;
             }
-            $entities = array_filter($this->order->entities, static fn (PricedEntity $entity): bool => $entity->type['key'] === $type['key']);
+            $entities = array_filter(
+                $this->order->entities,
+                static fn (PricedEntity $entity): bool => $entity->type['key'] === $type['key'],
+            );
             if ($entities === []) {
                 continue;
             }
@@ -163,14 +183,18 @@ final class ServiceFee
         }
         $distance = Units::distance($this->distanceMeters, $unit);
         if ($distance->isGreaterThan(R::text($settings['maximum_distance']))) {
-            throw $this->order->fail('distance-too-long', ['distance' => Exact::display($distance), 'maximum' => R::text($settings['maximum_distance'])]);
+            $tooLong = $this->order->fail('distance-too-long', [
+                'distance' => Exact::display($distance),
+                'maximum'  => R::text($settings['maximum_distance']),
+            ]);
+            throw $tooLong;
         }
         $distance = match ($settings['rounding']) {
-            'up'      => Exact::of(Exact::ceil($distance)),
-            'nearest' => Exact::of(Exact::round($distance)),
+            'up'      => Exact::rational(Exact::ceil($distance)),
+            'nearest' => Exact::rational(Exact::round($distance)),
             default   => $distance,
         };
-        $minimum = Exact::of(R::text($settings['minimum_distance']));
+        $minimum = Exact::rational(R::text($settings['minimum_distance']));
         if ($distance->isLessThan($minimum)) {
             $distance = $minimum;
         }
@@ -244,6 +268,12 @@ final class ServiceFee
      */
     private function draft(int $quantity, int $unit, string $name): array
     {
-        return ['product' => R::text($this->rate['product']), 'name' => $name, 'quantity' => $quantity, 'unit' => $unit, 'source' => $this->source];
+        return [
+            'product'  => R::text($this->rate['product']),
+            'name'     => $name,
+            'quantity' => $quantity,
+            'unit'     => $unit,
+            'source'   => $this->source,
+        ];
     }
 }

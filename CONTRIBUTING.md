@@ -79,4 +79,5 @@ locally with:
 python3 -m lizard -L 50 -w server/src
 ```
 
-Markdown lines stay within 80 characters (markdownlint MD013).
+PHP lines stay within 120 characters (PHPCS PSR12), and markdown lines
+within 80 (markdownlint MD013).

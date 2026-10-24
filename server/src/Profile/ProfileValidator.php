@@ -60,7 +60,7 @@ final class ProfileValidator
     private function run(array $definition, bool $checkSize): array
     {
         if ($checkSize && self::tooLarge($definition)) {
-            return [[], [Problem::at('', 'too-large', ['max' => self::MAX_BYTES])]];
+            return [[], [Problem::atPath('', 'too-large', ['max' => self::MAX_BYTES])]];
         }
 
         $schema  = new Schema();

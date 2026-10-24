@@ -7,7 +7,13 @@ namespace Fleetbase\EnhancedPricing\Tests\Support;
  */
 final class Docs
 {
-    public const FILES = ['README.md', 'CONTRIBUTING.md', 'docs/SETUP.md', 'docs/profile-format.md', 'docs/pricing-engine.md'];
+    public const FILES = [
+        'README.md',
+        'CONTRIBUTING.md',
+        'docs/SETUP.md',
+        'docs/profile-format.md',
+        'docs/pricing-engine.md',
+    ];
 
     public static function path(string $relative): string
     {
@@ -63,6 +69,9 @@ final class Docs
     {
         preg_match_all('/\]\(([^)#\s]+)(?:#[^)]*)?\)/', self::text($relative), $matches);
 
-        return array_values(array_filter($matches[1], static fn (string $link): bool => preg_match('/^[a-z]+:/', $link) !== 1));
+        return array_values(array_filter(
+            $matches[1],
+            static fn (string $link): bool => preg_match('/^[a-z]+:/', $link) !== 1,
+        ));
     }
 }

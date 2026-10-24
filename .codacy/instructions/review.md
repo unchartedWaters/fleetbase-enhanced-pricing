@@ -55,6 +55,7 @@
   methods rather than suppressing.
 - JS: Prettier from the `prettier` key in `package.json`, ESLint
   `plugin:ember/recommended`.
+- PHP lines stay within 120 columns (PHPCS PSR12).
 - Markdown: 80-column lines (MD013).
 - Format or behavior changes update `docs/profile-format.md` or
   `docs/pricing-engine.md` in the same PR.
@@ -63,10 +64,10 @@
 
 - Branch from `main`; PRs target `main`. One concern per PR, minimum change.
 - `package.json`, `composer.json` and `extension.json` versions must match
-  (`check-versions.py`).
+  (`check_versions.py`).
 - The npm pack must keep the manifests, the service provider,
   `translations/en-us.yaml`, `server/src/Pricing/` and `server/src/Profile/`
-  (`check-registry-manifest.py`).
+  (`check_registry_manifest.py`).
 
 ## Common pitfalls
 
@@ -79,7 +80,9 @@
 ## Out of scope
 
 - PHPMD rules excluded in `phpmd.xml` (`StaticAccess`, `ElseExpression`,
-  `BooleanArgumentFlag`).
+  `BooleanArgumentFlag`), and its raised limits: cyclomatic 15, NPath 1000,
+  class complexity 100, and 13 parameters for `PricingRequest`'s named
+  arguments.
 - Paths excluded in `.codacy.yml`: JSHint on Ember/JS code, Lizard on
   `server/tests` and `tests`, PHPMD on `server/tests`.
 - Lockfile contents (`composer.lock`, `pnpm-lock.yaml`).

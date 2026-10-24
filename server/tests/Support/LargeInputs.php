@@ -31,7 +31,10 @@ final class LargeInputs
                 'weekdays'   => [6],
             ];
         }
-        $profile['holiday_lists'] = array_fill_keys(array_map(static fn (int $list): string => "l$list", range(0, 9)), []);
+        $profile['holiday_lists'] = array_fill_keys(
+            array_map(static fn (int $list): string => "l$list", range(0, 9)),
+            [],
+        );
         $date                     = new \DateTimeImmutable('2027-01-01');
         for ($count = 0; self::size($profile) < 65000 && $count < 4000; $count++) {
             $profile['holiday_lists']['l' . ($count % 10)][] = $date->format('Y-m-d');
@@ -77,7 +80,10 @@ final class LargeInputs
      */
     public static function entities(int $count): array
     {
-        return array_map(static fn (int $grams): EntityInput => new EntityInput(weight: $grams, weightUnit: 'g'), range(1, $count));
+        return array_map(
+            static fn (int $grams): EntityInput => new EntityInput(weight: $grams, weightUnit: 'g'),
+            range(1, $count),
+        );
     }
 
     /**

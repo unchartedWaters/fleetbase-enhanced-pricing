@@ -40,6 +40,7 @@
   <rule ref="rulesets/naming.xml"/>
   <rule ref="rulesets/unusedcode.xml"/>
   <rule ref="rulesets/codesize.xml">
+    <exclude name="ExcessiveParameterList"/>
     <exclude name="ExcessiveMethodLength"/>
     <exclude name="CyclomaticComplexity"/>
     <exclude name="NPathComplexity"/>
@@ -49,7 +50,7 @@
   </rule>
   <!--
     The PHPMD defaults (cyclomatic 10, NPath 200, class complexity 50, 25 methods, 10 public
-    methods) flag ordinary sync and controller code, so these limits are raised to values
+    methods) flag ordinary profile checks and pricing rules, so these limits are raised to values
     that still catch methods and classes that need splitting.
   -->
   <rule ref="rulesets/codesize.xml/CyclomaticComplexity">
@@ -75,6 +76,15 @@
   <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
     <properties>
       <property name="maxmethods" value="20"/>
+    </properties>
+  </rule>
+  <!--
+    PricingRequest is built with named arguments, one per input the engine reads (12), and
+    each has a default, so a longer list costs callers nothing. Other methods stay under 13.
+  -->
+  <rule ref="rulesets/codesize.xml/ExcessiveParameterList">
+    <properties>
+      <property name="minimum" value="13"/>
     </properties>
   </rule>
   <!--

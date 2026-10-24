@@ -30,8 +30,13 @@ final class ManualCharges
             $definitions[R::text($definition['key'])] = $definition;
         }
         foreach ($charges as $charge) {
-            $definition      = $definitions[$charge->key] ?? throw $this->order->fail('unknown-manual-charge', ['charge' => $charge->key]);
-            [$amount, $name] = $charge->stored ? $this->stored($definition, $charge) : $this->priced($definition, $charge);
+            $definition = $definitions[$charge->key]
+                ?? throw $this->order->fail('unknown-manual-charge', ['charge' => $charge->key]);
+            if ($charge->stored === true) {
+                [$amount, $name] = $this->stored($definition, $charge);
+            } else {
+                [$amount, $name] = $this->priced($definition, $charge);
+            }
             $this->order->book->add([[
                 'product'  => R::text($definition['product']),
                 'name'     => $name,
@@ -55,7 +60,12 @@ final class ManualCharges
         $quantity = Exact::canonical($charge->quantity);
         $name     = R::text($definition['name']);
         if (is_array($definition['quantity']) && $quantity !== null) {
-            $name = sprintf('%s (%s %s)', $name, Exact::display(Exact::of($quantity)), R::text($definition['quantity']['unit']));
+            $name = sprintf(
+                '%s (%s %s)',
+                $name,
+                Exact::display(Exact::rational($quantity)),
+                R::text($definition['quantity']['unit']),
+            );
         }
 
         return [$charge->amount, $name];
@@ -78,14 +88,7 @@ final class ManualCharges
         $name    = R::text($definition['name']);
         $entered = $definition['entered'];
         if (is_array($entered)) {
-            if ($charge->quantity !== null) {
-                throw $this->order->fail('manual-charge-quantity-invalid', ['charge' => $key]);
-            }
-            if ($charge->amount === null || $charge->amount < $entered['minimum'] || $charge->amount > $entered['maximum']) {
-                throw $this->order->fail('manual-charge-amount-out-of-range', ['charge' => $key, 'minimum' => R::text($entered['minimum']), 'maximum' => R::text($entered['maximum'])]);
-            }
-
-            return [$charge->amount, $name];
+            return [$this->entered($entered, $charge), $name];
         }
         if ($charge->amount !== null) {
             throw $this->order->fail('manual-charge-amount-not-entered', ['charge' => $key]);
@@ -101,7 +104,37 @@ final class ManualCharges
         }
         $value = $this->quantity($charge, $quantity);
 
-        return [Exact::round($value->multipliedBy($amount)), sprintf('%s (%s %s)', $name, Exact::display($value), R::text($quantity['unit']))];
+        return [
+            Exact::round($value->multipliedBy($amount)),
+            sprintf('%s (%s %s)', $name, Exact::display($value), R::text($quantity['unit'])),
+        ];
+    }
+
+    /**
+     * The amount entered for a charge whose amount is entered, checked against its limits.
+     *
+     * @param array<string, mixed> $entered
+     */
+    private function entered(array $entered, ManualChargeInput $charge): int
+    {
+        $key = $charge->key;
+        if ($charge->quantity !== null) {
+            throw $this->order->fail('manual-charge-quantity-invalid', ['charge' => $key]);
+        }
+        if (
+            $charge->amount === null
+            || $charge->amount < $entered['minimum']
+            || $charge->amount > $entered['maximum']
+        ) {
+            $outOfRange = $this->order->fail('manual-charge-amount-out-of-range', [
+                'charge'  => $key,
+                'minimum' => R::text($entered['minimum']),
+                'maximum' => R::text($entered['maximum']),
+            ]);
+            throw $outOfRange;
+        }
+
+        return $charge->amount;
     }
 
     /**
@@ -112,13 +145,20 @@ final class ManualCharges
     private function quantity(ManualChargeInput $charge, array $limits): \Brick\Math\BigRational
     {
         $canonical = Exact::canonical($charge->quantity);
-        $invalid   = $this->order->fail('manual-charge-quantity-invalid', ['charge' => $charge->key, 'step' => R::text($limits['step']), 'maximum' => R::text($limits['maximum'])]);
+        $invalid   = $this->order->fail('manual-charge-quantity-invalid', [
+            'charge'  => $charge->key,
+            'step'    => R::text($limits['step']),
+            'maximum' => R::text($limits['maximum']),
+        ]);
         if ($canonical === null) {
             throw $invalid;
         }
-        $value = Exact::of($canonical);
-        if ($value->isLessThanOrEqualTo(0) || $value->isGreaterThan(R::text($limits['maximum']))
-            || Exact::isWhole($value->dividedBy(R::text($limits['step']))) === false) {
+        $value = Exact::rational($canonical);
+        if (
+            $value->isLessThanOrEqualTo(0)
+            || $value->isGreaterThan(R::text($limits['maximum']))
+            || Exact::isWhole($value->dividedBy(R::text($limits['step']))) === false
+        ) {
             throw $invalid;
         }
 

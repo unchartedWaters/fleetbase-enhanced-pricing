@@ -9,6 +9,7 @@ FILES = ("package.json", "composer.json", "extension.json")
 
 
 def read_version(name: str) -> str:
+    """Return the version in the JSON file `name`, or exit when it has none."""
     path = Path(name)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -24,6 +25,7 @@ def read_version(name: str) -> str:
 
 
 def main() -> None:
+    """Compare the three versions and exit 1 when they differ."""
     versions = {name: read_version(name) for name in FILES}
     expected = versions[FILES[0]]
     if any(version != expected for version in versions.values()):

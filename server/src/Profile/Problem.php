@@ -21,7 +21,7 @@ final class Problem
     /**
      * @param array<string, scalar|null> $params
      */
-    public static function at(string $path, string $name, array $params = []): self
+    public static function atPath(string $path, string $name, array $params = []): self
     {
         return new self($path, 'enhanced-pricing.profile.' . $name, $params);
     }

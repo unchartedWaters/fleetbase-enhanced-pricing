@@ -21,12 +21,32 @@ final class OverridePaths
         'additional' => ['amount', 'if_missing', 'equals'],
     ];
 
-    private const SUBTOTAL_FIELDS = ['applies_to', 'requires', 'skipped_for', 'percentage', 'amount', 'if_missing', 'minimum', 'maximum', 'enabled'];
+    private const SUBTOTAL_FIELDS = [
+        'applies_to',
+        'requires',
+        'skipped_for',
+        'percentage',
+        'amount',
+        'if_missing',
+        'minimum',
+        'maximum',
+        'enabled',
+    ];
 
     private const MANUAL_FIELDS = ['amount', 'entered', 'quantity', 'offered'];
 
     /** Fields whose values are money, percents or numbers, which may change by date. */
-    private const DATED = ['amount', 'percentage', 'minimum', 'maximum', 'thresholds', 'tiers', 'rate', 'base_fee', 'minimum_distance'];
+    private const DATED = [
+        'amount',
+        'percentage',
+        'minimum',
+        'maximum',
+        'thresholds',
+        'tiers',
+        'rate',
+        'base_fee',
+        'minimum_distance',
+    ];
 
     /**
      * Finds a path in a normalized profile, or null when the profile has no such value or it
@@ -42,7 +62,11 @@ final class OverridePaths
             return self::entry(null, false, S::listOf(S::type('key'), 0, 20));
         }
         $parts = explode('.', $path);
-        if (count($parts) === 2 && $parts[0] === 'holiday_lists' && array_key_exists($parts[1], R::map($profile['holiday_lists'] ?? []))) {
+        if (
+            count($parts) === 2
+            && $parts[0] === 'holiday_lists'
+            && array_key_exists($parts[1], R::map($profile['holiday_lists'] ?? []))
+        ) {
             return self::entry(['holiday_lists', $parts[1]], false, S::listOf(S::type('date'), 0, 400));
         }
         if (count($parts) < 3) {
@@ -60,10 +84,18 @@ final class OverridePaths
             'service_rates'  => self::serviceRate($rule, $index, $field),
             'fees'           => self::fee($rule, $index, $field),
             'subtotal_fees'  => in_array($field, self::SUBTOTAL_FIELDS, true)
-                ? self::entry(['subtotal_fees', $index, $field], in_array($field, self::DATED, true), self::bare(ProfileShapes::subtotalFeeFields()[$field]))
+                ? self::entry(
+                    ['subtotal_fees', $index, $field],
+                    in_array($field, self::DATED, true),
+                    self::bare(ProfileShapes::subtotalFeeFields()[$field]),
+                )
                 : null,
             'manual_charges' => in_array($field, self::MANUAL_FIELDS, true)
-                ? self::entry(['manual_charges', $index, $field], $field === 'amount', self::bare(ProfileShapes::manualCharge()[$field]))
+                ? self::entry(
+                    ['manual_charges', $index, $field],
+                    $field === 'amount',
+                    self::bare(ProfileShapes::manualCharge()[$field]),
+                )
                 : null,
             default => null,
         };
@@ -102,19 +134,42 @@ final class OverridePaths
         $method  = $rule['method'];
 
         return match (true) {
-            $field === 'enabled'                      => self::entry([...$pointer, 'enabled'], false, S::type('boolean')),
-            $field === 'minimum'                      => self::entry([...$pointer, 'minimum'], true, S::nullable(S::type('money'))),
+            $field === 'enabled'                      => self::entry(
+                [...$pointer, 'enabled'],
+                false,
+                S::type('boolean'),
+            ),
+            $field === 'minimum'                      => self::entry(
+                [...$pointer, 'minimum'],
+                true,
+                S::nullable(S::type('money')),
+            ),
             $field === 'tiers' && $method === 'tiers' => [
                 'pointer' => [...$pointer, 'tiers'],
                 'dated'   => true,
-                'check'   => static fn (S $schema, mixed $value, string $path): mixed => (new ProfileShapes($schema))->tiers($value, $path),
+                'check'   => static fn (
+                    S $schema,
+                    mixed $value,
+                    string $path,
+                ): mixed => (new ProfileShapes($schema))->tiers($value, $path),
             ],
             $field === 'fixed_rate.amount' && $method === 'fixed_rate' => [
                 'pointer' => [...$pointer, 'fixed_rate', 'amount'],
                 'dated'   => true,
-                'check'   => static fn (S $schema, mixed $value, string $path): mixed => (new ProfileShapes($schema))->choiceOf($value, ['value' => S::type('money'), 'column' => S::type('key')], $path),
+                'check'   => static fn (
+                    S $schema,
+                    mixed $value,
+                    string $path,
+                ): mixed => (new ProfileShapes($schema))->choiceOf(
+                    $value,
+                    ['value' => S::type('money'), 'column' => S::type('key')],
+                    $path,
+                ),
             ],
-            str_starts_with($field, 'per_meter.') && $method === 'per_meter' => self::perMeter($pointer, substr($field, 10)),
+            str_starts_with($field, 'per_meter.') && $method === 'per_meter' => self::perMeter(
+                $pointer,
+                substr($field, 10),
+            ),
             default                                                          => null,
         };
     }
@@ -131,7 +186,11 @@ final class OverridePaths
             return null;
         }
 
-        return self::entry([...$pointer, 'per_meter', $field], in_array($field, self::DATED, true), self::bare(ProfileShapes::perMeter()[$field]));
+        return self::entry(
+            [...$pointer, 'per_meter', $field],
+            in_array($field, self::DATED, true),
+            self::bare(ProfileShapes::perMeter()[$field]),
+        );
     }
 
     /**
@@ -147,7 +206,11 @@ final class OverridePaths
             return null;
         }
 
-        return self::entry(['fees', $index, $field], in_array($field, self::DATED, true), self::bare(ProfileShapes::feeFields($kind)[$field]));
+        return self::entry(
+            ['fees', $index, $field],
+            in_array($field, self::DATED, true),
+            self::bare(ProfileShapes::feeFields($kind)[$field]),
+        );
     }
 
     /**
@@ -161,7 +224,11 @@ final class OverridePaths
         return [
             'pointer' => $pointer,
             'dated'   => $dated,
-            'check'   => static fn (S $schema, mixed $value, string $path): mixed => $schema->value($value, $spec, $path),
+            'check'   => static fn (S $schema, mixed $value, string $path): mixed => $schema->value(
+                $value,
+                $spec,
+                $path,
+            ),
         ];
     }
 

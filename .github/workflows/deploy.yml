@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Check package versions match
-        run: python3 .github/workflows/check-versions.py
+        run: python3 .github/workflows/check_versions.py
 
       - name: Check tag matches package version
         run: |
@@ -64,7 +64,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Check the registry tarball includes the Composer package
-        run: python3 .github/workflows/check-registry-manifest.py
+        run: python3 .github/workflows/check_registry_manifest.py
 
   php_tests:
     uses: ./.github/workflows/server.yml

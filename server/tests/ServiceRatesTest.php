@@ -16,7 +16,11 @@ beforeEach(function () {
 });
 
 test('tiers can take their limit and price from row columns', function () {
-    $profile = Profiles::append($this->profile, 'rate_tables.0.columns', ['key' => 'included', 'type' => 'integer', 'required' => true]);
+    $profile = Profiles::append($this->profile, 'rate_tables.0.columns', [
+        'key'      => 'included',
+        'type'     => 'integer',
+        'required' => true,
+    ]);
     $profile = Profiles::set($profile, 'service_rates.0.tiers', [
         ['up_to' => ['column' => 'included'], 'price' => ['column' => 'first']],
         ['up_to' => null, 'price' => ['column' => 'second']],
@@ -59,7 +63,10 @@ test('the line name can come from a text column of the row', function () {
 });
 
 test('an entity type priced at its own column is its own line under its own product', function () {
-    $quote = Orders::price(['profile' => $this->profile, 'entities' => [Orders::entity(5), Orders::entity(5, 'separate'), Orders::entity(5, 'separate')]]);
+    $quote = Orders::price([
+        'profile'  => $this->profile,
+        'entities' => [Orders::entity(5), Orders::entity(5, 'separate'), Orders::entity(5, 'separate')],
+    ]);
 
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
@@ -110,7 +117,12 @@ test('on a per-meter service rate every entity is billed under its product', fun
 test('per meter rounding', function (string $rounding, int $meters, string $name, int $amount) {
     $profile = Profiles::set($this->profile, 'service_rates.1.per_meter.rounding', $rounding);
 
-    $quote = Orders::price(['profile' => $profile, 'service_rate' => 'distance', 'row' => null, 'distance_meters' => $meters]);
+    $quote = Orders::price([
+        'profile'         => $profile,
+        'service_rate'    => 'distance',
+        'row'             => null,
+        'distance_meters' => $meters,
+    ]);
 
     expect(Orders::lines($quote))->toBe([['DISTANCE', $name, 1, $amount, $amount]]);
 })->with([
@@ -123,13 +135,23 @@ test('per meter rounding', function (string $rounding, int $meters, string $name
 test('a per-meter rate in miles converts the driving distance', function () {
     $profile = Profiles::set($this->profile, 'distance_unit', 'mi');
 
-    $quote = Orders::price(['profile' => $profile, 'service_rate' => 'distance', 'row' => null, 'distance_meters' => 16094]);
+    $quote = Orders::price([
+        'profile'         => $profile,
+        'service_rate'    => 'distance',
+        'row'             => null,
+        'distance_meters' => 16094,
+    ]);
 
     expect(Orders::lines($quote))->toBe([['DISTANCE', 'Distance (11 mi)', 1, 3710, 3710]]);
 });
 
 test('a per-meter rate refuses a missing, zero or too long distance', function (?int $meters, string $key) {
-    expect(fn () => Orders::price(['profile' => $this->profile, 'service_rate' => 'distance', 'row' => null, 'distance_meters' => $meters]))
+    expect(fn () => Orders::price([
+        'profile'         => $this->profile,
+        'service_rate'    => 'distance',
+        'row'             => null,
+        'distance_meters' => $meters,
+    ]))
         ->toThrow(PricingFailed::class, $key);
 })->with([
     'missing'  => [null, 'enhanced-pricing.pricing.distance-required'],
@@ -176,7 +198,10 @@ test('a minimum below the service fee changes nothing', function () {
 test('a minimum does not raise a $0 service fee', function () {
     $profile = Profiles::set($this->profile, 'service_rates.0.minimum', 5000);
 
-    $quote = Orders::price(['profile' => $profile, 'row' => ['first' => 0, 'second' => 0, 'third' => 0] + Orders::ROW_1]);
+    $quote = Orders::price([
+        'profile' => $profile,
+        'row'     => ['first' => 0, 'second' => 0, 'third' => 0] + Orders::ROW_1,
+    ]);
 
     expect(Orders::lines($quote))->toBe([]);
 });

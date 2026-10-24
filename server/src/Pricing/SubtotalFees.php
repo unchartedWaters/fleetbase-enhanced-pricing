@@ -52,7 +52,9 @@ final class SubtotalFees
             if ($percentage === null) {
                 return [];
             }
-            $amount = Exact::round(Exact::of($this->order->book->sum($chosen))->multipliedBy($percentage)->dividedBy(10000));
+            $amount = Exact::round(
+                Exact::rational($this->order->book->sum($chosen))->multipliedBy($percentage)->dividedBy(10000),
+            );
 
             return [$this->support->draft($fee, 1, $amount)];
         }

@@ -13,11 +13,14 @@ final class PricingRequest
      * @param array<string, mixed>                                            $profile       the profile as saved
      * @param list<EntityInput>                                               $entities
      * @param array<string, mixed>                                            $attributes    the order's attributes
-     * @param array<string, mixed>|null                                       $row           the chosen rate card row's values
+     * @param array<string, mixed>|null                                       $row           the chosen rate card
+     *                                                                                       row's values
      * @param list<ManualChargeInput>                                         $manualCharges
      * @param array<string, mixed>                                            $overrides     the customer's overrides
-     * @param list<array{path: string, value: mixed, effective_from: string}> $valueChanges  dated changes to global values
-     * @param array<string, string>                                           $labels        customer, card and row, for messages
+     * @param list<array{path: string, value: mixed, effective_from: string}> $valueChanges  dated changes to global
+     *                                                                                       values
+     * @param array<string, string>                                           $labels        customer, card and row,
+     *                                                                                       for messages
      */
     public function __construct(
         public readonly array $profile,

@@ -27,7 +27,8 @@ final class RuleSupport
 
         return array_values(array_filter(
             $this->order->entities,
-            fn (PricedEntity $entity): bool => in_array($entity->billingProduct, $products, true) && $this->order->book->hasPositive($entity->billingProduct),
+            fn (PricedEntity $entity): bool => in_array($entity->billingProduct, $products, true)
+                && $this->order->book->hasPositive($entity->billingProduct),
         ));
     }
 

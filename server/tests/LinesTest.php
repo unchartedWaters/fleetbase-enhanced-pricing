@@ -28,7 +28,11 @@ test('lines of two rules with the same product, name and unit amount combine', f
 });
 
 test('tier lines at the same price combine', function () {
-    $quote = Orders::price(['profile' => $this->profile, 'row' => ['second' => 2700] + Orders::ROW_1, 'entities' => array_fill(0, 4, Orders::entity(5))]);
+    $quote = Orders::price([
+        'profile'  => $this->profile,
+        'row'      => ['second' => 2700] + Orders::ROW_1,
+        'entities' => array_fill(0, 4, Orders::entity(5)),
+    ]);
 
     expect(Orders::lines($quote))->toBe([['TIERED', 'Tiered delivery', 4, 2700, 10800]]);
 });
@@ -42,14 +46,21 @@ test('a $0 line is left off', function () {
 });
 
 test('a line or a total above $1,000,000 stops pricing', function (int $first, int $count) {
-    Orders::price(['profile' => $this->profile, 'row' => ['first' => $first, 'second' => $first, 'third' => $first] + Orders::ROW_1, 'entities' => array_fill(0, $count, Orders::entity(5))]);
+    Orders::price([
+        'profile'  => $this->profile,
+        'row'      => ['first' => $first, 'second' => $first, 'third' => $first] + Orders::ROW_1,
+        'entities' => array_fill(0, $count, Orders::entity(5)),
+    ]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.amount-too-large')->with([
     'one line'  => [100000000, 2],
     'the total' => [60000000, 2],
 ]);
 
 test('each line records where it came from', function () {
-    $quote = Orders::price(['profile' => Profiles::example(), 'entities' => [Orders::entity(5), Orders::entity(5, 'separate')]]);
+    $quote = Orders::price([
+        'profile'  => Profiles::example(),
+        'entities' => [Orders::entity(5), Orders::entity(5, 'separate')],
+    ]);
 
     expect(array_map(static fn ($line) => $line->sources, $quote->lines))->toBe([
         ['service_rate:tiered'],

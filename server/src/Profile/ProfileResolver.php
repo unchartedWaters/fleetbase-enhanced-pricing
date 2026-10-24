@@ -14,7 +14,12 @@ final class ProfileResolver
      * @param array<mixed>                                                    $overrides path => value
      * @param list<array{path: string, value: mixed, effective_from: string}> $changes
      *
-     * @return array{profile: array<string, mixed>, allowed: list<string>|null, overrides: array<string, mixed>, changes: array<string, string>}
+     * @return array{
+     *     profile: array<string, mixed>,
+     *     allowed: list<string>|null,
+     *     overrides: array<string, mixed>,
+     *     changes: array<string, string>,
+     * }
      */
     public function resolve(array $profile, array $overrides, array $changes, string $date): array
     {

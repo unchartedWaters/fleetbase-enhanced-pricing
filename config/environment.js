@@ -1,8 +1,7 @@
-'use strict';
 const { name } = require('../package');
 
-module.exports = function (environment) {
-    let ENV = {
+module.exports = (environment) => {
+    const ENV = {
         modulePrefix: name,
         environment,
     };

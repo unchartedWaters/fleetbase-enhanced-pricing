@@ -62,7 +62,8 @@ final class OrderContext
         $from  = $rule['effective_from'] ?? null;
         $until = $rule['effective_until'] ?? null;
 
-        return (is_string($from) === false || $from <= $this->date()) && (is_string($until) === false || $until >= $this->date());
+        return (is_string($from) === false || $from <= $this->date())
+            && (is_string($until) === false || $until >= $this->date());
     }
 
     /**
@@ -164,16 +165,23 @@ final class OrderContext
             case 'boolean':
                 return is_bool($value) ? $value : throw $invalid;
             case 'choice':
-                $choices = array_map(static fn (array $choice): mixed => $choice['key'], R::items($definition['choices']));
+                $choices = array_map(
+                    static fn (array $choice): mixed => $choice['key'],
+                    R::items($definition['choices']),
+                );
 
                 return is_string($value) && in_array($value, $choices, true) ? $value : throw $invalid;
             default:
                 $number = Exact::canonical($value);
-                if ($number === null || str_starts_with($number, '-') || Exact::of($number)->isGreaterThan(R::text($definition['maximum']))) {
+                if (
+                    $number === null
+                    || str_starts_with($number, '-')
+                    || Exact::rational($number)->isGreaterThan(R::text($definition['maximum']))
+                ) {
                     throw $invalid;
                 }
 
-                return Exact::of($number);
+                return Exact::rational($number);
         }
     }
 
@@ -206,12 +214,18 @@ final class OrderContext
         if (count(array_filter($sides, static fn (mixed $side): bool => $side !== null)) === 0) {
             return null;
         }
-        if (in_array(null, $sides, true) || $input->dimensionsUnit === null || isset(Units::LENGTH[$input->dimensionsUnit]) === false) {
+        if (
+            in_array(null, $sides, true)
+            || $input->dimensionsUnit === null
+            || isset(Units::LENGTH[$input->dimensionsUnit]) === false
+        ) {
             throw $this->fail('entity-invalid', ['entity' => $number]);
         }
         $volume = BigRational::one();
         foreach ($sides as $side) {
-            $volume = $volume->multipliedBy(Units::toCentimetres($this->measure($side, $number), $input->dimensionsUnit));
+            $volume = $volume->multipliedBy(
+                Units::toCentimetres($this->measure($side, $number), $input->dimensionsUnit),
+            );
         }
 
         return $volume;
@@ -220,10 +234,14 @@ final class OrderContext
     private function measure(int|float|string|null $value, int $number): BigRational
     {
         $canonical = Exact::canonical($value);
-        if ($canonical === null || str_starts_with($canonical, '-') || Exact::of($canonical)->isGreaterThan(self::MAX_MEASURE)) {
+        if (
+            $canonical === null
+            || str_starts_with($canonical, '-')
+            || Exact::rational($canonical)->isGreaterThan(self::MAX_MEASURE)
+        ) {
             throw $this->fail('entity-invalid', ['entity' => $number]);
         }
 
-        return Exact::of($canonical);
+        return Exact::rational($canonical);
     }
 }

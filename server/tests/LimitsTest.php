@@ -13,13 +13,16 @@ use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
 // Inputs at the documented limits: they price, or stop with a message, and do it quickly.
 
 test('the 64 KB limit is on the profile as saved, not with its defaults filled in', function () {
-    $profile = LargeInputs::nearSizeLimit();
+    $profile    = LargeInputs::nearSizeLimit();
+    $normalized = (new ProfileValidator())->normalize($profile);
+    $overrides  = ['fees.w0.amount' => 2];
+    $change     = ['path' => 'fees.w0.amount', 'value' => 2, 'effective_from' => '2027-01-01'];
 
     expect(LargeInputs::size($profile))->toBeLessThanOrEqual(ProfileValidator::MAX_BYTES)
-        ->and(LargeInputs::size((new ProfileValidator())->normalize($profile)))->toBeGreaterThan(ProfileValidator::MAX_BYTES)
-        ->and((new OverrideValidator())->check($profile, ['fees.w0.amount' => 2]))->toBe([])
-        ->and((new ChangeValidator())->check($profile, [['path' => 'fees.w0.amount', 'value' => 2, 'effective_from' => '2027-01-01']]))->toBe([])
-        ->and(Orders::price(['profile' => $profile, 'overrides' => ['fees.w0.amount' => 2]])->total())->toBeGreaterThan(0);
+        ->and(LargeInputs::size($normalized))->toBeGreaterThan(ProfileValidator::MAX_BYTES)
+        ->and((new OverrideValidator())->check($profile, $overrides))->toBe([])
+        ->and((new ChangeValidator())->check($profile, [$change]))->toBe([])
+        ->and(Orders::price(['profile' => $profile, 'overrides' => $overrides])->total())->toBeGreaterThan(0);
 });
 
 test('the 64 KB limit counts text as UTF-8', function () {
@@ -37,8 +40,17 @@ test('the 64 KB limit counts text as UTF-8', function () {
 });
 
 test('an amount too large for an integer stops pricing with a message', function () {
-    $profile = Profiles::set(Profiles::set(Profiles::set(Profiles::example(), 'fees.1.basis', 'volume'), 'fees.1.unit', 'cm3'), 'fees.1.measure', null);
-    $entity  = new EntityInput(weight: 1, weightUnit: 'kg', length: 1000000, width: 1000000, height: 1000000, dimensionsUnit: 'm');
+    $profile = Profiles::set(Profiles::example(), 'fees.1.basis', 'volume');
+    $profile = Profiles::set($profile, 'fees.1.unit', 'cm3');
+    $profile = Profiles::set($profile, 'fees.1.measure', null);
+    $entity  = new EntityInput(
+        weight: 1,
+        weightUnit: 'kg',
+        length: 1000000,
+        width: 1000000,
+        height: 1000000,
+        dimensionsUnit: 'm',
+    );
 
     Orders::price(['profile' => $profile, 'entities' => [$entity]]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.amount-too-large');
@@ -91,8 +103,14 @@ test('1,000 dated changes do not slow pricing down', function () {
 test('a float measurement is read as its shortest exact form', function (float $kilograms, string $same) {
     $profile = Profiles::set(Profiles::example(), 'fees.1.unit', 'g');
 
-    expect(Orders::lines(Orders::price(['profile' => $profile, 'entities' => [new EntityInput(weight: $kilograms, weightUnit: 'kg')]])))
-        ->toBe(Orders::lines(Orders::price(['profile' => $profile, 'entities' => [new EntityInput(weight: $same, weightUnit: 'kg')]])));
+    expect(Orders::lines(Orders::price([
+        'profile'  => $profile,
+        'entities' => [new EntityInput(weight: $kilograms, weightUnit: 'kg')],
+    ])))
+        ->toBe(Orders::lines(Orders::price([
+            'profile'  => $profile,
+            'entities' => [new EntityInput(weight: $same, weightUnit: 'kg')],
+        ])));
 })->with([
     'a tenth'        => [0.1, '0.1'],
     'a small number' => [0.00005, '0.00005'],

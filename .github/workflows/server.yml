@@ -25,7 +25,7 @@ jobs:
       uses: actions/checkout@v7
 
     - name: Check package versions match
-      run: python3 .github/workflows/check-versions.py
+      run: python3 .github/workflows/check_versions.py
 
     - name: Setup PHP
       uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0

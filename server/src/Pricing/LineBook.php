@@ -97,7 +97,13 @@ final class LineBook
     public function lines(): array
     {
         return array_map(
-            static fn (array $line): QuoteLine => new QuoteLine($line['product'], $line['name'], $line['quantity'], $line['unit'], $line['sources']),
+            static fn (array $line): QuoteLine => new QuoteLine(
+                $line['product'],
+                $line['name'],
+                $line['quantity'],
+                $line['unit'],
+                $line['sources'],
+            ),
             $this->lines,
         );
     }

@@ -17,7 +17,8 @@ test('the pricing engine example prices as the guide shows', function () {
         distanceMeters: 7000,
     );
 
-    expect((new PricingEngine())->price($request)->toArray())->toBe(Docs::jsonAfter('docs/pricing-engine.md', 'example-quote'));
+    expect((new PricingEngine())->price($request)->toArray())
+        ->toBe(Docs::jsonAfter('docs/pricing-engine.md', 'example-quote'));
 });
 
 test('the example profile the docs link to has no problems', function () {
@@ -33,7 +34,10 @@ test('every JSON block in the docs parses', function (string $file) {
 })->with(Docs::FILES);
 
 test('every relative link in the docs points at a file', function (string $file) {
-    $missing = array_filter(Docs::relativeLinks($file), static fn (string $link): bool => file_exists(dirname(Docs::path($file)) . '/' . $link) === false);
+    $missing = array_filter(
+        Docs::relativeLinks($file),
+        static fn (string $link): bool => file_exists(dirname(Docs::path($file)) . '/' . $link) === false,
+    );
 
     expect(array_values($missing))->toBe([]);
 })->with(Docs::FILES);

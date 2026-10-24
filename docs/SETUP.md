@@ -61,7 +61,7 @@ lists, so the first listing is created in the Fleetbase console. Later tags
 upload the new bundle.
 
 `package.json`, `composer.json` and `extension.json` must have the same
-version; `.github/workflows/check-versions.py` checks this in CI.
+version; `.github/workflows/check_versions.py` checks this in CI.
 
 ## Tests
 

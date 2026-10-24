@@ -18,10 +18,8 @@ if (typeof Array.prototype.pushObject !== 'function') {
 // The universe extension manager imports a module the console host generates at build
 // time. The engine's dummy app has no host, so provide an inert stand-in before boot.
 if (typeof window.define === 'function' && !window.requirejs?.entries?.['@fleetbase/console/extensions']) {
-    window.define('@fleetbase/console/extensions', ['exports'], function (exports) {
-        exports.getExtensionLoader = function () {
-            return null;
-        };
+    window.define('@fleetbase/console/extensions', ['exports'], (exports) => {
+        exports.getExtensionLoader = () => null;
         exports.default = {};
     });
 }

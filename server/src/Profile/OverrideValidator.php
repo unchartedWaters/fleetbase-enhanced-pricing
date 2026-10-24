@@ -25,7 +25,7 @@ final class OverrideValidator
             return $invalid->problems;
         }
         if (count($overrides) > self::MAX_OVERRIDES) {
-            return [Problem::at('', 'too-many', ['max' => self::MAX_OVERRIDES])];
+            return [Problem::atPath('', 'too-many', ['max' => self::MAX_OVERRIDES])];
         }
 
         $schema   = new Schema();
@@ -35,7 +35,7 @@ final class OverrideValidator
             $path  = (string) $path;
             $found = OverridePaths::find($normalized, $path);
             if ($found === null) {
-                $schema->add(Problem::at($path, 'unknown-override', ['path' => $path]));
+                $schema->add(Problem::atPath($path, 'unknown-override', ['path' => $path]));
                 continue;
             }
             $before = count($schema->problems());
@@ -63,10 +63,17 @@ final class OverrideValidator
      */
     private function allowedServiceRates(Schema $schema, array $profile, mixed $keys): void
     {
-        $known = array_map(static fn (array $rate): mixed => $rate['key'], ProfileReferences::items($profile['service_rates']));
+        $known = array_map(
+            static fn (array $rate): mixed => $rate['key'],
+            ProfileReferences::items($profile['service_rates']),
+        );
         foreach (ProfileReferences::strings($keys) as $key) {
             if (in_array($key, $known, true) === false) {
-                $schema->add(Problem::at(OverridePaths::ALLOWED_SERVICE_RATES, 'unknown-reference', ['kind' => 'service rate', 'key' => $key]));
+                $schema->add(Problem::atPath(
+                    OverridePaths::ALLOWED_SERVICE_RATES,
+                    'unknown-reference',
+                    ['kind' => 'service rate', 'key' => $key],
+                ));
             }
         }
     }

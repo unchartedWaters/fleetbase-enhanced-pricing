@@ -101,7 +101,11 @@ test('a scheduled change takes effect at 00:00 on its date', function (string $p
     $quote = Orders::price([
         'pickup'    => $pickup,
         'overrides' => $overrides,
-        'changes'   => [['path' => 'subtotal_fees.percent.percentage', 'value' => 1300, 'effective_from' => '2027-04-01']],
+        'changes'   => [[
+            'path'           => 'subtotal_fees.percent.percentage',
+            'value'          => 1300,
+            'effective_from' => '2027-04-01',
+        ]],
     ]);
 
     expect($quote->total())->toBe($total);

@@ -1,5 +1,4 @@
-GNU Affero General Public License
-=================================
+# GNU Affero General Public License
 
 _Version 3, 19 November 2007_
 _Copyright © 2007 Free Software Foundation, Inc. &lt;<http://fsf.org/>&gt;_
@@ -606,7 +605,7 @@ an absolute waiver of all civil liability in connection with the
 Program, unless a warranty or assumption of liability accompanies a
 copy of the Program in return for a fee.
 
-_END OF TERMS AND CONDITIONS_
+## END OF TERMS AND CONDITIONS
 
 ## How to Apply These Terms to Your New Programs
 

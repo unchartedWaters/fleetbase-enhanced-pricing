@@ -4,7 +4,7 @@ name: Fleetbase Extension Registry Publish
 # This workflow only checks the tarball those steps pack.
 # `flb publish` runs `npm publish` against https://registry.fleetbase.io,
 # and that registry reads composer.json from the tarball for
-# unchartedwaters/enhanced-pricing-api. check-registry-manifest.py fails the
+# unchartedwaters/enhanced-pricing-api. check_registry_manifest.py fails the
 # run if a dry-run pack would omit composer.json, extension.json, or
 # the PHP package under server/.
 
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Check package versions match
-        run: python3 .github/workflows/check-versions.py
+        run: python3 .github/workflows/check_versions.py
 
       - name: Check tag matches package version
         if: startsWith(github.ref, 'refs/tags/')
@@ -43,4 +43,4 @@ jobs:
           node-version: lts/*
 
       - name: Check the registry tarball includes the Composer package
-        run: python3 .github/workflows/check-registry-manifest.py
+        run: python3 .github/workflows/check_registry_manifest.py

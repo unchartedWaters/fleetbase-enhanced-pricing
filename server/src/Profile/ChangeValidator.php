@@ -56,7 +56,7 @@ final class ChangeValidator
             return $invalid->problems;
         }
         if (count($changes) > self::MAX_CHANGES) {
-            return [Problem::at('', 'too-many', ['max' => self::MAX_CHANGES])];
+            return [Problem::atPath('', 'too-many', ['max' => self::MAX_CHANGES])];
         }
 
         $schema  = new S();
@@ -72,7 +72,9 @@ final class ChangeValidator
             if ($memo === false) {
                 $memo = "change $index";
             }
-            $results[$memo] ??= (new ProfileValidator())->recheck(OverridePaths::apply($normalized, $change['pointer'], $change['value']));
+            $results[$memo] ??= (new ProfileValidator())->recheck(
+                OverridePaths::apply($normalized, $change['pointer'], $change['value']),
+            );
             foreach ($results[$memo] as $problem) {
                 $schema->add(new Problem("$index.value", $problem->key, $problem->params));
             }
@@ -91,24 +93,32 @@ final class ChangeValidator
      */
     private function change(S $schema, array $normalized, mixed $raw, int $index, array &$seen): ?array
     {
-        $change = $schema->fields($raw, ['path' => S::type('text'), 'value' => S::nullable(S::type('raw')), 'effective_from' => S::type('date')], (string) $index);
+        $change = $schema->fields($raw, [
+            'path'           => S::type('text'),
+            'value'          => S::nullable(S::type('raw')),
+            'effective_from' => S::type('date'),
+        ], (string) $index);
         if ($change === null || is_string($change['path']) === false) {
             return null;
         }
         $found = OverridePaths::find($normalized, $change['path']);
         if ($found === null) {
-            $schema->add(Problem::at("$index.path", 'unknown-override', ['path' => $change['path']]));
+            $schema->add(Problem::atPath("$index.path", 'unknown-override', ['path' => $change['path']]));
 
             return null;
         }
         if ($found['dated'] === false || $found['pointer'] === null) {
-            $schema->add(Problem::at("$index.path", 'not-dated', ['path' => $change['path']]));
+            $schema->add(Problem::atPath("$index.path", 'not-dated', ['path' => $change['path']]));
 
             return null;
         }
         $key = $change['path'] . '@' . ProfileReferences::text($change['effective_from']);
         if (isset($seen[$key])) {
-            $schema->add(Problem::at("$index.effective_from", 'duplicate', ['value' => ProfileReferences::text($change['effective_from'])]));
+            $schema->add(Problem::atPath(
+                "$index.effective_from",
+                'duplicate',
+                ['value' => ProfileReferences::text($change['effective_from'])],
+            ));
 
             return null;
         }

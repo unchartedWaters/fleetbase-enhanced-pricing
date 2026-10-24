@@ -45,7 +45,7 @@ final class Exact
         return (string) BigDecimal::of($value)->stripTrailingZeros();
     }
 
-    public static function of(int|string $value): BigRational
+    public static function rational(int|string $value): BigRational
     {
         return BigRational::of((string) $value);
     }

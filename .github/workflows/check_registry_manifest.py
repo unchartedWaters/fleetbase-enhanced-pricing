@@ -7,6 +7,8 @@ That registry stores composer.json and extension.json from the tarball, and
 those manifests and the PHP package.
 """
 
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
@@ -24,6 +26,7 @@ REQUIRED_PREFIXES = ("server/src/Pricing/", "server/src/Profile/")
 
 
 def pack_paths() -> list[str]:
+    """Return the paths `npm pack` would put in the tarball."""
     result = subprocess.run(
         ["npm", "pack", "--dry-run", "--json", "--ignore-scripts"],
         check=False,
@@ -52,6 +55,7 @@ def pack_paths() -> list[str]:
 
 
 def main() -> None:
+    """Exit 1 when the tarball misses a registry file or a package name is wrong."""
     paths = pack_paths()
     missing = [name for name in REQUIRED if name not in paths]
     for prefix in REQUIRED_PREFIXES:

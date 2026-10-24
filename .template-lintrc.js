@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
     extends: 'recommended',
     ignore: ['server/**', 'server_vendor/**', 'vendor/**', 'node_modules/**'],

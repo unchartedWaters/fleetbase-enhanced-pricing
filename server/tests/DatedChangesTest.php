@@ -12,10 +12,22 @@ test('money, percent and number values can change by date', function () {
     $problems = (new ChangeValidator())->check(Profiles::example(), [
         ['path' => 'subtotal_fees.percent.percentage', 'value' => 1300, 'effective_from' => '2027-04-01'],
         ['path' => 'fees.additional.amount', 'value' => 1700, 'effective_from' => '2027-04-01'],
-        ['path' => 'fees.parcel.thresholds', 'value' => [['over' => 30, 'amount' => 45]], 'effective_from' => '2027-04-01'],
+        [
+            'path'           => 'fees.parcel.thresholds',
+            'value'          => [['over' => 30, 'amount' => 45]],
+            'effective_from' => '2027-04-01',
+        ],
         ['path' => 'service_rates.distance.per_meter.rate', 'value' => 220, 'effective_from' => '2027-04-01'],
-        ['path' => 'service_rates.distance.per_meter.minimum_distance', 'value' => '12.5', 'effective_from' => '2027-04-01'],
-        ['path' => 'service_rates.tiered.tiers', 'value' => [['up_to' => null, 'price' => ['value' => 2000]]], 'effective_from' => '2027-04-01'],
+        [
+            'path'           => 'service_rates.distance.per_meter.minimum_distance',
+            'value'          => '12.5',
+            'effective_from' => '2027-04-01',
+        ],
+        [
+            'path'           => 'service_rates.tiered.tiers',
+            'value'          => [['up_to' => null, 'price' => ['value' => 2000]]],
+            'effective_from' => '2027-04-01',
+        ],
         ['path' => 'manual_charges.hourly.amount', 'value' => 4500, 'effective_from' => '2027-04-01'],
     ]);
 
@@ -27,13 +39,34 @@ test('other values cannot change by date', function (array $change, string $key)
 
     expect($problems[0]->key)->toBe($key)->and($problems[0]->path)->toStartWith('0');
 })->with([
-    'a switch'        => [['path' => 'fees.peak.enabled', 'value' => false, 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.not-dated'],
-    'a product list'  => [['path' => 'fees.peak.applies_to', 'value' => ['TIERED'], 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.not-dated'],
-    'the rounding'    => [['path' => 'service_rates.distance.per_meter.rounding', 'value' => 'none', 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.not-dated'],
-    'allowed rates'   => [['path' => 'allowed_service_rates', 'value' => [], 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.not-dated'],
-    'an unknown path' => [['path' => 'fees.nope.amount', 'value' => 1, 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.unknown-override'],
-    'a bad date'      => [['path' => 'fees.peak.amount', 'value' => 1, 'effective_from' => '2027-02-30'], 'enhanced-pricing.profile.wrong-type'],
-    'a bad value'     => [['path' => 'fees.peak.amount', 'value' => 'a lot', 'effective_from' => '2027-04-01'], 'enhanced-pricing.profile.wrong-type'],
+    'a switch'        => [
+        ['path' => 'fees.peak.enabled', 'value' => false, 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.not-dated',
+    ],
+    'a product list'  => [
+        ['path' => 'fees.peak.applies_to', 'value' => ['TIERED'], 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.not-dated',
+    ],
+    'the rounding'    => [
+        ['path' => 'service_rates.distance.per_meter.rounding', 'value' => 'none', 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.not-dated',
+    ],
+    'allowed rates'   => [
+        ['path' => 'allowed_service_rates', 'value' => [], 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.not-dated',
+    ],
+    'an unknown path' => [
+        ['path' => 'fees.nope.amount', 'value' => 1, 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.unknown-override',
+    ],
+    'a bad date'      => [
+        ['path' => 'fees.peak.amount', 'value' => 1, 'effective_from' => '2027-02-30'],
+        'enhanced-pricing.profile.wrong-type',
+    ],
+    'a bad value'     => [
+        ['path' => 'fees.peak.amount', 'value' => 'a lot', 'effective_from' => '2027-04-01'],
+        'enhanced-pricing.profile.wrong-type',
+    ],
     'a missing field' => [['path' => 'fees.peak.amount', 'value' => 1], 'enhanced-pricing.profile.missing-field'],
 ]);
 
@@ -59,7 +92,11 @@ test('a change takes effect at 00:00 in the pickup timezone', function (string $
     $quote = Orders::price([
         'pickup_utc' => $utc,
         'timezone'   => 'America/Edmonton',
-        'changes'    => [['path' => 'subtotal_fees.percent.percentage', 'value' => 1300, 'effective_from' => '2027-04-01']],
+        'changes'    => [[
+            'path'           => 'subtotal_fees.percent.percentage',
+            'value'          => 1300,
+            'effective_from' => '2027-04-01',
+        ]],
     ]);
 
     expect($quote->total())->toBe($total);

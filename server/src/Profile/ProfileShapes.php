@@ -31,7 +31,10 @@ final class ProfileShapes
             'currency'            => S::type('currency'),
             'timezone'            => S::type('timezone'),
             'distance_unit'       => S::enum(['km', 'mi']),
-            'products'            => S::listOf(S::object(['code' => S::type('code'), 'name' => S::type('text')]), 1, 50),
+            'products'            => S::listOf(S::object([
+                'code' => S::type('code'),
+                'name' => S::type('text'),
+            ]), 1, 50),
             'attributes'          => S::optional(S::listOf(S::type('raw'), 0, 20), []),
             'entity_types'        => S::listOf(S::type('raw'), 1, 20),
             'default_entity_type' => S::type('key'),
@@ -40,7 +43,11 @@ final class ProfileShapes
             'fees'                => S::optional(S::listOf(S::type('raw'), 0, 50), []),
             'subtotal_fees'       => S::optional(S::listOf(S::type('raw'), 0, 50), []),
             'manual_charges'      => S::optional(S::listOf(S::object(self::manualCharge()), 0, 20), []),
-            'holiday_lists'       => S::optional(['type' => 'map', 'max' => 10, 'of' => S::listOf(S::type('date'), 0, 400)], []),
+            'holiday_lists'       => S::optional([
+                'type' => 'map',
+                'max'  => 10,
+                'of'   => S::listOf(S::type('date'), 0, 400),
+            ], []),
         ];
     }
 
@@ -117,10 +124,18 @@ final class ProfileShapes
         if ($rate === null) {
             return null;
         }
-        $rate['line_name'] = $this->choiceOf($rate['line_name'], ['column' => S::type('key'), 'text' => S::type('text')], S::join($path, 'line_name'));
+        $rate['line_name'] = $this->choiceOf(
+            $rate['line_name'],
+            ['column' => S::type('key'), 'text' => S::type('text')],
+            S::join($path, 'line_name'),
+        );
         $rate[$method]     = match ($method) {
             'tiers'      => $this->tiers($rate['tiers'], S::join($path, 'tiers')),
-            'per_meter'  => $this->schema->value($rate['per_meter'], S::object(self::perMeter()), S::join($path, 'per_meter')),
+            'per_meter'  => $this->schema->value(
+                $rate['per_meter'],
+                S::object(self::perMeter()),
+                S::join($path, 'per_meter'),
+            ),
             default      => $this->fixedRate($rate['fixed_rate'], S::join($path, 'fixed_rate')),
         };
 
@@ -132,7 +147,11 @@ final class ProfileShapes
      */
     public function tiers(mixed $raw, string $path): ?array
     {
-        $tiers = $this->schema->value($raw, S::listOf(S::object(['up_to' => S::nullable(S::type('raw')), 'price' => S::type('raw')]), 1, 10), $path);
+        $tiers = $this->schema->value(
+            $raw,
+            S::listOf(S::object(['up_to' => S::nullable(S::type('raw')), 'price' => S::type('raw')]), 1, 10),
+            $path,
+        );
         if (is_array($tiers) === false) {
             return null;
         }
@@ -143,8 +162,18 @@ final class ProfileShapes
                 continue;
             }
             $tierPath      = S::join($path, $index);
-            $tier['up_to'] = $tier['up_to'] === null ? null : $this->choiceOf($tier['up_to'], ['value' => S::type('integer', ['min' => 1, 'max' => 100000]), 'column' => S::type('key')], S::join($tierPath, 'up_to'));
-            $tier['price'] = $this->choiceOf($tier['price'], ['value' => S::type('money'), 'column' => S::type('key')], S::join($tierPath, 'price'));
+            if ($tier['up_to'] !== null) {
+                $tier['up_to'] = $this->choiceOf(
+                    $tier['up_to'],
+                    ['value' => S::type('integer', ['min' => 1, 'max' => 100000]), 'column' => S::type('key')],
+                    S::join($tierPath, 'up_to'),
+                );
+            }
+            $tier['price'] = $this->choiceOf(
+                $tier['price'],
+                ['value' => S::type('money'), 'column' => S::type('key')],
+                S::join($tierPath, 'price'),
+            );
             $normalized[]  = $tier;
         }
 
@@ -160,7 +189,11 @@ final class ProfileShapes
         if ($fixed === null) {
             return null;
         }
-        $fixed['amount'] = $this->choiceOf($fixed['amount'], ['value' => S::type('money'), 'column' => S::type('key')], S::join($path, 'amount'));
+        $fixed['amount'] = $this->choiceOf(
+            $fixed['amount'],
+            ['value' => S::type('money'), 'column' => S::type('key')],
+            S::join($path, 'amount'),
+        );
 
         return $fixed;
     }
@@ -289,7 +322,10 @@ final class ProfileShapes
             'name'            => S::type('text'),
             'product'         => S::type('code'),
             'amount'          => S::optional(S::nullable(S::type('money'))),
-            'entered'         => S::optional(S::nullable(S::object(['minimum' => S::type('money'), 'maximum' => S::type('money')]))),
+            'entered'         => S::optional(S::nullable(S::object([
+                'minimum' => S::type('money'),
+                'maximum' => S::type('money'),
+            ]))),
             'quantity'        => S::optional(S::nullable(S::object([
                 'unit'    => S::type('text'),
                 'step'    => S::number('0', '1000000', true),
@@ -336,7 +372,11 @@ final class ProfileShapes
     public function choiceOf(mixed $raw, array $choices, string $path): ?array
     {
         if (is_array($raw) && count(array_intersect_key($raw, $choices)) !== 1) {
-            $this->schema->add(Problem::at($path, 'needs-exactly-one', ['fields' => implode(', ', array_keys($choices))]));
+            $this->schema->add(Problem::atPath(
+                $path,
+                'needs-exactly-one',
+                ['fields' => implode(', ', array_keys($choices))],
+            ));
 
             return null;
         }
@@ -370,12 +410,12 @@ final class ProfileShapes
     private function discriminator(mixed $raw, string $field, array $choices, string $path): ?string
     {
         if (is_array($raw) === false || ($raw !== [] && array_is_list($raw))) {
-            $this->schema->add(Problem::at($path, 'wrong-type', ['expected' => 'object']));
+            $this->schema->add(Problem::atPath($path, 'wrong-type', ['expected' => 'object']));
 
             return null;
         }
         if (array_key_exists($field, $raw) === false) {
-            $this->schema->add(Problem::at(S::join($path, $field), 'missing-field', ['field' => $field]));
+            $this->schema->add(Problem::atPath(S::join($path, $field), 'missing-field', ['field' => $field]));
 
             return null;
         }
