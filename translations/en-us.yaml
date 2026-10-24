@@ -1,0 +1,72 @@
+# English text for the keys the server stores. A profile problem is shown with
+# the path of the value it is about; {name} is replaced with the problem's
+# detail of that name.
+enhanced-pricing:
+  profile:
+    column-needs-rate-table: A column can be used only when the service rate names a rate table.
+    column-wrong-type: "The rate table column {column} must be a {expected} column."
+    divisor-not-allowed: A divisor is used only for weight measured as dimensional or greater.
+    duplicate: "{value} is listed more than once."
+    entered-takes-no-quantity: A charge with an entered amount has no quantity settings.
+    equals-not-allowed: A value to match is used only for a choice attribute.
+    later-product: "{code} is charged by a later rule, so this rule can't use it."
+    measure-not-allowed: A measure is used only when the fee is by weight.
+    minimum-above-maximum: The minimum is above the maximum.
+    missing-field: "{field} is required."
+    needs-exactly-one: "Give exactly one of: {fields}."
+    needs-one-of: "Give at least one of: {fields}."
+    not-a-step: The value must be a whole number of steps.
+    not-allowed-for-mode: "This field isn't used for the {mode} mode."
+    not-dated: "{path} can be overridden but can't change by date."
+    not-increasing: Each limit must be higher than the one before it.
+    not-one-of: "Choose one of: {choices}."
+    open-tier-not-last: Only the last tier can be open-ended.
+    out-of-range: "The value must be from {min} to {max}."
+    own-product: "A rule can't apply to its own product {code}."
+    per-unit-needs-number: A per-unit charge needs a number attribute.
+    product-in-two-lists: "{code} is in two product lists."
+    row-key-not-required: "The row key column {column} must be required."
+    tiers-need-rate-table: Tiers need a rate table when an entity type is priced by column.
+    too-few: "Give at least {min} entries."
+    too-large: "The profile is larger than {max} bytes."
+    too-long: "The text is longer than {max} characters."
+    too-many: "Give no more than {max} entries."
+    too-short: "Give at least {min} character."
+    unknown-override: "{path} isn't a value that can be overridden."
+    unknown-product: "{code} isn't one of the profile's products."
+    unknown-reference: "There is no {kind} named {key}."
+    until-before-from: The end date is before the start date.
+    window-empty: The start and end times are the same.
+    wrong-type: "The value must be a {expected}."
+  pricing:
+    amount-too-large: "A line or the total is above the largest amount, {max} cents."
+    attribute-invalid: "The value of {attribute} isn't valid."
+    attribute-required: "{attribute} is required."
+    changes-invalid: The customer's dated changes aren't valid.
+    distance-required: This service rate needs the order's distance.
+    distance-too-long: "The distance {distance} is above the maximum of {maximum}."
+    entity-invalid: "Item {entity} has a weight or size that isn't valid."
+    entity-not-measured: "Item {entity} has no weight or size, so {rule} wasn't charged for it."
+    manual-charge-amount-not-entered: "{charge} needs an amount."
+    manual-charge-amount-out-of-range: "The amount for {charge} must be from {minimum} to {maximum}."
+    manual-charge-not-in-effect: "{charge} isn't in effect on {date}."
+    manual-charge-not-offered: "{charge} isn't offered to this customer."
+    manual-charge-quantity-invalid: "The quantity for {charge} must be in steps of {step}, up to {maximum}."
+    missing-amount: "{rule} has no amount to charge."
+    missing-value: "{rule} has no line name in the rate card row."
+    no-entities: The order has no items to price.
+    overrides-invalid: The customer's overrides aren't valid.
+    profile-invalid: "The pricing profile has {problems} problems."
+    profile-invalid-for-order: "With this customer's overrides and changes, the profile isn't valid at {path}."
+    row-invalid: "The rate card row has a value for {column} that isn't valid."
+    row-required: "{service_rate} needs a rate card row."
+    service-rate-not-allowed: "{service_rate} isn't allowed for this customer."
+    tiers-invalid: "The tiers of {rule} don't increase."
+    timezone-invalid: "{timezone} isn't a known timezone."
+    too-many-entities: "An order can have at most {max} items."
+    too-many-entities-for-tiers: "The order has {entities} items, but the tiers price only {limit}."
+    too-many-lines: "The quote has more than {max} lines."
+    too-many-manual-charges: "An order can have at most {max} manual charges."
+    unknown-entity-type: "Item {entity} has an unknown type, {type}."
+    unknown-manual-charge: "There is no manual charge named {charge}."
+    unknown-service-rate: "There is no service rate named {service_rate}."

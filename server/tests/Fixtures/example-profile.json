@@ -1,0 +1,345 @@
+{
+  "currency": "USD",
+  "timezone": "UTC",
+  "distance_unit": "km",
+  "products": [
+    {
+      "code": "TIERED",
+      "name": "Tiered delivery"
+    },
+    {
+      "code": "SEPARATE",
+      "name": "Separate entity type"
+    },
+    {
+      "code": "DISTANCE",
+      "name": "Distance delivery"
+    },
+    {
+      "code": "ADDITIONAL",
+      "name": "Additional fee"
+    },
+    {
+      "code": "PARCEL",
+      "name": "Parcel fee"
+    },
+    {
+      "code": "PEAK",
+      "name": "Peak hours fee"
+    },
+    {
+      "code": "PERCENT",
+      "name": "Percentage subtotal fee"
+    },
+    {
+      "code": "FLAT_A",
+      "name": "Flat subtotal fee A"
+    },
+    {
+      "code": "FLAT_B",
+      "name": "Flat subtotal fee B"
+    },
+    {
+      "code": "HOURLY",
+      "name": "Hourly charge"
+    },
+    {
+      "code": "ENTERED",
+      "name": "Entered charge"
+    }
+  ],
+  "attributes": [
+    {
+      "key": "extra",
+      "name": "Extra handling",
+      "scope": "order",
+      "type": "boolean",
+      "required": false
+    }
+  ],
+  "entity_types": [
+    {
+      "key": "standard",
+      "name": "Standard",
+      "priced": "tiers"
+    },
+    {
+      "key": "separate",
+      "name": "Separate entity type",
+      "priced": "column",
+      "column": "separate_price",
+      "product": "SEPARATE"
+    }
+  ],
+  "default_entity_type": "standard",
+  "rate_tables": [
+    {
+      "key": "rows",
+      "columns": [
+        {
+          "key": "code",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "first",
+          "type": "money",
+          "required": true
+        },
+        {
+          "key": "second",
+          "type": "money",
+          "required": true
+        },
+        {
+          "key": "third",
+          "type": "money",
+          "required": true
+        },
+        {
+          "key": "separate_price",
+          "type": "money",
+          "required": false
+        }
+      ],
+      "row_key": [
+        "code"
+      ]
+    }
+  ],
+  "service_rates": [
+    {
+      "key": "tiered",
+      "name": "Tiered delivery",
+      "product": "TIERED",
+      "rate_table": "rows",
+      "line_name": {
+        "text": "Tiered delivery"
+      },
+      "method": "tiers",
+      "tiers": [
+        {
+          "up_to": {
+            "value": 2
+          },
+          "price": {
+            "column": "first"
+          }
+        },
+        {
+          "up_to": {
+            "value": 5
+          },
+          "price": {
+            "column": "second"
+          }
+        },
+        {
+          "up_to": null,
+          "price": {
+            "column": "third"
+          }
+        }
+      ],
+      "minimum": null,
+      "enabled": true
+    },
+    {
+      "key": "distance",
+      "name": "Distance delivery",
+      "product": "DISTANCE",
+      "rate_table": null,
+      "line_name": {
+        "text": "Distance"
+      },
+      "method": "per_meter",
+      "per_meter": {
+        "rate": 210,
+        "base_fee": 1400,
+        "minimum_distance": 10,
+        "maximum_distance": 1000,
+        "rounding": "up"
+      },
+      "minimum": null,
+      "enabled": true
+    }
+  ],
+  "fees": [
+    {
+      "key": "additional",
+      "kind": "additional",
+      "name": "Additional fee",
+      "product": "ADDITIONAL",
+      "applies_to": [
+        "TIERED",
+        "SEPARATE",
+        "DISTANCE"
+      ],
+      "charge": "per_order",
+      "amount": 1600,
+      "if_missing": "stop",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true,
+      "attribute": "extra",
+      "equals": null
+    },
+    {
+      "key": "parcel",
+      "kind": "parcel",
+      "name": "Parcel fee",
+      "product": "PARCEL",
+      "applies_to": [
+        "TIERED",
+        "SEPARATE",
+        "DISTANCE"
+      ],
+      "charge": "per_unit",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true,
+      "basis": "weight",
+      "measure": "actual",
+      "divisor": null,
+      "unit": "kg",
+      "scope": "entity",
+      "thresholds": [
+        {
+          "over": 30,
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "key": "peak",
+      "kind": "peak_hours",
+      "name": "Peak hours fee",
+      "product": "PEAK",
+      "applies_to": [
+        "TIERED",
+        "SEPARATE",
+        "DISTANCE"
+      ],
+      "charge": "per_order",
+      "amount": 2200,
+      "if_missing": "stop",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true,
+      "window": null,
+      "weekdays": [
+        6,
+        7
+      ],
+      "holidays": null
+    }
+  ],
+  "subtotal_fees": [
+    {
+      "key": "percent",
+      "name": "Percentage subtotal fee",
+      "product": "PERCENT",
+      "applies_to": [
+        "TIERED",
+        "SEPARATE",
+        "ADDITIONAL",
+        "PARCEL",
+        "PEAK"
+      ],
+      "requires": [],
+      "skipped_for": [],
+      "mode": "percentage",
+      "percentage": 1100,
+      "amount": null,
+      "charge": "per_order",
+      "if_missing": "stop",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true
+    },
+    {
+      "key": "flat_a",
+      "name": "Flat subtotal fee A",
+      "product": "FLAT_A",
+      "applies_to": [
+        "ADDITIONAL"
+      ],
+      "requires": [],
+      "skipped_for": [
+        "DISTANCE"
+      ],
+      "mode": "flat",
+      "percentage": null,
+      "amount": 400,
+      "charge": "per_order",
+      "if_missing": "stop",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true
+    },
+    {
+      "key": "flat_b",
+      "name": "Flat subtotal fee B",
+      "product": "FLAT_B",
+      "applies_to": [
+        "PARCEL"
+      ],
+      "requires": [
+        "ADDITIONAL"
+      ],
+      "skipped_for": [],
+      "mode": "flat",
+      "percentage": null,
+      "amount": 600,
+      "charge": "per_order",
+      "if_missing": "stop",
+      "minimum": null,
+      "maximum": null,
+      "effective_from": null,
+      "effective_until": null,
+      "enabled": true
+    }
+  ],
+  "manual_charges": [
+    {
+      "key": "hourly",
+      "name": "Hourly charge",
+      "product": "HOURLY",
+      "amount": 4200,
+      "entered": null,
+      "quantity": {
+        "unit": "h",
+        "step": "0.25",
+        "maximum": "24"
+      },
+      "offered": true,
+      "effective_from": null,
+      "effective_until": null
+    },
+    {
+      "key": "entered",
+      "name": "Entered charge",
+      "product": "ENTERED",
+      "amount": null,
+      "entered": {
+        "minimum": 800,
+        "maximum": 15000
+      },
+      "quantity": null,
+      "offered": true,
+      "effective_from": null,
+      "effective_until": null
+    }
+  ],
+  "holiday_lists": {}
+}
