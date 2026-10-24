@@ -62,6 +62,9 @@
                     "PKSA-zwc5-qtrz-zm1n": "Inherited CVE-2026-48019 via fleetbase/core-api ^1.6 (newest 1.6.68 still requires illuminate/notifications 9 or 10). Not fixable in this package."
                 }
             }
+        },
+        "platform": {
+            "php": "8.2.0"
         }
     },
     "scripts": {
