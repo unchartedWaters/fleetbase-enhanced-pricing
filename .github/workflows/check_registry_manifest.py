@@ -7,8 +7,6 @@ That registry stores composer.json and extension.json from the tarball, and
 those manifests and the PHP package.
 """
 
-from __future__ import annotations
-
 import json
 import subprocess
 import sys
@@ -25,8 +23,8 @@ REQUIRED = (
 REQUIRED_PREFIXES = ("server/src/Pricing/", "server/src/Profile/")
 
 
-def pack_paths() -> list[str]:
-    """Return the paths `npm pack` would put in the tarball."""
+def pack_paths() -> "list[str]":
+    """Return the list of paths `npm pack` would put in the tarball."""
     result = subprocess.run(
         ["npm", "pack", "--dry-run", "--json", "--ignore-scripts"],
         check=False,
