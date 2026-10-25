@@ -1,0 +1,10 @@
+{
+    "name": "Enhanced Pricing",
+    "version": "0.0.1",
+    "description": "Price Fleet-Ops orders from pricing profiles: per-customer rate cards and overrides, fees, subtotal fees and manual charges.",
+    "repository": "https://github.com/watersAbove/fleetbase-enhanced-pricing",
+    "license": "AGPL-3.0-or-later",
+    "author": "unchartedWaters",
+    "engine": "package.json",
+    "api": "composer.json"
+}

@@ -1,0 +1,55 @@
+name: PHP CI
+
+# Registry listing and Composer publish run from deploy.yml on a v* tag.
+# This workflow stays on PHP tests. It does not run `flb install`.
+# deploy.yml also calls it (workflow_call) so a release waits for these tests.
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Check package versions match
+      run: python3 .github/workflows/check_versions.py
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, gd, zip, pdo_mysql, sockets, intl, bcmath, gmp 
+        coverage: xdebug
+
+    - name: Update and Install additional packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libzip-dev libgd-dev libfreetype6-dev libjpeg-dev libpng-dev imagemagick libmagickwand-dev libmemcached-dev libgeos-dev libgmp-dev default-mysql-client libicu-dev
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run Lint
+      run: composer test:lint
+
+    - name: Run Static Analysis
+      run: composer test:types
+
+    - name: Run Tests
+      run: composer test:unit

@@ -1,0 +1,46 @@
+name: Fleetbase Extension Registry Publish
+
+# deploy.yml publishes on a v* tag: npmjs, `flb publish`, and bundle upload.
+# This workflow only checks the tarball those steps pack.
+# `flb publish` runs `npm publish` against https://registry.fleetbase.io,
+# and that registry reads composer.json from the tarball for
+# unchartedwaters/enhanced-pricing-api. check_registry_manifest.py fails the
+# run if a dry-run pack would omit composer.json, extension.json, or
+# the PHP package under server/.
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check package versions match
+        run: python3 .github/workflows/check_versions.py
+
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} must be v${version}."
+            exit 1
+          fi
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Check the registry tarball includes the Composer package
+        run: python3 .github/workflows/check_registry_manifest.py

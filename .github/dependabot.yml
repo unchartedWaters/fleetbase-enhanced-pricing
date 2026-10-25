@@ -1,0 +1,21 @@
+# Dependabot version updates. Each entry names a package ecosystem and where its
+# manifest is; see
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # composer.json and composer.lock: the PHP package.
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # package.json and pnpm-lock.yaml: the Ember engine.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # The actions used by .github/workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
