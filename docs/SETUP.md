@@ -63,6 +63,9 @@ upload the new bundle.
 `package.json`, `composer.json` and `extension.json` must have the same
 version; `.github/workflows/check_versions.py` checks this in CI.
 
+`.github/dependabot.yml` has Dependabot check the Composer, npm and GitHub
+Actions dependencies each week and open a pull request for each update.
+
 ## Tests
 
 PHP 8.2 is the supported version. It matches Fleetbase and is the version CI
