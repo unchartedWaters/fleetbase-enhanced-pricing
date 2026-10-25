@@ -111,10 +111,11 @@ final class ProfileReferences
             ));
         }
         foreach (self::items($this->profile['entity_types']) as $index => $type) {
-            if ($type['priced'] !== 'column') {
+            if (is_array($type['own_price']) === false) {
                 continue;
             }
-            $this->product($type['product'], "entity_types.$index.product");
+            $ownPrice = $type['own_price'];
+            $this->product($ownPrice['product'], "entity_types.$index.own_price.product");
             foreach (self::items($this->profile['service_rates']) as $rate) {
                 if (
                     $rate['method'] === 'tiers'
@@ -123,9 +124,9 @@ final class ProfileReferences
                 ) {
                     $this->columnOfType(
                         $rate['rate_table'],
-                        self::text($type['column']),
+                        self::text($ownPrice['column']),
                         'money',
-                        "entity_types.$index.column",
+                        "entity_types.$index.own_price.column",
                     );
                 }
             }
@@ -148,7 +149,7 @@ final class ProfileReferences
 
             return;
         }
-        if ($rate['method'] === 'tiers' && $table === null && $this->hasColumnTypes()) {
+        if ($rate['method'] === 'tiers' && $table === null && $this->hasOwnPriceTypes()) {
             $this->schema->add(Problem::atPath("$path.rate_table", 'tiers-need-rate-table'));
         }
         $this->reference($rate['line_name'], is_string($table) ? $table : null, 'text', "$path.line_name");
@@ -302,10 +303,10 @@ final class ProfileReferences
         return null;
     }
 
-    private function hasColumnTypes(): bool
+    private function hasOwnPriceTypes(): bool
     {
         foreach (self::items($this->profile['entity_types']) as $type) {
-            if ($type['priced'] === 'column') {
+            if (is_array($type['own_price'])) {
                 return true;
             }
         }

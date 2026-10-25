@@ -62,7 +62,7 @@ test('the line name can come from a text column of the row', function () {
     expect(Orders::lines($quote))->toBe([['TIERED', 'R1', 1, 2700, 2700]]);
 });
 
-test('an entity type priced at its own column is its own line under its own product', function () {
+test('an entity type with its own price is its own line under its own product', function () {
     $quote = Orders::price([
         'profile'  => $this->profile,
         'entities' => [Orders::entity(5), Orders::entity(5, 'separate'), Orders::entity(5, 'separate')],
@@ -72,6 +72,17 @@ test('an entity type priced at its own column is its own line under its own prod
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
         ['SEPARATE', 'Separate entity type', 2, 900, 1800],
     ]);
+});
+
+test('an entity type with own_price null counts in the tiers under the service rate product', function () {
+    $profile = Profiles::set($this->profile, 'entity_types.1.own_price', null);
+
+    $quote = Orders::price([
+        'profile'  => $profile,
+        'entities' => [Orders::entity(5), Orders::entity(5, 'separate')],
+    ]);
+
+    expect(Orders::lines($quote))->toBe([['TIERED', 'Tiered delivery', 2, 2700, 5400]]);
 });
 
 test('a blank column that a rule needs stops pricing and names the customer, card, row and rule', function () {

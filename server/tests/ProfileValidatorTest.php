@@ -29,7 +29,10 @@ test('normalize fills in optional fields with their defaults', function () {
         ->and($normalized['fees'][2]['if_missing'])->toBe('stop')
         ->and($normalized['service_rates'][1]['per_meter']['base_fee'])->toBe(0)
         ->and($normalized['manual_charges'][1]['amount'])->toBeNull()
-        ->and($normalized['manual_charges'][0]['quantity']['step'])->toBe('0.25');
+        ->and($normalized['manual_charges'][0]['quantity']['step'])->toBe('0.25')
+        ->and($normalized['entity_types'][0])->toBe(['key' => 'standard', 'name' => 'Standard', 'own_price' => null])
+        ->and($normalized['entity_types'][1]['own_price'])
+        ->toBe(['column' => 'separate_price', 'product' => 'SEPARATE']);
 });
 
 test('normalize refuses an invalid profile with every problem', function () {
@@ -43,6 +46,22 @@ test('normalize refuses an invalid profile with every problem', function () {
         expect(array_map(static fn ($problem) => $problem->path, $invalid->problems))
             ->toBe(['currency', 'distance_unit']);
     }
+});
+
+test('an entity type with own_price null counts in the tiers', function () {
+    $profile = Profiles::set(Profiles::example(), 'entity_types.1.own_price', null);
+
+    expect((new ProfileValidator())->check($profile))->toBe([])
+        ->and((new ProfileValidator())->normalize($profile)['entity_types'][1]['own_price'])->toBeNull();
+});
+
+test('a tiered service rate needs no rate table when no entity type has its own price', function () {
+    $profile = Profiles::set(Profiles::example(), 'entity_types', [['key' => 'standard', 'name' => 'Standard']]);
+    $profile = Profiles::set($profile, 'service_rates.0.rate_table', null);
+    $profile = Profiles::set($profile, 'service_rates.0.line_name', ['text' => 'Tiered delivery']);
+    $profile = Profiles::set($profile, 'service_rates.0.tiers', [['up_to' => null, 'price' => ['value' => 2700]]]);
+
+    expect((new ProfileValidator())->check($profile))->toBe([]);
 });
 
 test('a problem in one part of the profile', function (string $path, mixed $value, string $problemPath, string $key) {
@@ -98,11 +117,68 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
     ],
     // Entity types.
     'default type unknown'         => ['default_entity_type', 'nope', 'default_entity_type', 'unknown-reference'],
-    'column type without column'   => ['entity_types.1.column', '__remove__', 'entity_types.1.column', 'missing-field'],
-    'column not in the table'      => ['entity_types.1.column', 'nope', 'entity_types.1.column', 'unknown-reference'],
-    'column not money'             => ['entity_types.1.column', 'code', 'entity_types.1.column', 'column-wrong-type'],
-    'column type product unknown'  => ['entity_types.1.product', 'NOPE', 'entity_types.1.product', 'unknown-product'],
-    'tiers type with a column'     => ['entity_types.0.column', 'first', 'entity_types.0.column', 'unknown-field'],
+    'own price without column'     => [
+        'entity_types.1.own_price.column',
+        '__remove__',
+        'entity_types.1.own_price.column',
+        'missing-field',
+    ],
+    'own price without product'    => [
+        'entity_types.1.own_price.product',
+        '__remove__',
+        'entity_types.1.own_price.product',
+        'missing-field',
+    ],
+    'own price not an object'      => [
+        'entity_types.1.own_price',
+        'separate_price',
+        'entity_types.1.own_price',
+        'wrong-type',
+    ],
+    'own price empty'              => [
+        'entity_types.1.own_price',
+        [],
+        'entity_types.1.own_price.column',
+        'missing-field',
+    ],
+    'own price a list'             => [
+        'entity_types.1.own_price',
+        ['separate_price', 'SEPARATE'],
+        'entity_types.1.own_price',
+        'wrong-type',
+    ],
+    'own price column unknown'     => [
+        'entity_types.1.own_price.column',
+        'nope',
+        'entity_types.1.own_price.column',
+        'unknown-reference',
+    ],
+    'own price column not money'   => [
+        'entity_types.1.own_price.column',
+        'code',
+        'entity_types.1.own_price.column',
+        'column-wrong-type',
+    ],
+    'own price product unknown'    => [
+        'entity_types.1.own_price.product',
+        'NOPE',
+        'entity_types.1.own_price.product',
+        'unknown-product',
+    ],
+    'unknown own price field'      => [
+        'entity_types.1.own_price.amount',
+        900,
+        'entity_types.1.own_price.amount',
+        'unknown-field',
+    ],
+    // The old `priced` field is refused, so a profile written for it fails loudly instead of losing its own prices.
+    'old priced field'             => ['entity_types.0.priced', 'tiers', 'entity_types.0.priced', 'unknown-field'],
+    'column beside own price'      => [
+        'entity_types.1.column',
+        'separate_price',
+        'entity_types.1.column',
+        'unknown-field',
+    ],
     // Rate tables.
     'row key not a column'         => [
         'rate_tables.0.row_key',

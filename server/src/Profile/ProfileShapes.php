@@ -87,17 +87,14 @@ final class ProfileShapes
      */
     public function entityType(mixed $raw, string $path): ?array
     {
-        $priced = $this->discriminator($raw, 'priced', ['tiers', 'column'], $path);
-        if ($priced === null) {
-            return null;
-        }
-        $fields = ['key' => S::type('key'), 'name' => S::type('text'), 'priced' => S::type('raw')];
-        if ($priced === 'column') {
-            $fields['column']  = S::type('key');
-            $fields['product'] = S::type('code');
-        }
-
-        return $this->schema->fields($raw, $fields, $path);
+        return $this->schema->fields($raw, [
+            'key'       => S::type('key'),
+            'name'      => S::type('text'),
+            'own_price' => S::optional(S::nullable(S::object([
+                'column'  => S::type('key'),
+                'product' => S::type('code'),
+            ]))),
+        ], $path);
     }
 
     /**

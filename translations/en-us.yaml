@@ -26,7 +26,7 @@ enhanced-pricing:
     per-unit-needs-number: A per-unit charge needs a number attribute.
     product-in-two-lists: "{code} is in two product lists."
     row-key-not-required: "The row key column {column} must be required."
-    tiers-need-rate-table: Tiers need a rate table when an entity type is priced by column.
+    tiers-need-rate-table: Tiers need a rate table when an entity type has its own price.
     too-few: "Give at least {min} entries."
     too-large: "The profile is larger than {max} bytes."
     too-long: "The text is longer than {max} characters."
