@@ -20,6 +20,7 @@ overrides:
   linkify-it@<5.0.2: 5.0.2
   babel-traverse@6: npm:@babel/traverse@7.23.2
   braces@2: 3.0.3
+  ansi-html@<0.0.8: 0.0.9
 
 importers:
 
@@ -2120,11 +2121,6 @@ packages:
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
     engines: {node: '>=8'}
-
-  ansi-html@0.0.7:
-    resolution: {integrity: sha512-JoAxEa1DfP9m2xfB/y2r/aKcwXNlltr4+0QSBC4TrLfcxyvepX2Pv0t/xpgGV5bGsDzCYV8SzjWgyCW0T9yYbA==}
-    engines: {'0': node >= 0.8.0}
-    hasBin: true
 
   ansi-html@0.0.9:
     resolution: {integrity: sha512-ozbS3LuenHVxNRh/wdnN16QapUHzauqSomAl1jwwJRRsGwFwtj644lIhxfWu0Fy0acCij2+AEgHvjscq3dlVXg==}
@@ -11050,8 +11046,6 @@ snapshots:
     dependencies:
       type-fest: 0.21.3
 
-  ansi-html@0.0.7: {}
-
   ansi-html@0.0.9: {}
 
   ansi-regex@2.1.1: {}
@@ -12051,7 +12045,7 @@ snapshots:
       '@types/chai': 4.3.20
       '@types/chai-as-promised': 7.1.8
       '@types/express': 4.17.25
-      ansi-html: 0.0.7
+      ansi-html: 0.0.9
       broccoli-node-info: 2.2.0
       broccoli-slow-trees: 3.1.0
       broccoli-source: 3.0.1
