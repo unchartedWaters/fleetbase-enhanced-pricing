@@ -208,14 +208,14 @@ export function setIn(value, path, next) {
         return next;
     }
     const [segment, ...rest] = path;
-    const copy = Array.isArray(value) ? [...value] : { ...(value ?? {}) };
+    const copy = Array.isArray(value) ? [...value] : { ...value };
     copy[segment] = setIn(copy[segment], rest, next);
 
     return copy;
 }
 
 export function withoutKey(value, name) {
-    const copy = { ...(value ?? {}) };
+    const copy = { ...value };
     delete copy[name];
 
     return copy;

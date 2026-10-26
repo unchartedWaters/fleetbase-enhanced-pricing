@@ -11,7 +11,7 @@ export default class PricingMessageHelper extends Helper {
         if (!message || typeof message.key !== 'string') {
             return '';
         }
-        const params = { ...(message.params ?? {}) };
+        const params = { ...message.params };
         for (const [name, folder] of [
             ['expected', 'types'],
             ['kind', 'kinds'],

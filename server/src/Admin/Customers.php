@@ -57,7 +57,7 @@ final class Customers
         asort($order);
         $pageUuids = array_slice(array_keys($order), ($page - 1) * $perPage, $perPage);
         $customers = Customer::listOf(Customer::ofCompany($this->company)->whereKey($pageUuids));
-        usort($customers, static fn (Customer $a, Customer $b): int => $order[$a->uuid] <=> $order[$b->uuid]);
+        usort($customers, static fn (Customer $left, Customer $right): int => $order[$left->uuid] <=> $order[$right->uuid]);
         $cardQuery = RateCard::ofCompany($this->company);
         $cardQuery->getQuery()->whereIn('pricing_customer_uuid', $pageUuids);
         $cards     = Counts::by($cardQuery, 'pricing_customer_uuid');
@@ -161,8 +161,10 @@ final class Customers
 
         return array_map(static function (RateCard $card) use ($rows): array {
             $own = $rows[$card->uuid] ?? [];
-            usort($own, static fn (RateCardRow $a, RateCardRow $b): int => [$a->table_key, json_encode($a->key_values)]
-                <=> [$b->table_key, json_encode($b->key_values)]);
+            usort($own, static fn (RateCardRow $left, RateCardRow $right): int => [
+                $left->table_key,
+                json_encode($left->key_values),
+            ] <=> [$right->table_key, json_encode($right->key_values)]);
 
             return [
                 'uuid'  => $card->uuid,

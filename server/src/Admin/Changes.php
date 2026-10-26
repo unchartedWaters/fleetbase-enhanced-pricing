@@ -40,7 +40,7 @@ final class Changes
      */
     public function schedule(string $profileKey): array
     {
-        $state     = ProfileState::of($this->company, $profileKey, $this->context);
+        $state     = ProfileState::load($this->company, $profileKey, $this->context);
         $query     = DatedChange::ofCompany($this->company)->where('profile_uuid', $state->profile->uuid);
         $query->getQuery()->orderBy('path')->orderBy('effective_from')->orderBy('added_at');
         $all       = DatedChange::listOf($query);
@@ -83,7 +83,7 @@ final class Changes
      */
     public function add(string $profileKey, string $path, mixed $value, string $effectiveFrom, ?string $userUuid): array
     {
-        $state = ProfileState::of($this->company, $profileKey, $this->context);
+        $state = ProfileState::load($this->company, $profileKey, $this->context);
         if ($this->allowed($state->normalized, $path) === false) {
             throw AdminRefused::invalid('change-not-allowed', ['path' => $path], 'path');
         }
@@ -155,7 +155,7 @@ final class Changes
                 ];
             }
         }
-        usort($found, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+        usort($found, static fn (array $left, array $right): int => strcasecmp($left['name'], $right['name']));
 
         return $found;
     }

@@ -41,7 +41,7 @@ final class ProfileState
         $this->live       = DatedChange::listOf($live);
     }
 
-    public static function of(string $company, string $key, StoreContext $context): self
+    public static function load(string $company, string $key, StoreContext $context): self
     {
         $profile = Profile::firstOf(Profile::ofCompany($company)->where('key', $key)) ?? throw AdminRefused::notFound();
 
