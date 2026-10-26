@@ -104,7 +104,7 @@ skipped for distance orders, and the other requires the additional fee.
 | `manualCharges` | a list of `ManualChargeInput` |
 | `overrides` | the customer's overrides, by path |
 | `datedChanges` | dated changes: `path`, `value`, `effective_from` |
-| `labels` | `customer`, `card` and `row` names; messages use them, so give all three |
+| `labels` | `customer`, `card` and `row` names, all three used in messages |
 
 An `EntityInput` has a `type` (an entity type key, or `null` for the
 profile's default), `weight` with `weightUnit`, `length`, `width` and

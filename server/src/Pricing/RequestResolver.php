@@ -37,7 +37,8 @@ final class RequestResolver
         );
         $problems          = (new ProfileValidator())->recheck($resolved['profile']);
         if ($problems !== []) {
-            throw PricingFailed::because('profile-invalid-for-order', ['path' => OverridePaths::keyed($resolved['profile'], $problems[0]->path)]);
+            $path = OverridePaths::keyed($resolved['profile'], $problems[0]->path);
+            throw PricingFailed::because('profile-invalid-for-order', ['path' => $path]);
         }
 
         return [

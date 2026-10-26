@@ -283,7 +283,8 @@ final class ProfileReferences
         if ($definition === null) {
             $this->schema->add(Problem::atPath($path, 'unknown-reference', ['kind' => 'column', 'key' => $column]));
         } elseif ($definition['type'] !== $type) {
-            $this->schema->add(Problem::atPath($path, 'column-wrong-type', ['column' => $column, 'column_type' => $type]));
+            $params = ['column' => $column, 'column_type' => $type];
+            $this->schema->add(Problem::atPath($path, 'column-wrong-type', $params));
         }
     }
 

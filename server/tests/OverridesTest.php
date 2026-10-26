@@ -68,7 +68,11 @@ test('an override that the profile cannot take is refused', function (string $pa
     ],
     'a field of another fee kind'      => ['fees.peak.thresholds', [], 'enhanced-pricing.profile.unknown-override'],
     'an unknown holiday list'          => ['holiday_lists.nope', [], 'enhanced-pricing.profile.unknown-override'],
-    'money of the wrong type'          => ['fees.extra_handling.amount', '16.00', 'enhanced-pricing.profile.wrong-type'],
+    'money of the wrong type'          => [
+        'fees.extra_handling.amount',
+        '16.00',
+        'enhanced-pricing.profile.wrong-type',
+    ],
     'negative money'                   => ['fees.extra_handling.amount', -1, 'enhanced-pricing.profile.out-of-range'],
     'a percentage as a fraction'       => [
         'subtotal_fees.percent.percentage',
@@ -124,7 +128,9 @@ test('an override cannot change how a manual charge works', function (string $pa
 ]);
 
 test('a dated change cannot change how a manual charge works', function () {
-    Orders::price(['changes' => [['path' => 'manual_charges.hourly.amount', 'value' => null, 'effective_from' => '2027-01-01']]]);
+    Orders::price([
+        'changes' => [['path' => 'manual_charges.hourly.amount', 'value' => null, 'effective_from' => '2027-01-01']],
+    ]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.changes-invalid');
 
 test('minimum above maximum is caught across two overrides', function () {

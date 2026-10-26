@@ -385,7 +385,12 @@ test('a fee the profile turns off can be turned on for one customer', function (
     expect($quote->total())->toBe(4300);
 });
 
-test('a required attribute that is missing stops pricing', function (string $field, mixed $required, string $rate, bool $stops) {
+test('a required attribute that is missing stops pricing', function (
+    string $field,
+    mixed $required,
+    string $rate,
+    bool $stops,
+) {
     $profile = Profiles::set($this->profile, "attributes.0.$field", $required);
     $options = ['profile' => $profile, 'service_rate' => $rate, 'distance_meters' => 10000];
     if ($rate === 'distance') {

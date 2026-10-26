@@ -148,7 +148,8 @@ final class OrderContext
         }
         foreach ($this->attributeDefinitions as $key => $definition) {
             if ($definition['scope'] === $scope && $this->isRequired($definition) && isset($read[$key]) === false) {
-                throw $this->fail('attribute-required', ['attribute' => R::text($definition['name']), 'entity' => $entity]);
+                $params = ['attribute' => R::text($definition['name']), 'entity' => $entity];
+                throw $this->fail('attribute-required', $params);
             }
         }
 

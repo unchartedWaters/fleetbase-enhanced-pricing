@@ -54,7 +54,10 @@ final class ManualCharges
         if ($charge->amount === null || $charge->amount < 0) {
             throw $this->order->fail('manual-charge-amount-invalid', ['charge' => $name]);
         }
-        $products = array_map(static fn (array $known): mixed => $known['code'], R::items($this->order->profile['products']));
+        $products = array_map(
+            static fn (array $known): mixed => $known['code'],
+            R::items($this->order->profile['products']),
+        );
         if (in_array($product, $products, true) === false) {
             throw $this->order->fail('manual-charge-product-unknown', ['charge' => $name, 'product' => $product]);
         }
@@ -75,7 +78,8 @@ final class ManualCharges
             throw $this->order->fail('manual-charge-not-offered', ['charge' => $name]);
         }
         if ($this->order->inEffect($definition) === false) {
-            throw $this->order->fail('manual-charge-not-in-effect', ['charge' => $name, 'date' => $this->order->date()]);
+            $params = ['charge' => $name, 'date' => $this->order->date()];
+            throw $this->order->fail('manual-charge-not-in-effect', $params);
         }
         $entered = $definition['entered'];
         if (is_array($entered)) {

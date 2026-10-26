@@ -108,7 +108,8 @@ final class ServiceFee
             $start = $limit ?? $counted;
         }
         if ($counted > $start) {
-            throw $this->order->fail('too-many-entities-for-tiers', ['entities' => $counted, 'limit'    => $start, 'rule'     => $this->ruleName()]);
+            $params = ['entities' => $counted, 'limit' => $start, 'rule' => $this->ruleName()];
+            throw $this->order->fail('too-many-entities-for-tiers', $params);
         }
 
         return $drafts;

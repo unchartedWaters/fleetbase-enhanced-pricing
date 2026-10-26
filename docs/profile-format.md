@@ -53,8 +53,8 @@ as one of the profile's products.
   refused, so a misspelt field never goes unnoticed.
 - Fields marked *optional* below may be left out, and take the default shown.
 - Each rule (service rate, fee, subtotal fee, manual charge) has a key that is
-  unique in its section of the profile. Overrides and dated changes name a value by
-  that key, so they stay with their rule across profile versions.
+  unique in its section of the profile. Overrides and dated changes name a
+  value by that key, so they stay with their rule across profile versions.
 
 Arithmetic is exact. Unit conversions, distances, percentages and fractional
 quantities are worked out as exact fractions, and compared exactly with
@@ -234,7 +234,7 @@ Every order has one service rate. It decides the service fee.
 | Field | Meaning |
 | --- | --- |
 | `key`, `product` | as for every rule |
-| `name` | the label in the order form's service rate picker and in messages; lines use `line_name` |
+| `name` | label in the order form's rate picker and in messages |
 | `rate_table` | optional, default `null`: table whose row the order picks |
 | `line_name` | `{ "column": key }` of a text column, or `{ "text": name }` |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
@@ -557,7 +557,7 @@ charges" permission, or by another system through the API.
 | `amount` | money: the charge, or the charge per unit of quantity |
 | `entered` | `{ "minimum", "maximum" }`: the amount is typed when added |
 | `quantity` | optional, default `null`: `{ "unit", "step", "maximum" }` |
-| `offered` | optional, default `true`; `false` hides the charge, except from customers whose override offers it |
+| `offered` | optional, default `true`; `false` hides it unless overridden |
 | `effective_from`, `effective_until` | optional dates, as for fees |
 
 Exactly one of `amount` and `entered` is set (the other is left out or `null`).
@@ -627,7 +627,7 @@ as a whole. `null` is allowed wherever the profile allows it.
 | `subtotal_fees.K.F` | any field in the subtotal fee list below |
 | `manual_charges.K.F` | `amount`, `entered`, `quantity`, `offered` |
 | `holiday_lists.NAME` | a list of dates, for a list the profile has |
-| `allowed_service_rates` | service rate keys the customer may order; `[]` allows none |
+| `allowed_service_rates` | rate keys the customer may order; `[]` allows none |
 
 Every fee's `applies_to`, `minimum`, `maximum` and `enabled` can be
 overridden. So can a peak hours fee's `amount`, `if_missing`, `window`,

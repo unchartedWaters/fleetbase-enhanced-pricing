@@ -59,7 +59,8 @@ final class PricingEngine
                 throw PricingFailed::because('service-rate-disabled', ['service_rate' => $name]);
             }
             if ($allowed !== null && in_array($key, $allowed, true) === false) {
-                throw PricingFailed::because('service-rate-not-allowed', ['service_rate' => $name, 'customer'     => $request->labels['customer'] ?? '']);
+                $params = ['service_rate' => $name, 'customer' => $request->labels['customer'] ?? ''];
+                throw PricingFailed::because('service-rate-not-allowed', $params);
             }
 
             return $rate;
