@@ -122,10 +122,12 @@ final class LineBook
         $this->products[$product] ??= ['sum' => 0, 'lines' => 0];
         $this->products[$product]['sum'] += $amount;
         if ($index !== null) {
-            $this->lines[$index]['quantity'] += $draft['quantity'];
-            if (in_array($draft['source'], $this->lines[$index]['sources'], true) === false) {
-                $this->lines[$index]['sources'][] = $draft['source'];
+            $line              = $this->lines[$index];
+            $line['quantity'] += $draft['quantity'];
+            if (in_array($draft['source'], $line['sources'], true) === false) {
+                $line['sources'][] = $draft['source'];
             }
+            $this->lines[$index] = $line;
 
             return;
         }

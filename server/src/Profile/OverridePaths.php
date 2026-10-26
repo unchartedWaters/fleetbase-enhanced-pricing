@@ -114,13 +114,13 @@ final class OverridePaths
         $cursor = &$profile;
         foreach ($pointer as $part) {
             if (is_array($cursor) === false) {
-                return $profile;
+                return R::map($profile);
             }
             $cursor = &$cursor[$part];
         }
         $cursor = $value;
 
-        return $profile;
+        return R::map($profile);
     }
 
     /**

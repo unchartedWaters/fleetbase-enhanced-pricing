@@ -50,7 +50,12 @@ final class ProfileResolver
             $resolved = $this->set($profile, $resolved, (string) $path, $value);
         }
 
-        return ['profile' => $resolved, 'allowed' => $allowed, 'overrides' => $overrides, 'changes' => $applied];
+        return [
+            'profile'   => $resolved,
+            'allowed'   => $allowed,
+            'overrides' => ProfileReferences::map($overrides),
+            'changes'   => $applied,
+        ];
     }
 
     /**

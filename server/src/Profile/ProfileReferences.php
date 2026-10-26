@@ -363,7 +363,7 @@ final class ProfileReferences
         $items = [];
         foreach (is_array($value) ? $value : [] as $item) {
             if (is_array($item)) {
-                $items[] = $item;
+                $items[] = self::map($item);
             }
         }
 
