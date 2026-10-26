@@ -1,5 +1,5 @@
 import { module, test } from 'qunit';
-import { render } from '@ember/test-helpers';
+import { render, fillIn } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest } from 'dummy/tests/helpers/engine';
 
@@ -14,4 +14,16 @@ module('Integration | Component | pricing/input', (hooks) => {
             assert.dom(this.element).exists();
         });
     }
+
+    test('a whole number shows the value it is given, not text typed before', async function (assert) {
+        this.value = 2;
+        this.change = (value) => this.set('value', value);
+        await render(hbs`<Pricing::Input @type="integer" @value={{this.value}} @onChange={{this.change}} />`);
+
+        await fillIn('input', '3');
+        assert.strictEqual(this.value, 3);
+        this.set('value', 5);
+
+        assert.dom('input').hasValue('5');
+    });
 });

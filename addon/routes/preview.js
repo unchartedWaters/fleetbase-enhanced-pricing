@@ -9,7 +9,7 @@ export default class PreviewRoute extends Route {
     queryParams = { profile: { refreshModel: true }, customer: { refreshModel: true } };
 
     async model({ profile, customer }) {
-        const profiles = await this.pricingApi.get('admin/profiles');
+        const { profiles } = await this.pricingApi.get('admin/profiles');
         const key = profiles.some((item) => item.key === profile) ? profile : profiles[0]?.key;
         if (!key) {
             return { profiles, key: null };

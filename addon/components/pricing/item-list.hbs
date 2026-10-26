@@ -1,5 +1,5 @@
 <div class="space-y-3">
-    {{#each this.entries key="path" as |entry|}}
+    {{#each this.entries key="id" as |entry|}}
         {{#if @nested}}
             <div class="rounded border border-gray-200 p-3 dark:border-gray-700" data-test-nested-item={{entry.path}}>
                 <div class="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

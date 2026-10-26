@@ -138,3 +138,14 @@ test('every stored change is listed with its state', function () {
         'subtotal_fees.percent.percentage' => 'cancelled',
     ]);
 });
+
+test('a change\'s times are ISO times in UTC, as the console reads them', function () {
+    $profile = Stores::profile('a');
+    $change  = Stores::for('a')->addDatedChange($profile, 'subtotal_fees.percent.percentage', 1300, '2026-12-01');
+
+    $cancelled = adminChanges()->cancel($change->uuid, Database::user('a'));
+
+    expect($cancelled['added_at'])->toBe('2026-11-02T12:00:00+00:00')
+        ->and($cancelled['cancelled_at'])->toBe('2026-11-02T12:00:00+00:00')
+        ->and(adminChanges()->schedule('main')['changes'][0]['added_at'])->toBe('2026-11-02T12:00:00+00:00');
+});

@@ -180,11 +180,25 @@ final class Changes
             'value'          => $change->value,
             'effective_from' => $change->effective_from,
             'state'          => $state,
-            'added_at'       => $change->added_at,
+            'added_at'       => self::time($change->added_at),
             'added_by'       => Names::person($change->added_by_uuid, $users),
-            'cancelled_at'   => $change->cancelled_at,
+            'cancelled_at'   => self::time($change->cancelled_at),
             'cancelled_by'   => Names::person($change->cancelled_by_uuid, $users),
             'problems'       => $change->problems,
         ];
+    }
+
+    /**
+     * The store writes times in UTC without a zone (StoreContext::timestamp); the console reads
+     * ISO times, as Profiles sends them.
+     */
+    private static function time(?string $stored): ?string
+    {
+        if ($stored === null) {
+            return null;
+        }
+        $time = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $stored, new \DateTimeZone('UTC'));
+
+        return $time === false ? $stored : $time->format(\DateTimeInterface::ATOM);
     }
 }

@@ -68,7 +68,7 @@
 
         <fieldset class="space-y-2">
             <legend class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{t "enhanced-pricing.console.preview.entities"}}</legend>
-            {{#each this.entityRows as |row|}}
+            {{#each this.entityRows key="id" as |row|}}
                 <div class="rounded border border-gray-200 p-2 dark:border-gray-700" data-test-entity={{row.index}}>
                     <div class="flex flex-wrap items-end gap-2">
                         <label class="text-xs">
@@ -113,16 +113,16 @@
         {{#if this.offeredCharges.length}}
             <fieldset class="space-y-2">
                 <legend class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{t "enhanced-pricing.console.preview.manual-charges"}}</legend>
-                {{#each this.chargeRows as |row|}}
+                {{#each this.chargeRows key="id" as |row|}}
                     <div class="flex flex-wrap items-center gap-2" data-test-charge={{row.index}}>
                         <span class="text-sm">{{or row.spec.name row.charge.key}}</span>
                         {{#if row.spec.entered}}
-                            <Pricing::MoneyInput @value={{row.charge.amount}} @currency={{this.currency}} @onChange={{fn this.setChargeAmount row.index}} @onError={{fn this.chargeError row.index}} />
+                            <Pricing::MoneyInput @value={{row.charge.amount}} @currency={{this.currency}} @onChange={{fn this.setChargeAmount row.index}} @onError={{fn this.chargeError row.charge.id}} />
                         {{else if row.spec.quantity}}
                             <input type="text" inputmode="decimal" class="form-input form-input-sm w-24" value={{row.charge.quantity}} aria-label={{t "enhanced-pricing.console.preview.quantity"}} {{on "input" (fn this.setChargeQuantity row.index)}} />
                             <span class="text-xs">{{row.spec.quantity.unit}}</span>
                         {{/if}}
-                        <Button @size="xs" @type="danger" @icon="trash" @onClick={{fn this.removeCharge row.index}} />
+                        <Button @size="xs" @type="danger" @icon="trash" @onClick={{fn this.removeCharge row.index}} data-test-remove-charge />
                     </div>
                 {{/each}}
                 <select class="form-select form-input-sm w-60" data-test-add-charge {{on "change" this.addCharge}}>

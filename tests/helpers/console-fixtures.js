@@ -894,21 +894,23 @@ export default {
             }
         }
     },
-    "profiles": [
-        {
-            "key": "main",
-            "name": "Main",
-            "currency": "USD",
-            "distance_unit": "km",
-            "current_version": 2,
-            "saved_at": "2026-11-02T12:00:00+00:00",
-            "saved_by": {
-                "uuid": "00000000-0000-4000-8000-000000000001",
-                "name": "User a"
-            },
-            "customers": 2
-        }
-    ],
+    "profiles": {
+        "profiles": [
+            {
+                "key": "main",
+                "name": "Main",
+                "currency": "USD",
+                "distance_unit": "km",
+                "current_version": 2,
+                "saved_at": "2026-11-02T12:00:00+00:00",
+                "saved_by": {
+                    "uuid": "00000000-0000-4000-8000-000000000001",
+                    "name": "User a"
+                },
+                "customers": 2
+            }
+        ]
+    },
     "profile": {
         "key": "main",
         "name": "Main",

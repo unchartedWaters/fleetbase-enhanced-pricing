@@ -48,7 +48,7 @@
         {{#if this.outdated}}
             <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950" role="alert" data-test-outdated>
                 <p class="mb-3 text-sm text-yellow-900 dark:text-yellow-100">
-                    {{t "enhanced-pricing.console.editor.outdated" number=this.outdated.number name=(or this.outdated.saved_by.name "—") at=this.outdated.saved_at}}
+                    {{t "enhanced-pricing.console.editor.outdated" number=this.outdated.number name=(or this.outdated.saved_by.name "—") at=(pricing-time this.outdated.saved_at)}}
                 </p>
                 {{#if (eq this.confirming "open-newer")}}
                     <p class="mb-2 text-sm">{{t "enhanced-pricing.console.editor.confirm-open-newer"}}</p>

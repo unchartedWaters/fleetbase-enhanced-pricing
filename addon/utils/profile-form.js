@@ -105,7 +105,7 @@ export function newItem(form, kindName, variant = null) {
 // to remove.
 export function switchVariant(form, kind, item, variant) {
     const before = new Set(fieldsFor(kind, item).map((field) => field.name));
-    const known = new Set([...(kind.fields ?? []), ...Object.values(kind.variants ?? {}).flat()].map((field) => field.name));
+    const known = knownNames(kind);
     const next = {};
     for (const [name, value] of Object.entries(item ?? {})) {
         if (!known.has(name) && name !== kind.discriminator) {
@@ -127,23 +127,21 @@ export function switchVariant(form, kind, item, variant) {
     return next;
 }
 
-// Fields the element holds that its variant doesn't use. A manual charge's other variant may be
-// held as null, as the server stores it.
+function knownNames(kind) {
+    return new Set([...(kind.fields ?? []), ...Object.values(kind.variants ?? {}).flat()].map((field) => field.name));
+}
+
+// Fields the element holds that its variant doesn't use. The server stores every optional field,
+// so a field of another variant, or one whose condition isn't met, is held as null: that is not
+// unknown.
 export function unknownFields(kind, item) {
     const used = new Set(fieldsFor(kind, item).map((field) => field.name));
     if (kind.discriminator) {
         used.add(kind.discriminator);
     }
-    const nullable =
-        kind.discriminator === null
-            ? new Set(
-                  Object.values(kind.variants ?? {})
-                      .flat()
-                      .map((field) => field.name)
-              )
-            : new Set();
+    const known = knownNames(kind);
 
-    return Object.keys(item ?? {}).filter((name) => !used.has(name) && !(nullable.has(name) && item[name] === null));
+    return Object.keys(item ?? {}).filter((name) => !used.has(name) && !(known.has(name) && item[name] === null));
 }
 
 function list(value) {

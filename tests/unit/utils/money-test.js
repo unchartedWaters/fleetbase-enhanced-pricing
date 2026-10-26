@@ -90,8 +90,17 @@ module('Unit | Utility | money', () => {
         assert.strictEqual(valueKind('service_rates.distance.per_meter.minimum_distance'), null);
         assert.strictEqual(formatValue('subtotal_fees.percent.percentage', 900, 'USD'), '9%');
         assert.strictEqual(formatValue('fees.heavy.minimum', 500, 'USD'), '$5.00');
-        assert.strictEqual(formatValue('allowed_service_rates', ['tiered'], 'USD'), '["tiered"]');
+        assert.strictEqual(formatValue('allowed_service_rates', ['tiered', 'distance'], 'USD'), '[tiered, distance]');
         assert.strictEqual(formatValue('service_rates.tiered.enabled', false, 'USD'), 'false');
         assert.strictEqual(formatValue('fees.heavy.minimum', null, 'USD'), '');
+    });
+
+    test('money and percents inside a list or object are shown in their unit too', (assert) => {
+        assert.strictEqual(formatValue('fees.heavy.thresholds', [{ over: 30, amount: 40 }], 'USD'), '[{over: 30, amount: $0.40}]');
+        assert.strictEqual(formatValue('service_rates.tiered.tiers', [{ up_to: { value: 5 }, price: { value: 4500 } }], 'USD'), '[{up_to: {value: 5}, price: {value: $45.00}}]');
+        assert.strictEqual(formatValue('service_rates.tiered.tiers', [{ up_to: null, price: { column: 'first' } }], 'USD'), '[{up_to: null, price: {column: first}}]');
+        assert.strictEqual(formatValue('service_rates.flat.fixed_rate.amount', { value: 1250 }, 'USD'), '{value: $12.50}');
+        assert.strictEqual(formatValue('service_rates.flat.fixed_rate.amount', { column: 'first' }, 'USD'), '{column: first}');
+        assert.strictEqual(formatValue('manual_charges.entered.entered', { minimum: 800, maximum: 15000 }, 'USD'), '{minimum: $8.00, maximum: $150.00}');
     });
 });

@@ -99,8 +99,18 @@ module('Unit | Utility | profile-form', () => {
         const fee = kindOf(form, 'fee');
 
         assert.deepEqual(unknownFields(product, { code: 'A', name: 'A', priced: true }), ['priced']);
-        assert.deepEqual(unknownFields(fee, { kind: 'parcel', basis: 'volume', measure: 'actual' }), ['measure']);
+        assert.deepEqual(unknownFields(fee, { kind: 'parcel', basis: 'volume', measure: 'actual' }), ['measure'], 'a value set where it is not used');
         assert.deepEqual(unknownFields(product, { code: 'A', name: 'A' }), []);
+        assert.deepEqual(unknownFields(fee, { kind: 'parcel', basis: 'volume', measure: 'dimensional' }), ['measure'], 'a value is kept');
+    });
+
+    test("a stored element's empty fields of another variant or condition aren't unknown", (assert) => {
+        for (const section of ['fees', 'subtotal_fees', 'manual_charges', 'service_rates']) {
+            const kind = kindOf(form, form.sections.find((item) => item.key === section).kind);
+            for (const item of definition[section]) {
+                assert.deepEqual(unknownFields(kind, item), [], `${section} ${item.key}`);
+            }
+        }
     });
 
     test("references list what the profile holds, in the element's own context", (assert) => {

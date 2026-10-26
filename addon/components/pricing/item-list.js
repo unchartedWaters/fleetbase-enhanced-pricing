@@ -6,9 +6,11 @@ import { kindOf, variantNames, newItem, moveItem, removeItem, problemsWithin } f
 // A list of profile elements of one kind: a section's rules, or a nested list such as a service
 // rate's tiers. Elements are added (choosing a variant), moved and removed; rule order matters
 // for fees and subtotal fees. A move or removal clears the problem marks within the list, since
-// problems name positions.
+// problems name positions. Elements are drawn by position, so a move or removal draws them again:
+// text typed but not saved stays with no element rather than following another.
 export default class PricingItemListComponent extends Component {
     @tracked addVariant = null;
+    @tracked drawn = 0;
 
     get kind() {
         return kindOf(this.args.env.form, this.args.kind);
@@ -37,6 +39,7 @@ export default class PricingItemListComponent extends Component {
             const path = `${this.args.path}.${index}`;
 
             return {
+                id: `${this.drawn}.${path}`,
                 item,
                 index,
                 number: index + 1,
@@ -52,6 +55,7 @@ export default class PricingItemListComponent extends Component {
     change(next, clearsProblems) {
         if (clearsProblems) {
             this.args.env.clearProblems(this.args.path);
+            this.drawn++;
         }
         this.args.onChange(next);
     }

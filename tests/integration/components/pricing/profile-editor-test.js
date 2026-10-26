@@ -1,5 +1,5 @@
 import { module, test } from 'qunit';
-import { render, click, fillIn, select, findAll } from '@ember/test-helpers';
+import { render, click, fillIn, select, findAll, triggerEvent } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest, fixture } from 'dummy/tests/helpers/engine';
 
@@ -242,5 +242,80 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-save]');
 
         assert.deepEqual(this.dirty, [true, false]);
+    });
+
+    test("a stored fee's empty fields of another mode or basis aren't called unknown", async function (assert) {
+        await render(editor);
+        await click('[data-test-section="subtotal_fees"]');
+        assert.dom('[data-test-unknown]').doesNotExist();
+
+        await click('[data-test-section="fees"]');
+        assert.dom('[data-test-unknown]').doesNotExist();
+    });
+
+    test("text that wasn't saved doesn't follow a moved element onto another", async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+        await fillIn('[data-test-field="fees.0.minimum"] input', '1.234');
+        assert.dom('[data-test-save]').isDisabled();
+
+        await click('[data-test-item="fees.0"] [data-test-move-down]');
+
+        assert.dom('[data-test-field="fees.0.minimum"] input').hasValue('');
+        assert.dom('[data-test-field="fees.1.minimum"] input').hasValue('');
+        assert.dom('[data-test-save]').isNotDisabled();
+    });
+
+    test('saving anyway after replacing a newer version still replaces it', async function (assert) {
+        this.answer = (payload) => {
+            if (payload.built_on !== null) {
+                return Promise.reject(fixture('refused').outdated);
+            }
+
+            return payload.accept_stale.length ? Promise.resolve(fixture('profile')) : Promise.reject(fixture('refused').stale);
+        };
+        await render(editor);
+        await click('[data-test-save]');
+        await click('[data-test-replace]');
+        await click('[data-test-confirm-replace]');
+        await click('[data-test-save-stale]');
+
+        assert.strictEqual(this.saved[2].built_on, null);
+        assert.dom('[data-test-stale]').doesNotExist();
+        assert.dom('[data-test-outdated]').doesNotExist();
+    });
+
+    test("the newer version's time is shown as a time", async function (assert) {
+        this.answer = () => Promise.reject(fixture('refused').outdated);
+        await render(editor);
+        await click('[data-test-save]');
+
+        assert.dom('[data-test-outdated]').doesNotIncludeText(fixture('refused').outdated.newer.saved_at);
+    });
+
+    test("a holiday list can't take a blank name or another list's name", async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25'], alberta: ['2026-08-03'] };
+        await render(editor);
+        await click('[data-test-section="holiday_lists"]');
+
+        await fillIn('[data-test-holiday-list="canada"] [data-test-list-name]', 'alberta');
+        assert.dom('[data-test-list-name-error]').exists();
+        assert.dom('[data-test-holiday-list="canada"] [data-test-list-name]').hasValue('canada');
+        await fillIn('[data-test-holiday-list="canada"] [data-test-list-name]', ' ');
+        await triggerEvent('[data-test-holiday-list="canada"] [data-test-list-name]', 'change');
+        await click('[data-test-save]');
+
+        assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-12-25'], alberta: ['2026-08-03'] });
+    });
+
+    test("a new profile's key and name count as changes", async function (assert) {
+        this.dirty = [];
+        this.onDirty = (dirty) => this.dirty.push(dirty);
+        this.blank = { currency: 'CAD', distance_unit: 'km' };
+        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} @onDirty={{this.onDirty}} />`);
+
+        await fillIn('[data-test-new-key]', 'courier');
+
+        assert.deepEqual(this.dirty, [true]);
     });
 });

@@ -13,7 +13,8 @@ use Fleetbase\EnhancedPricing\Tests\Support\Stores;
 
 // The console's tests render what the admin endpoints really answer. This test makes those
 // answers from the repo's example profile with the real admin services, and fails when the
-// committed copy no longer matches. Run with WRITE_CONSOLE_FIXTURES=1 to write it again.
+// committed copy no longer matches. Run with WRITE_CONSOLE_FIXTURES=1 to write it again. Each
+// answer is the body its endpoint sends.
 
 const CONSOLE_FIXTURES = __DIR__ . '/../../tests/helpers/console-fixtures.js';
 
@@ -110,7 +111,7 @@ function consoleFixtures(): array
     $invalid  = ExampleProfiles::set($invalid, 'products.1.code', 'bad code');
     $fixtures = [
         'form'      => (new ProfileForm())->spec(),
-        'profiles'  => $profiles->list(),
+        'profiles'  => ['profiles' => $profiles->list()],
         'profile'   => $profiles->show('main'),
         'schedule'  => $changes->schedule('main'),
         'customers' => (new Customers($company, $clock))->list('main'),

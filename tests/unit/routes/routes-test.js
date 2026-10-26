@@ -2,6 +2,7 @@ import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
 import Service from '@ember/service';
 import PreviewRoute from '@unchartedwaters/enhanced-pricing-engine/routes/preview';
+import ProfilesIndexRoute from '@unchartedwaters/enhanced-pricing-engine/routes/profiles/index';
 import NewProfileRoute from '@unchartedwaters/enhanced-pricing-engine/routes/new-profile';
 import { fixture } from 'dummy/tests/helpers/engine';
 
@@ -64,12 +65,24 @@ module('Unit | Route | console routes', (hooks) => {
     });
 
     test('with no profiles the preview has nothing to price', async function (assert) {
-        api(this.owner, { 'admin/profiles': [] });
+        api(this.owner, { 'admin/profiles': { profiles: [] } });
         this.owner.register('route:test-preview', PreviewRoute);
 
         const model = await this.owner.lookup('route:test-preview').model({ profile: null, customer: null });
 
         assert.strictEqual(model.key, null);
+    });
+
+    test("the profiles page lists the company's profiles", async function (assert) {
+        api(this.owner, { 'admin/profiles': fixture('profiles') });
+        this.owner.register('route:test-profiles', ProfilesIndexRoute);
+
+        const model = await this.owner.lookup('route:test-profiles').model();
+
+        assert.deepEqual(
+            model.map((profile) => profile.key),
+            ['main']
+        );
     });
 
     test('a new profile starts with every section empty and its general fields blank', async function (assert) {

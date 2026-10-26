@@ -10,8 +10,18 @@ import { zonedToUtc, distanceToMeters } from '../../utils/preview';
 const WEIGHT_UNITS = ['kg', 'g', 'lb', 'oz'];
 const LENGTH_UNITS = ['cm', 'mm', 'm', 'in', 'ft', 'yd'];
 
+// Each entity and charge row has an id of its own, so a row keeps its fields while it is typed
+// in, and removing one leaves the others as they are.
+let lastRowId = 0;
+
+function rowId() {
+    lastRowId += 1;
+
+    return lastRowId;
+}
+
 function blankEntity() {
-    return { type: '', weight: '', weight_unit: 'kg', length: '', width: '', height: '', dimensions_unit: 'cm', attributes: {} };
+    return { id: rowId(), type: '', weight: '', weight_unit: 'kg', length: '', width: '', height: '', dimensions_unit: 'cm', attributes: {} };
 }
 
 function orNull(text) {
@@ -110,11 +120,12 @@ export default class PricingQuotePreviewComponent extends Component {
     }
 
     get entityRows() {
-        return this.entities.map((entity, index) => ({ entity, index }));
+        return this.entities.map((entity, index) => ({ id: entity.id, entity, index }));
     }
 
     get chargeRows() {
         return this.charges.map((charge, index) => ({
+            id: charge.id,
             charge,
             index,
             spec: this.offeredCharges.find((offered) => offered.key === charge.key),
@@ -188,7 +199,7 @@ export default class PricingQuotePreviewComponent extends Component {
     @action addCharge(event) {
         const key = event.target.value;
         if (key !== '') {
-            this.charges = [...this.charges, { key, quantity: '', amount: null }];
+            this.charges = [...this.charges, { id: rowId(), key, quantity: '', amount: null }];
             event.target.value = '';
         }
     }
@@ -201,19 +212,20 @@ export default class PricingQuotePreviewComponent extends Component {
         this.charges = this.charges.map((charge, position) => (position === index ? { ...charge, amount } : charge));
     }
 
-    @action chargeError(index, failing) {
+    @action chargeError(id, failing) {
         const errors = new Set(this.chargeErrors);
         if (failing) {
-            errors.add(index);
+            errors.add(id);
         } else {
-            errors.delete(index);
+            errors.delete(id);
         }
         this.chargeErrors = errors;
     }
 
     @action removeCharge(index) {
+        const removed = this.charges[index];
         this.charges = this.charges.filter((_, position) => position !== index);
-        this.chargeErrors = new Set();
+        this.chargeError(removed.id, false);
     }
 
     request() {

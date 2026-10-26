@@ -9,7 +9,7 @@ import { problemsWithin, withoutProblemsWithin } from '../../utils/profile-form'
 // returns a promise; a refusal is the server's body:
 // - invalid: every problem is listed and its field marked;
 // - stale: the stored entries that no longer fit are named, and saving anyway sends exactly
-//   the ones shown (decision 10);
+//   the ones shown (decision 10), built on the same version as the save refused;
 // - outdated: the newer version is named, and the person opens it (losing the draft) or replaces
 //   it (sent without built_on).
 export default class PricingProfileEditorComponent extends Component {
@@ -25,6 +25,7 @@ export default class PricingProfileEditorComponent extends Component {
     @tracked key = '';
     @tracked name = '';
     dirty = false;
+    lastBuiltOn = null;
 
     constructor() {
         super(...arguments);
@@ -72,6 +73,10 @@ export default class PricingProfileEditorComponent extends Component {
 
     change(next) {
         this.draft = next;
+        this.markDirty();
+    }
+
+    markDirty() {
         if (!this.dirty) {
             this.dirty = true;
             this.args.onDirty?.(true);
@@ -111,10 +116,12 @@ export default class PricingProfileEditorComponent extends Component {
 
     @action typeKey(event) {
         this.key = event.target.value;
+        this.markDirty();
     }
 
     @action typeName(event) {
         this.name = event.target.value;
+        this.markDirty();
     }
 
     @action confirm(what) {
@@ -126,7 +133,7 @@ export default class PricingProfileEditorComponent extends Component {
     }
 
     @action saveStale() {
-        return this.send({ builtOn: this.args.builtOn ?? null, acceptStale: this.stale.map((entry) => entry.uuid) });
+        return this.send({ builtOn: this.lastBuiltOn, acceptStale: this.stale.map((entry) => entry.uuid) });
     }
 
     @action replace() {
@@ -140,6 +147,7 @@ export default class PricingProfileEditorComponent extends Component {
 
     async send({ builtOn, acceptStale }) {
         const payload = this.args.isNew ? { key: this.key.trim(), name: this.name.trim(), definition: this.draft } : { definition: this.draft, built_on: builtOn, accept_stale: acceptStale };
+        this.lastBuiltOn = builtOn;
         this.saving = true;
         this.failure = null;
         this.confirming = null;

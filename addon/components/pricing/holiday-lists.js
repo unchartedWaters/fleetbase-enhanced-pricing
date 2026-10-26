@@ -4,14 +4,17 @@ import { action } from '@ember/object';
 import { mapToEntries, entriesToMap, problemsWithin } from '../../utils/profile-form';
 
 // Holiday lists: a map of list name to dates, edited as named lists. A renamed list keeps its
-// place; a fee names a list by its name.
+// place; a fee names a list by its name. A list can't be renamed to a blank name or to another
+// list's, which would drop one of the two.
 export default class PricingHolidayListsComponent extends Component {
     @tracked newName = '';
+    @tracked renameRefused = null;
 
     get entries() {
         return mapToEntries(this.args.value).map((entry, index) => ({
             ...entry,
             index,
+            refused: index === this.renameRefused,
             path: `holiday_lists.${entry.name}`,
             problems: problemsWithin(this.args.env.problems, `holiday_lists.${entry.name}`),
         }));
@@ -30,7 +33,20 @@ export default class PricingHolidayListsComponent extends Component {
 
     @action rename(index, event) {
         const entries = mapToEntries(this.args.value);
-        entries[index] = { ...entries[index], name: event.target.value.trim() };
+        const name = event.target.value.trim();
+        if (name === entries[index].name) {
+            this.renameRefused = null;
+
+            return;
+        }
+        if (name === '' || entries.some((entry) => entry.name === name)) {
+            this.renameRefused = index;
+            event.target.value = entries[index].name;
+
+            return;
+        }
+        this.renameRefused = null;
+        entries[index] = { ...entries[index], name };
         this.save(entries);
     }
 

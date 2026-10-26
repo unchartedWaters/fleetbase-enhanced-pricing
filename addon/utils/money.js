@@ -76,7 +76,7 @@ export function formatPercent(points) {
 // What an override or dated change path holds, by its last field: subtotal_fees.K.percentage is
 // basis points; an amount, minimum, maximum, rate or base fee is cents. Anything else (a list,
 // an object, a number or a flag) is shown as it is stored.
-const MONEY_FIELDS = new Set(['amount', 'minimum', 'maximum', 'rate', 'base_fee']);
+const MONEY_FIELDS = new Set(['amount', 'minimum', 'maximum', 'rate', 'base_fee', 'price']);
 
 export function valueKind(path) {
     const field = String(path ?? '')
@@ -89,16 +89,31 @@ export function valueKind(path) {
     return MONEY_FIELDS.has(field) ? 'money' : null;
 }
 
+// An override's value in its unit. A list or object, such as a parcel fee's thresholds or a
+// tier's price ({value: cents}), shows each amount in its unit too, so no cents are shown bare.
 export function formatValue(path, value, currency) {
     if (value === null || value === undefined) {
         return '';
     }
-    switch (valueKind(path)) {
-        case 'percent':
-            return Number.isInteger(value) ? formatPercent(value) : JSON.stringify(value);
-        case 'money':
-            return Number.isInteger(value) ? formatMoney(value, currency) : JSON.stringify(value);
-        default:
-            return typeof value === 'string' ? value : JSON.stringify(value);
+
+    return formatIn(valueKind(path), value, currency);
+}
+
+function formatIn(kind, value, currency) {
+    if (Array.isArray(value)) {
+        return `[${value.map((item) => formatIn(kind, item, currency)).join(', ')}]`;
     }
+    if (value !== null && typeof value === 'object') {
+        const fields = Object.entries(value).map(([name, item]) => `${name}: ${formatIn(name === 'value' ? kind : valueKind(name), item, currency)}`);
+
+        return `{${fields.join(', ')}}`;
+    }
+    if (Number.isInteger(value) && kind === 'percent') {
+        return formatPercent(value);
+    }
+    if (Number.isInteger(value) && kind === 'money') {
+        return formatMoney(value, currency);
+    }
+
+    return String(value);
 }

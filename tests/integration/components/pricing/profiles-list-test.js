@@ -7,7 +7,7 @@ module('Integration | Component | pricing/profiles-list', (hooks) => {
     setupEngineRenderingTest(hooks);
 
     test('each profile shows its version, who saved it and its customers', async function (assert) {
-        this.profiles = fixture('profiles');
+        this.profiles = fixture('profiles').profiles;
         this.opened = [];
         this.open = (key) => this.opened.push(key);
 

@@ -1,5 +1,5 @@
 import { module, test } from 'qunit';
-import { render, click, fillIn, select } from '@ember/test-helpers';
+import { render, click, fillIn, select, typeIn, find } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest, fixture } from 'dummy/tests/helpers/engine';
 
@@ -136,5 +136,33 @@ module('Integration | Component | pricing/quote-preview', (hooks) => {
 
         assert.dom('[data-test-customer-select]').hasValue(this.initial);
         assert.dom('[data-test-row-select] option').exists({ count: 3 }, 'none and the two rows');
+    });
+
+    const preview = hbs`<Pricing::QuotePreview @profile={{this.profile}} @definition={{this.definition}} @customers={{this.customers}} @onLoadCustomer={{this.loadCustomer}} @onPrice={{this.price}} />`;
+
+    test('a weight is typed into the same field, one key at a time', async function (assert) {
+        await render(preview);
+        const field = find('[data-test-entity="0"] [data-test-weight]');
+
+        await typeIn(field, '36');
+
+        assert.strictEqual(find('[data-test-entity="0"] [data-test-weight]'), field, 'the field is not drawn again');
+        assert.dom(field).hasValue('36');
+    });
+
+    test("removing a charge leaves another charge's amount and its error in place", async function (assert) {
+        await render(preview);
+        await select('[data-test-service-rate]', 'tiered');
+        await select('[data-test-add-charge]', 'entered');
+        await select('[data-test-add-charge]', 'entered');
+        await select('[data-test-add-charge]', 'hourly');
+        await fillIn('[data-test-charge="1"] input', '1.234');
+        await fillIn('[data-test-charge="2"] input', '2');
+
+        await click('[data-test-charge="0"] [data-test-remove-charge]');
+
+        assert.dom('[data-test-charge="0"] input').hasValue('1.234');
+        assert.dom('[data-test-charge="1"] input').hasValue('2');
+        assert.dom('[data-test-price]').isDisabled();
     });
 });

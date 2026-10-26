@@ -11,6 +11,7 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 export default class PricingInputComponent extends Component {
     @tracked integerText = null;
     @tracked integerError = false;
+    sent = undefined;
 
     get type() {
         return this.args.type;
@@ -38,8 +39,13 @@ export default class PricingInputComponent extends Component {
         return value === null || value === undefined ? '' : String(value);
     }
 
+    // Typed text is kept while it is wrong or is still the value, as MoneyInput does.
     get integerValue() {
-        return this.integerText ?? this.textValue;
+        if (this.integerText !== null && (this.integerError || this.sent === this.args.value)) {
+            return this.integerText;
+        }
+
+        return this.textValue;
     }
 
     // A select keeps a value the profile doesn't hold, so it is shown, not silently dropped.
@@ -90,12 +96,14 @@ export default class PricingInputComponent extends Component {
         this.integerText = text;
         if (text === '') {
             this.integerError = false;
+            this.sent = null;
             this.args.onError?.(false);
             this.args.onChange(null);
         } else if (/^\d+$/.test(text) && Number.isSafeInteger(Number(text))) {
             this.integerError = false;
+            this.sent = Number(text);
             this.args.onError?.(false);
-            this.args.onChange(Number(text));
+            this.args.onChange(this.sent);
         } else {
             this.integerError = true;
             this.args.onError?.(true);
