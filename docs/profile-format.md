@@ -21,7 +21,7 @@ complete profile is in
 The price of an order is a list of invoice lines, made in this order:
 
 1. The service fee, from the order's service rate, and a line for each entity
-   type priced at its own column.
+   type with its own price.
 2. Manual charges added to the order.
 3. Fees, in the order the profile lists them.
 4. Subtotal fees, in the order the profile lists them.
@@ -108,9 +108,9 @@ location, which the caller looks up and passes to the engine.
 ```
 
 Every invoice line carries one product, and the line's code is that product's
-code. Codes are unique. Each service rate, each entity type priced at its own
-column, each fee, subtotal fee and manual charge names its product. Several
-rules may share a product.
+code. Codes are unique. Each service rate, each entity type with its own price,
+each fee, subtotal fee and manual charge names its product. Several rules may
+share a product.
 
 ## Attributes
 
@@ -144,32 +144,37 @@ stops pricing.
 ## Entity types
 
 ```json
-{ "key": "standard", "name": "Standard", "priced": "tiers" }
+{ "key": "standard", "name": "Standard" }
 ```
 
 ```json
 {
   "key": "oversize",
   "name": "Oversize",
-  "priced": "column",
-  "column": "oversize_price",
-  "product": "OVERSIZE"
+  "own_price": { "column": "oversize_price", "product": "OVERSIZE" }
 }
 ```
 
 An entity is one package in the order's payload. Its type decides how the
 service fee prices it.
 
-- `tiers`: the entity counts in the service rate's tiers and is billed under
-  the service rate's product.
-- `column`: on a service rate priced in tiers, the entity is billed on its own
-  line, at the row's `column`, under its own `product`. On a per-meter or
-  fixed-rate service rate, the entity is billed under the service rate's
-  product and no column is used.
+| Field | Value |
+| --- | --- |
+| `key` | key |
+| `name` | text; names the type's own line when it has `own_price` |
+| `own_price` | optional, default `null`; `{ "column": key, "product": code }` |
 
-When the profile has a `column` entity type, every service rate priced in tiers
-must have a rate table, and each `column` entity type's column must be a money
-column of that table. `default_entity_type`
+- Without `own_price`, the entity counts in the service rate's tiers and is
+  billed under the service rate's product.
+- With `own_price`, on a service rate priced in tiers, the entity is not
+  counted in the tiers. It is billed on its own line, at the rate card row's
+  value in `column`, under `product`. On a per-meter or fixed-rate service
+  rate, `own_price` is not used: the entity is billed under the service rate's
+  product.
+
+When any entity type has `own_price`, every service rate priced in tiers must
+have a rate table, and each `own_price.column` must be a money column of that
+table. `default_entity_type`
 is used for entities that have no type. An entity with a type the profile does
 not know stops pricing.
 
@@ -249,14 +254,14 @@ per entity:
   columns are checked when the order is priced.
 - `price`: `{ "value": cents }` or a money column.
 
-Entities of types priced in tiers are counted. When the last tier has a limit
-and the order has more entities, pricing stops. A tiered service rate needs at
-least one entity. Each tier that covers any entities makes a line: that number
-of entities × the tier's price, named with `line_name`.
+Entities whose type has no `own_price` are counted. When the last tier has a
+limit and the order has more entities, pricing stops. A tiered service rate
+needs at least one entity. Each tier that covers any entities makes a line:
+that number of entities × the tier's price, named with `line_name`.
 
-Entity types priced at their own column make a line each: the number of those
-entities × the row's value in that column, under the type's product, named with
-the type's name.
+Each entity type with its own price makes a line: the number of those entities
+× the row's value in its `own_price.column`, under its `own_price.product`,
+named with the type's name.
 
 ### Per meter
 

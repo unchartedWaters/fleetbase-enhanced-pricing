@@ -8,7 +8,7 @@ use Fleetbase\EnhancedPricing\Support\Exact;
 
 /**
  * The service fee: tiers per entity, a per-meter rate, or a fixed rate, and the lines of entity
- * types priced at their own column. It also decides each entity's billing product.
+ * types with their own price. It also decides each entity's billing product.
  */
 final class ServiceFee
 {
@@ -75,7 +75,7 @@ final class ServiceFee
         }
         $this->order->book->add($drafts);
         if ($this->rate['method'] === 'tiers') {
-            $this->order->book->add($this->columnTypes());
+            $this->order->book->add($this->ownPriceTypes());
         }
     }
 
@@ -89,7 +89,7 @@ final class ServiceFee
         }
         $counted = count(array_filter(
             $this->order->entities,
-            static fn (PricedEntity $entity): bool => $entity->type['priced'] === 'tiers',
+            static fn (PricedEntity $entity): bool => $entity->type['own_price'] === null,
         ));
         $tiers   = R::items($this->rate['tiers']);
         $drafts  = [];
@@ -141,13 +141,14 @@ final class ServiceFee
     /**
      * @return list<array{product: string, name: string, quantity: int, unit: int, source: string}>
      */
-    private function columnTypes(): array
+    private function ownPriceTypes(): array
     {
         $drafts = [];
         foreach (R::items($this->order->profile['entity_types']) as $type) {
-            if ($type['priced'] !== 'column') {
+            if (is_array($type['own_price']) === false) {
                 continue;
             }
+            $ownPrice = R::map($type['own_price']);
             $entities = array_filter(
                 $this->order->entities,
                 static fn (PricedEntity $entity): bool => $entity->type['key'] === $type['key'],
@@ -156,14 +157,14 @@ final class ServiceFee
                 continue;
             }
             foreach ($entities as $entity) {
-                $entity->billingProduct = R::text($type['product']);
+                $entity->billingProduct = R::text($ownPrice['product']);
             }
             $key      = R::text($type['key']);
             $drafts[] = [
-                'product'  => R::text($type['product']),
+                'product'  => R::text($ownPrice['product']),
                 'name'     => R::text($type['name']),
                 'quantity' => count($entities),
-                'unit'     => $this->amount(['column' => $type['column']], $key),
+                'unit'     => $this->amount(['column' => $ownPrice['column']], $key),
                 'source'   => 'entity_type:' . $key,
             ];
         }

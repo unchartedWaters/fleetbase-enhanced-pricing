@@ -60,15 +60,15 @@
   "entity_types": [
     {
       "key": "standard",
-      "name": "Standard",
-      "priced": "tiers"
+      "name": "Standard"
     },
     {
       "key": "separate",
       "name": "Separate entity type",
-      "priced": "column",
-      "column": "separate_price",
-      "product": "SEPARATE"
+      "own_price": {
+        "column": "separate_price",
+        "product": "SEPARATE"
+      }
     }
   ],
   "default_entity_type": "standard",
