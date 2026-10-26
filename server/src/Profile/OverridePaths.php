@@ -91,11 +91,7 @@ final class OverridePaths
                 )
                 : null,
             'manual_charges' => in_array($field, self::MANUAL_FIELDS, true)
-                ? self::entry(
-                    ['manual_charges', $index, $field],
-                    $field === 'amount',
-                    self::bare(ProfileShapes::manualCharge()[$field]),
-                )
+                ? self::manualCharge($rule, $index, $field)
                 : null,
             default => null,
         };
@@ -234,6 +230,39 @@ final class OverridePaths
             in_array($field, self::DATED, true),
             self::bare(ProfileShapes::feeFields($kind)[$field]),
         );
+    }
+
+    /**
+     * A manual charge's value. Whether its amount, entered limits and quantity are set decides
+     * how the charge works, so an override or change may replace them but not add or remove one.
+     *
+     * @param array<string, mixed> $rule
+     *
+     * @return array{pointer: list<string|int>|null, dated: bool, check: \Closure(S, mixed, string): mixed}
+     */
+    private static function manualCharge(array $rule, int $index, string $field): array
+    {
+        $entry = self::entry(
+            ['manual_charges', $index, $field],
+            $field === 'amount',
+            self::bare(ProfileShapes::manualCharge()[$field]),
+        );
+        if ($field === 'offered') {
+            return $entry;
+        }
+        $check          = $entry['check'];
+        $set            = ($rule[$field] ?? null) !== null;
+        $entry['check'] = static function (S $schema, mixed $value, string $path) use ($check, $set, $field): mixed {
+            if (($value !== null) !== $set) {
+                $schema->add(Problem::atPath($path, 'changes-charge-mode', ['field' => $field]));
+
+                return null;
+            }
+
+            return $check($schema, $value, $path);
+        };
+
+        return $entry;
     }
 
     /**

@@ -22,6 +22,8 @@ test('valid overrides have no problems', function () {
         'subtotal_fees.percent.percentage'        => 900,
         'subtotal_fees.flat_a.skipped_for'        => [],
         'manual_charges.hourly.offered'           => false,
+        'manual_charges.hourly.quantity'          => ['unit' => 'h', 'step' => '0.5', 'maximum' => '12'],
+        'manual_charges.entered.entered'          => ['minimum' => 500, 'maximum' => 9000],
         'allowed_service_rates'                   => ['distance'],
     ]);
 
@@ -103,8 +105,27 @@ test('an override that breaks the rule order checks is refused', function (strin
         2000,
         'enhanced-pricing.profile.minimum-above-maximum',
     ],
-    'an amount and entered'   => ['manual_charges.entered.amount', 100, 'enhanced-pricing.profile.needs-exactly-one'],
 ]);
+
+test('an override cannot change how a manual charge works', function (string $path, mixed $value) {
+    $problems = (new OverrideValidator())->check(Profiles::example(), [$path => $value]);
+
+    expect(array_map(static fn ($problem) => [$problem->path, $problem->key], $problems))
+        ->toContain([$path, 'enhanced-pricing.profile.changes-charge-mode']);
+})->with([
+    'an amount on an entered charge'   => ['manual_charges.entered.amount', 100],
+    'a flat charge made entered'       => ['manual_charges.hourly.entered', ['minimum' => 100, 'maximum' => 900]],
+    'an entered charge made flat'      => ['manual_charges.entered.entered', null],
+    'a per-hour charge made flat'      => ['manual_charges.hourly.quantity', null],
+    'a quantity on an entered charge'  => [
+        'manual_charges.entered.quantity',
+        ['unit' => 'h', 'step' => '1', 'maximum' => '5'],
+    ],
+]);
+
+test('a dated change cannot change how a manual charge works', function () {
+    Orders::price(['changes' => [['path' => 'manual_charges.hourly.amount', 'value' => null, 'effective_from' => '2027-01-01']]]);
+})->throws(PricingFailed::class, 'enhanced-pricing.pricing.changes-invalid');
 
 test('minimum above maximum is caught across two overrides', function () {
     $problems = (new OverrideValidator())->check(Profiles::example(), [

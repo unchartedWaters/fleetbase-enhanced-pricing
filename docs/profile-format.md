@@ -624,7 +624,7 @@ as a whole. `null` is allowed wherever the profile allows it.
 | `subtotal_fees.K.F` | any field in the subtotal fee list below |
 | `manual_charges.K.F` | `amount`, `entered`, `quantity`, `offered` |
 | `holiday_lists.NAME` | a list of dates, for a list the profile has |
-| `allowed_service_rates` | service rate keys the customer may order |
+| `allowed_service_rates` | service rate keys the customer may order; `[]` allows none |
 
 Every fee's `applies_to`, `minimum`, `maximum` and `enabled` can be
 overridden. So can a peak hours fee's `amount`, `if_missing`, `window`,
@@ -633,9 +633,14 @@ additional fee's `amount`, `if_missing` and `equals`. A subtotal fee's are
 `applies_to`, `requires`, `skipped_for`, `percentage`, `amount`, `if_missing`,
 `minimum`, `maximum` and `enabled`.
 
+A manual charge's `amount`, `entered` and `quantity` can be replaced, but an
+override can't set one the profile leaves `null` or clear one it sets: that
+would turn a flat charge into an entered one, or an hourly one into a flat one.
+
 The structure can't be overridden: products, service rates, entity types,
 attributes, rate tables, the kind of each fee, each charge's mode and how it is
-charged, the distance unit and maximum distance, and rule dates. An override is
+charged (including whether a manual charge is flat, entered or by quantity),
+the distance unit and maximum distance, and rule dates. An override is
 checked when it is loaded: its path must name a value the profile has, its
 value must have the right type, and the profile with every override applied
 must still pass every check in this document.
