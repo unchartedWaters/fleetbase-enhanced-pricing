@@ -53,7 +53,7 @@ as one of the profile's products.
   refused, so a misspelt field never goes unnoticed.
 - Fields marked *optional* below may be left out, and take the default shown.
 - Each rule (service rate, fee, subtotal fee, manual charge) has a key that is
-  unique among rules of its kind. Overrides and dated changes name a value by
+  unique in its section of the profile. Overrides and dated changes name a value by
   that key, so they stay with their rule across profile versions.
 
 Arithmetic is exact. Unit conversions, distances, percentages and fractional
@@ -66,7 +66,7 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 ```json
 {
   "currency": "CAD",
-  "timezone": "America/Edmonton",
+  "scheduling_timezone": "America/Edmonton",
   "distance_unit": "km",
   "products": [],
   "attributes": [],
@@ -84,7 +84,7 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 | Field | Meaning |
 | --- | --- |
 | `currency` | ISO 4217 code, three capital letters |
-| `timezone` | IANA name; see below |
+| `scheduling_timezone` | IANA name; see below |
 | `distance_unit` | `km` or `mi`, for per-meter rates |
 | `products` | at least one product |
 | `attributes` | optional, default `[]` |
@@ -97,9 +97,10 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 | `manual_charges` | optional, default `[]` |
 | `holiday_lists` | optional, default `{}` |
 
-The profile's `timezone` only decides which day is "tomorrow" when a dated
-change is scheduled. Each order is timed in the timezone of its pickup place's
-location, which the caller looks up and passes to the engine.
+`scheduling_timezone` only decides which day is "tomorrow" when a dated
+change is scheduled. It doesn't time orders: each order is timed in the
+timezone of its pickup place's location, which the caller looks up and passes
+to the engine. Peak hours and rule dates follow that timezone too.
 
 ## Products
 
@@ -232,7 +233,8 @@ Every order has one service rate. It decides the service fee.
 
 | Field | Meaning |
 | --- | --- |
-| `key`, `name`, `product` | as for every rule |
+| `key`, `product` | as for every rule |
+| `name` | the label in the order form's service rate picker and in messages; lines use `line_name` |
 | `rate_table` | optional, default `null`: table whose row the order picks |
 | `line_name` | `{ "column": key }` of a text column, or `{ "text": name }` |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
@@ -555,7 +557,7 @@ charges" permission, or by another system through the API.
 | `amount` | money: the charge, or the charge per unit of quantity |
 | `entered` | `{ "minimum", "maximum" }`: the amount is typed when added |
 | `quantity` | optional, default `null`: `{ "unit", "step", "maximum" }` |
-| `offered` | optional, default `true`; `false` unless an override offers it |
+| `offered` | optional, default `true`; `false` hides the charge, except from customers whose override offers it |
 | `effective_from`, `effective_until` | optional dates, as for fees |
 
 Exactly one of `amount` and `entered` is set (the other is left out or `null`).
@@ -607,7 +609,8 @@ Overrides are a JSON object from a *path* to a value:
 }
 ```
 
-A path is the rule's kind, its key and a field, `K` below. A list is replaced
+A path is the section of the profile (`service_rates`, `fees`, `subtotal_fees`
+or `manual_charges`), the rule's key and a field, `K` below. A list is replaced
 as a whole. `null` is allowed wherever the profile allows it.
 
 | Path | Value |
@@ -716,8 +719,8 @@ value in the JSON being checked (for example `fees.2.thresholds.0.over`), a
 translation key and its parameters. The English text for each key is in
 [`translations/en-us.yaml`](../translations/en-us.yaml), under
 `enhanced-pricing.profile`. An `expected` parameter is a type, with its text
-under `enhanced-pricing.types`, and a `kind` parameter a kind of rule or list,
-with its text under `enhanced-pricing.kinds`.
+under `enhanced-pricing.types`, and a `kind` parameter is what was looked up
+(a service rate, a column), with its text under `enhanced-pricing.kinds`.
 
 Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
 rules, charges and service rates by their names, and the customer, card and

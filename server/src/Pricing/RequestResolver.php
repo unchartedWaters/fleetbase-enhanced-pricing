@@ -32,7 +32,7 @@ final class RequestResolver
         $resolved          = (new ProfileResolver())->resolve(
             $profile,
             $request->overrides,
-            $request->valueChanges,
+            $request->datedChanges,
             $local->format('Y-m-d'),
         );
         $problems          = (new ProfileValidator())->recheck($resolved['profile']);
@@ -65,7 +65,7 @@ final class RequestResolver
         if ($problems !== []) {
             throw PricingFailed::because('overrides-invalid', ['path'     => $problems[0]->path, 'customer' => $request->labels['customer'] ?? '']);
         }
-        $problems = (new ChangeValidator())->checkEach($request->profile, $request->valueChanges);
+        $problems = (new ChangeValidator())->checkEach($request->profile, $request->datedChanges);
         if ($problems !== []) {
             throw PricingFailed::because('changes-invalid', ['path' => $problems[0]->path]);
         }

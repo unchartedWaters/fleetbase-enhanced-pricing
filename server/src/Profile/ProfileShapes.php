@@ -29,7 +29,7 @@ final class ProfileShapes
     {
         return [
             'currency'            => S::type('currency'),
-            'timezone'            => S::type('timezone'),
+            'scheduling_timezone' => S::type('timezone'),
             'distance_unit'       => S::enum(['km', 'mi']),
             'products'            => S::listOf(S::object([
                 'code' => S::type('code'),

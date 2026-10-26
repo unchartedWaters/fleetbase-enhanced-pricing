@@ -6,8 +6,8 @@ use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Profile\Schema as S;
 
 /**
- * The values a customer override or a dated change can name, by path: a rule's kind, its key and
- * a field, such as "fees.parcel.thresholds". Each path knows where its value sits in a normalized
+ * The values a customer override or a dated change can name, by path: the profile's section, the
+ * rule's key and a field, such as "fees.heavy.thresholds". Each path knows where its value sits in a normalized
  * profile, how to check a new value, and whether the value can also change by date.
  */
 final class OverridePaths

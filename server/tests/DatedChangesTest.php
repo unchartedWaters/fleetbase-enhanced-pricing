@@ -11,9 +11,9 @@ use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
 test('money, percent and number values can change by date', function () {
     $problems = (new ChangeValidator())->check(Profiles::example(), [
         ['path' => 'subtotal_fees.percent.percentage', 'value' => 1300, 'effective_from' => '2027-04-01'],
-        ['path' => 'fees.additional.amount', 'value' => 1700, 'effective_from' => '2027-04-01'],
+        ['path' => 'fees.extra_handling.amount', 'value' => 1700, 'effective_from' => '2027-04-01'],
         [
-            'path'           => 'fees.parcel.thresholds',
+            'path'           => 'fees.heavy.thresholds',
             'value'          => [['over' => 30, 'amount' => 45]],
             'effective_from' => '2027-04-01',
         ],
@@ -119,7 +119,7 @@ test('pricing refuses changes that do not fit the profile', function () {
 test('the quote records the values that came from overrides and changes', function () {
     $quote = Orders::price([
         'pickup'    => '2027-04-02 10:00',
-        'overrides' => ['fees.additional.amount' => 1000],
+        'overrides' => ['fees.extra_handling.amount' => 1000],
         'changes'   => [
             ['path' => 'subtotal_fees.percent.percentage', 'value' => 1300, 'effective_from' => '2027-04-01'],
             ['path' => 'subtotal_fees.percent.percentage', 'value' => 1500, 'effective_from' => '2027-06-01'],
@@ -130,7 +130,7 @@ test('the quote records the values that came from overrides and changes', functi
         'timezone'     => 'UTC',
         'pricing_date' => '2027-04-02',
         'service_rate' => 'tiered',
-        'overrides'    => ['fees.additional.amount' => 1000],
+        'overrides'    => ['fees.extra_handling.amount' => 1000],
         'changes'      => ['subtotal_fees.percent.percentage' => '2027-04-01'],
     ]);
 });

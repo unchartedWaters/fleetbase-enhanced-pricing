@@ -79,7 +79,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
     'unknown top-level field'      => ['colour', 'red', 'colour', 'unknown-field'],
     'missing currency'             => ['currency', '__remove__', 'currency', 'missing-field'],
     'lowercase currency'           => ['currency', 'usd', 'currency', 'wrong-type'],
-    'unknown timezone'             => ['timezone', 'Mars/Olympus', 'timezone', 'wrong-type'],
+    'unknown timezone'             => ['scheduling_timezone', 'Mars/Olympus', 'scheduling_timezone', 'wrong-type'],
     'distance unit'                => ['distance_unit', 'yd', 'distance_unit', 'not-one-of'],
     'no products'                  => ['products', [], 'products', 'too-few'],
     'products not a list'          => ['products', ['a' => 1], 'products', 'wrong-type'],
@@ -388,7 +388,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
         'wrong-type',
     ],
     'unknown holiday list'         => ['fees.2.holidays', 'nope', 'fees.2.holidays', 'unknown-reference'],
-    'duplicate fee key'            => ['fees.1.key', 'additional', 'fees.1.key', 'duplicate'],
+    'duplicate fee key'            => ['fees.1.key', 'extra_handling', 'fees.1.key', 'duplicate'],
     // Subtotal fees.
     'percentage per line'          => ['subtotal_fees.0.charge', 'per_line', 'subtotal_fees.0.charge', 'not-one-of'],
     'amount on percentage'         => ['subtotal_fees.0.amount', 100, 'subtotal_fees.0.amount', 'not-allowed-for-mode'],

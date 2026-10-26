@@ -58,7 +58,7 @@ try {
       "quantity": 1,
       "unit_amount": 480,
       "amount": 480,
-      "sources": ["fee:parcel"]
+      "sources": ["fee:heavy"]
     },
     {
       "product": "PERCENT",
@@ -103,7 +103,7 @@ skipped for distance orders, and the other requires the additional fee.
 | `distanceMeters` | the driving distance in meters, or `null` |
 | `manualCharges` | a list of `ManualChargeInput` |
 | `overrides` | the customer's overrides, by path |
-| `valueChanges` | dated changes: `path`, `value`, `effective_from` |
+| `datedChanges` | dated changes: `path`, `value`, `effective_from` |
 | `labels` | `customer`, `card` and `row` names, used in error details |
 
 An `EntityInput` has a `type` (an entity type key, or `null` for the
@@ -161,7 +161,7 @@ them, `notes`, and `meta`. `total()` is the sum of the line amounts.
 
 Each `QuoteLine` has a `product` code, a `name`, a `quantity`, a
 `unitAmount` in cents, and `sources`: the rules that made it, such as
-`fee:parcel`. Its `amount()` is always quantity × unit amount, so an invoice
+`fee:heavy`. Its `amount()` is always quantity × unit amount, so an invoice
 can show the line as it is.
 
 `notes` lists what the engine could not check without stopping, such as an

@@ -202,7 +202,7 @@ test('an entity with no weight is not checked, and the quote says so', function 
     expect($quote->total())->toBe(2700)
         ->and($quote->notes)->toBe([[
             'key'    => 'enhanced-pricing.pricing.entity-not-measured',
-            'params' => ['entity' => 1, 'rule' => 'Parcel fee', 'rule_key' => 'parcel'],
+            'params' => ['entity' => 1, 'rule' => 'Parcel fee', 'rule_key' => 'heavy'],
         ]]);
 });
 
@@ -369,17 +369,17 @@ test('a customer can turn a fee off or on, or point it at other products', funct
 
     expect(Orders::price($options)->total())->toBe($total);
 })->with([
-    'turned off'           => [['fees.additional.enabled' => false], 2700],
-    'other products'       => [['fees.additional.applies_to' => ['DISTANCE']], 2700],
-    'an override of 0'     => [['fees.additional.amount' => 0], 2700],
-    'an override amount'   => [['fees.additional.amount' => 1000], 3700],
+    'turned off'           => [['fees.extra_handling.enabled' => false], 2700],
+    'other products'       => [['fees.extra_handling.applies_to' => ['DISTANCE']], 2700],
+    'an override of 0'     => [['fees.extra_handling.amount' => 0], 2700],
+    'an override amount'   => [['fees.extra_handling.amount' => 1000], 3700],
 ]);
 
 test('a fee the profile turns off can be turned on for one customer', function () {
     $quote = Orders::price([
         'profile'    => $this->profile,
         'attributes' => ['extra' => true],
-        'overrides'  => ['fees.additional.enabled' => true],
+        'overrides'  => ['fees.extra_handling.enabled' => true],
     ]);
 
     expect($quote->total())->toBe(4300);

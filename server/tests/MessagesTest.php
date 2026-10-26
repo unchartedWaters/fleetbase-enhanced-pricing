@@ -244,10 +244,10 @@ test('invalid overrides and dated changes name the path at fault', function () {
 
 test('a profile made invalid by overrides and changes together is named by rule key', function () {
     $failed = failure(fn () => Orders::price([
-        'overrides' => ['fees.parcel.maximum' => 3000],
-        'changes'   => [['path' => 'fees.parcel.minimum', 'value' => 5000, 'effective_from' => '2027-01-01']],
+        'overrides' => ['fees.heavy.maximum' => 3000],
+        'changes'   => [['path' => 'fees.heavy.minimum', 'value' => 5000, 'effective_from' => '2027-01-01']],
     ]));
 
     expect($failed->key)->toBe('enhanced-pricing.pricing.profile-invalid-for-order')
-        ->and($failed->params['path'])->toStartWith('fees.parcel.');
+        ->and($failed->params['path'])->toStartWith('fees.heavy.');
 });
