@@ -2,6 +2,7 @@
 
 use Fleetbase\EnhancedPricing\Models\CrossCompanyReference;
 use Fleetbase\EnhancedPricing\Models\DatedChange;
+use Fleetbase\EnhancedPricing\Models\ImmutableRecord;
 use Fleetbase\EnhancedPricing\Tests\Support\Database;
 use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
 use Fleetbase\EnhancedPricing\Tests\Support\Stores;
@@ -62,6 +63,28 @@ test('sending the same change again does nothing, even once it is in effect', fu
     $again = Stores::for('a', '2026-12-10T12:00:00Z')->addDatedChange($profile, RATE, 1300, '2026-12-01');
 
     expect($again->uuid)->toBe($first->uuid)->and(DatedChange::query()->count())->toBe(1);
+});
+
+test('a list value sent again with its keys in another order is the same change', function () {
+    $profile = Stores::profile();
+    $path    = 'fees.parcel.thresholds';
+    $first   = Stores::for()->addDatedChange($profile, $path, [['over' => 30, 'amount' => 50]], '2026-12-01');
+
+    $again = Stores::for('a', '2026-12-10T12:00:00Z')
+        ->addDatedChange($profile, $path, [['amount' => 50, 'over' => 30]], '2026-12-01');
+
+    expect($again->uuid)->toBe($first->uuid)->and(DatedChange::query()->count())->toBe(1);
+});
+
+test('a cancelled change keeps who added and cancelled it', function () {
+    $change = Stores::for()->addDatedChange(Stores::profile(), RATE, 1300, '2026-12-01', 'user-1');
+    Stores::for()->cancelDatedChange($change, 'user-2');
+
+    $changes = ['added_by_uuid' => 'x', 'cancelled_by_uuid' => 'x', 'cancelled_at' => '2020-01-01 00:00:00'];
+    foreach ($changes as $field => $value) {
+        expect(fn () => $change->refresh()->update([$field => $value]))->toThrow(ImmutableRecord::class);
+    }
+    expect($change->refresh()->cancelled_by_uuid)->toBe('user-2')->and($change->added_by_uuid)->toBe('user-1');
 });
 
 test('a different value replaces a change not yet in effect', function () {

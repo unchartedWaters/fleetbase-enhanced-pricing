@@ -93,6 +93,7 @@ enhanced-pricing:
     stale-entries: "{count} stored entries don't fit this version. Fix them first, or save the version anyway."
     too-many-charges: "An order can have at most {max} manual charges."
     too-many-rows: "Send at most {max} rows."
+    too-many-rows-on-card: "A rate card holds at most {max} rows."
     unit-changed: "The unit of {rule} can't change while an override or a dated change uses it. Use a new rule key instead."
     value-has-change-in-effect: "{path} has a dated change in effect, so its undated value can't change. Add a dated change instead."
     version-outdated: "The profile has a newer version, {current}. Start from the newest version."

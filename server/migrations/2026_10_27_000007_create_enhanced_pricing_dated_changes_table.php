@@ -19,9 +19,9 @@ return new class extends Migration {
             $table->json('value')->nullable();
             $table->date('effective_from');
             $table->char('added_by_uuid', 36)->nullable();
-            $table->timestamp('added_at');
+            $table->dateTime('added_at');
             $table->char('cancelled_by_uuid', 36)->nullable();
-            $table->timestamp('cancelled_at')->nullable();
+            $table->dateTime('cancelled_at')->nullable();
             $table->unsignedTinyInteger('live')->nullable();
             $table->unsignedInteger('checked_version')->nullable();
             $table->json('problems')->nullable();

@@ -14,6 +14,8 @@ namespace Fleetbase\EnhancedPricing\Models;
  */
 final class Profile extends PricingModel
 {
+    protected const FIXED = ['key', 'currency', 'distance_unit'];
+
     protected $table = 'enhanced_pricing_profiles';
 
     protected $fillable = ['company_uuid', 'key', 'name', 'currency', 'distance_unit', 'current_version'];

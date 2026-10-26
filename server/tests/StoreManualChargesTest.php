@@ -69,6 +69,19 @@ test('a charge is removed once, keeping who removed it', function () {
         ->toBe(['charge-removed']);
 });
 
+test('a charge removed through another copy cannot be removed again', function () {
+    $version = Stores::profile()->currentVersion();
+    $charge  = Stores::for()->addManualCharge(Database::order('a'), $version, Stores::hourly());
+    $copy    = ManualCharge::query()->findOrFail($charge->uuid);
+
+    Stores::for()->removeManualCharge($charge, 'user-1');
+
+    expect(Stores::refusal(fn () => Stores::for('a', '2026-11-03T12:00:00Z')->removeManualCharge($copy, 'user-2')))
+        ->toBe(['charge-removed'])
+        ->and($charge->refresh()->removed_by_uuid)->toBe('user-1')
+        ->and($charge->removed_at)->toBe('2026-11-02 12:00:00');
+});
+
 test('another company\'s version or charge is refused', function () {
     $versionB = Stores::profile('b')->currentVersion();
     $chargeB  = Stores::for('b')->addManualCharge(Database::order('b'), $versionB, Stores::hourly());

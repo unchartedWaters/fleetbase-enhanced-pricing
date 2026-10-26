@@ -1,6 +1,7 @@
 <?php
 
 use Fleetbase\EnhancedPricing\Models\Customer;
+use Fleetbase\EnhancedPricing\Models\RateCard;
 use Fleetbase\EnhancedPricing\Models\RateCardRow;
 use Fleetbase\EnhancedPricing\Pricing\ServiceFee;
 use Fleetbase\EnhancedPricing\Store\RowCheck;
@@ -58,6 +59,16 @@ test('overrides sent replace the stored ones, absent keeps them and empty clears
 
     expect($store->saveCustomer($uuid, $profile, [])->overrides)->toBe([])
         ->and(Customer::query()->count())->toBe(1);
+});
+
+test('overrides sent again are checked again, even when unchanged', function () {
+    $profile  = Stores::profile();
+    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
+    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
+
+    $again = fn () => Stores::for()->saveCustomer($customer->customer_uuid, $profile, $customer->overrides);
+
+    expect(Stores::refusal($again))->toContain('unknown-override');
 });
 
 test('a customer with cards cannot move to another profile', function () {
@@ -169,11 +180,46 @@ test('a rerun updates a row without changing its uuid or key', function () {
         ->and($again->meta)->toBe(['n' => 1]);
 });
 
-test('a card holds at most 2,000 rows, and a call at most 5,000', function () {
+test('a call sends at most 5,000 rows', function () {
     $card = Stores::card();
-    $rows = array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1, 2001));
+    $rows = array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1, 5001));
 
     expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', $rows)))->toBe(['too-many-rows']);
+});
+
+test('a card holds at most 2,000 rows, counted across calls', function () {
+    $card  = Stores::card();
+    $first = array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1, 1500));
+    Stores::for()->saveRows($card, 'rows', $first);
+
+    $more = array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1001, 2001));
+    expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', $more)))->toBe(['too-many-rows-on-card']);
+
+    $rerun = array_map(static fn (int $n) => ['values' => Stores::row("R$n", ['first' => 1])], range(1, 1500));
+    expect(Stores::for()->saveRows($card, 'rows', $rerun))->toHaveCount(1500)
+        ->and(RateCardRow::query()->count())->toBe(1500);
+});
+
+test('saving many rows takes a bounded number of queries', function () {
+    $card = Stores::card();
+    $rows = array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1, 1000));
+
+    $connection = Capsule::connection();
+    $connection->enableQueryLog();
+    Stores::for()->saveRows($card, 'rows', $rows);
+    $inserts = count($connection->getQueryLog());
+    // MySQL hands JSON objects back with their keys sorted, so stored values come back reordered.
+    foreach (RateCardRow::query()->get() as $row) {
+        $values = $row->values;
+        krsort($values);
+        Capsule::table('enhanced_pricing_rate_card_rows')->where('uuid', $row->uuid)
+            ->update(['values' => json_encode($values)]);
+    }
+    $connection->flushQueryLog();
+    Stores::for()->saveRows($card, 'rows', $rows);
+    $unchanged = count($connection->getQueryLog());
+
+    expect($inserts)->toBeLessThan(40)->and($unchanged)->toBeLessThan(40);
 });
 
 test('the row check agrees with the engine on every column type', function (string $type, mixed $value) {
@@ -200,4 +246,17 @@ test('another company\'s card or customer is refused', function () {
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
         ->and(fn () => Stores::for('a')->saveCustomer(Database::customer('a'), Stores::profile('b', null, 'b2')))
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class);
+});
+
+test('rows go only on a card the company has stored, whatever the card object says', function () {
+    $card   = Stores::card('b');
+    $forged = new RateCard([
+        'company_uuid'          => Database::company('a'),
+        'pricing_customer_uuid' => Stores::customer('a')->uuid,
+    ]);
+    $forged->uuid = $card->uuid;
+
+    expect(fn () => Stores::for('a')->saveRows($forged, 'rows', [['values' => Stores::row()]]))
+        ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
+        ->and(RateCardRow::query()->count())->toBe(0);
 });

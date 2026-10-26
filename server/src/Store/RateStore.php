@@ -8,6 +8,7 @@ use Fleetbase\EnhancedPricing\Models\Profile;
 use Fleetbase\EnhancedPricing\Models\RateCard;
 use Fleetbase\EnhancedPricing\Models\RateCardRow;
 use Fleetbase\EnhancedPricing\Profile\Problem;
+use Illuminate\Support\Str;
 
 /**
  * Customers, their overrides, rate cards and rows, for PricingStore. A customer's overrides are
@@ -19,6 +20,8 @@ final class RateStore
     public const MAX_ROWS_PER_CARD = 2000;
 
     public const MAX_ROWS_PER_CALL = 5000;
+
+    private const INSERT_CHUNK = 200;
 
     public function __construct(private readonly StoreContext $context)
     {
@@ -52,6 +55,10 @@ final class RateStore
             }
             if ($meta !== null) {
                 $customer->meta = $meta;
+            }
+            $unchanged = $customer->exists && $customer->isDirty(['overrides', 'profile_uuid']) === false;
+            if ($overrides !== null && $unchanged) {
+                $customer->checkOverrides();
             }
             $customer->save();
 
@@ -102,6 +109,9 @@ final class RateStore
         if (count($rows) > self::MAX_ROWS_PER_CALL) {
             throw StoreRefused::refuse('too-many-rows', ['max' => self::MAX_ROWS_PER_CALL]);
         }
+        // Rows are inserted without the model's check, so the card is read back as the company's.
+        $card     = RateCard::firstOf(RateCard::ofCompany($this->context->company)->whereKey($card->uuid))
+            ?? throw new CrossCompanyReference(RateCard::class, 'uuid');
         $customer = $card->customer();
         $profile  = $customer?->profile();
         if ($customer === null || $profile === null) {
@@ -119,15 +129,13 @@ final class RateStore
             $total    = RateCardRow::ofCompany($this->context->company)->where('rate_card_uuid', $card->uuid)->count()
                 + count(array_diff_key($checked, $existing));
             if ($total > self::MAX_ROWS_PER_CARD) {
-                throw StoreRefused::refuse('too-many-rows', ['max' => self::MAX_ROWS_PER_CARD]);
+                throw StoreRefused::refuse('too-many-rows-on-card', ['max' => self::MAX_ROWS_PER_CARD]);
             }
 
-            $saved = [];
-            foreach ($checked as $key => $row) {
-                $saved[] = $this->write($existing[$key] ?? null, $card, $tableKey, $key, $row, $current['version']);
-            }
+            $this->write($card, $tableKey, $checked, $existing, $current['version']);
+            $saved = $this->existing($card, $tableKey);
 
-            return $saved;
+            return array_map(static fn (string $key) => $saved[$key], array_keys($checked));
         });
     }
 
@@ -150,34 +158,67 @@ final class RateStore
     }
 
     /**
-     * Saves one checked row. An existing row keeps its uuid, key and key values.
+     * Writes checked rows. New rows are inserted together, in chunks; the card was already checked
+     * as the company's, so the model's per-row check isn't needed. An existing row is saved only
+     * when something changed, and keeps its uuid, key and key values.
+     *
+     * @param array<string, array{key: list<mixed>, values: array<mixed>, meta?: array<mixed>|null}> $checked
+     * @param array<string, RateCardRow>                                                             $existing
+     */
+    private function write(RateCard $card, string $tableKey, array $checked, array $existing, int $version): void
+    {
+        $now    = (new RateCardRow())->freshTimestampString();
+        $insert = [];
+        foreach ($checked as $key => $row) {
+            $model = $existing[$key] ?? null;
+            if ($model === null) {
+                $insert[] = [
+                    'uuid'            => (string) Str::uuid(),
+                    'company_uuid'    => $this->context->company,
+                    'rate_card_uuid'  => $card->uuid,
+                    'table_key'       => $tableKey,
+                    'row_key'         => $key,
+                    'key_values'      => json_encode($row['key']),
+                    'values'          => json_encode($row['values']),
+                    'checked_version' => $version,
+                    'problems'        => null,
+                    'meta'            => isset($row['meta']) ? json_encode($row['meta']) : null,
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
+                continue;
+            }
+            if ($this->unchanged($model, $row, $version)) {
+                continue;
+            }
+            $model->values          = $row['values'];
+            $model->checked_version = $version;
+            $model->problems        = null;
+            if (array_key_exists('meta', $row)) {
+                $model->meta = $row['meta'];
+            }
+            $model->save();
+        }
+        foreach (array_chunk($insert, self::INSERT_CHUNK) as $chunk) {
+            RateCardRow::query()->insert($chunk);
+        }
+    }
+
+    /**
+     * Whether a stored row already holds what was sent, checked against this version. Values are
+     * compared canonically, since MySQL hands JSON objects back with their keys reordered.
      *
      * @param array{key: list<mixed>, values: array<mixed>, meta?: array<mixed>|null} $row
      */
-    private function write(
-        ?RateCardRow $model,
-        RateCard $card,
-        string $tableKey,
-        string $key,
-        array $row,
-        int $version,
-    ): RateCardRow {
-        $model ??= new RateCardRow([
-            'company_uuid'   => $this->context->company,
-            'rate_card_uuid' => $card->uuid,
-            'table_key'      => $tableKey,
-            'row_key'        => $key,
-            'key_values'     => $row['key'],
-        ]);
-        $model->values          = $row['values'];
-        $model->checked_version = $version;
-        $model->problems        = null;
-        if (array_key_exists('meta', $row)) {
-            $model->meta = $row['meta'];
-        }
-        $model->save();
+    private function unchanged(RateCardRow $model, array $row, int $version): bool
+    {
+        $meta = array_key_exists('meta', $row) === false
+            || Canonical::json($model->meta) === Canonical::json($row['meta']);
 
-        return $model;
+        return $meta
+            && $model->checked_version === $version
+            && $model->problems === null
+            && Canonical::json($model->values) === Canonical::json($row['values']);
     }
 
     /**

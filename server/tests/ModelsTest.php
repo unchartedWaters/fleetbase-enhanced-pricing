@@ -108,6 +108,18 @@ test('a new record cannot point at another company\'s parent', function () {
         ]))->toThrow(CrossCompanyReference::class);
 });
 
+test('no record moves to another company, and a row keeps its key', function () {
+    $a = Stores::everything('a');
+
+    foreach ($a as $record) {
+        $record->company_uuid = Database::company('b');
+        expect(fn () => $record->save())->toThrow(ImmutableRecord::class, '', $record::class);
+        $record->refresh();
+    }
+    $a['row']->row_key = str_repeat('0', 64);
+    expect(fn () => $a['row']->save())->toThrow(ImmutableRecord::class);
+});
+
 test('a customer save that changes only meta never rechecks its overrides', function () {
     $store    = Stores::for();
     $profile  = Stores::profile();
@@ -203,3 +215,16 @@ test('deleting a company row removes every pricing row of that company only', fu
             ->and($record::ofCompany(Database::company('b'))->count())->toBe(1);
     }
 });
+
+test('a live change is only cancelled whole: not live, with when it was cancelled', function (array $fields) {
+    $change = Stores::everything('a')['change'];
+
+    expect(fn () => $change->update($fields))->toThrow(ImmutableRecord::class)
+        ->and($change->refresh()->live)->toBe(1)
+        ->and($change->cancelled_at)->toBeNull();
+})->with([
+    'who only'           => [['cancelled_by_uuid' => 'user-9']],
+    'when only'          => [['cancelled_at' => '2026-11-02 12:00:00']],
+    'live set to 0'      => [['live' => 0]],
+    'not live, no when'  => [['live' => null]],
+]);

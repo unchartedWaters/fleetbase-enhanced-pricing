@@ -64,7 +64,7 @@ final class VersionStore
     ): ProfileVersion {
         $this->context->own($profile);
         $new     = $this->context->normalize($definition);
-        $current = $this->context->current($profile);
+        $current = $this->context->current($this->context->fresh($profile));
         if ($builtOn !== null && $builtOn !== $current['version']) {
             throw StoreRefused::refuse('version-outdated', ['current' => $current['version']]);
         }
@@ -83,7 +83,7 @@ final class VersionStore
             if ($stale !== [] && $acceptStale === false) {
                 $list = array_map(static fn (array $entry) => [
                     'kind'     => $entry['kind'],
-                    'uuid'     => $entry['model']->uuid,
+                    'uuid'     => $entry['uuid'],
                     'problems' => $entry['problems'],
                 ], $stale);
 
@@ -91,6 +91,7 @@ final class VersionStore
             }
             $version = $this->insertVersion($locked, $current['version'] + 1, $definition, $userUuid);
             $this->record($entries, $version->version);
+            $profile->setRawAttributes($locked->getAttributes(), true);
 
             return $version;
         };
@@ -134,12 +135,11 @@ final class VersionStore
     {
         $fitting = [];
         foreach ($entries as $entry) {
-            $model = $entry['model'];
             if ($entry['problems'] === []) {
-                $fitting[$model::class][] = $model->uuid;
+                $fitting[$entry['class']][] = $entry['uuid'];
                 continue;
             }
-            $model->newQuery()->whereKey($model->uuid)->update([
+            $entry['class']::query()->whereKey($entry['uuid'])->update([
                 'checked_version' => $version,
                 'problems'        => json_encode(StoreRefused::stored($entry['problems'])),
             ]);

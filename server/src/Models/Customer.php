@@ -63,11 +63,12 @@ final class Customer extends PricingModel
 
     /**
      * Overrides are checked against the profile's current version whenever they or the profile
-     * change, and only then, so a save of meta alone never fails on a stale customer.
+     * change, so a save of meta alone never fails on a stale customer. The store also calls this
+     * when overrides are sent again unchanged.
      *
      * @throws StoreRefused
      */
-    protected function checkOverrides(): void
+    public function checkOverrides(): void
     {
         $profile = $this->profile();
         $version = $profile?->currentVersion();

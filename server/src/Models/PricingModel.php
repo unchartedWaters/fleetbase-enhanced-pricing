@@ -26,6 +26,13 @@ abstract class PricingModel extends Model
      */
     protected const PARENTS = [];
 
+    /**
+     * Columns that never change once saved, besides company_uuid, which no record changes.
+     *
+     * @var list<string>
+     */
+    protected const FIXED = [];
+
     protected $primaryKey = 'uuid';
 
     protected $keyType = 'string';
@@ -99,8 +106,16 @@ abstract class PricingModel extends Model
                 $model->setAttribute('uuid', (string) Str::uuid());
             }
         });
+        // No record moves company. Then a parent in another company is reported, even on a column
+        // that can't change, before any other change to a fixed column.
         static::saving(static function (PricingModel $model): void {
+            if ($model->exists && $model->isDirty('company_uuid')) {
+                throw new ImmutableRecord($model::class);
+            }
             $model->checkParents();
+            if ($model->exists && $model::FIXED !== [] && $model->isDirty($model::FIXED)) {
+                throw new ImmutableRecord($model::class);
+            }
         });
     }
 

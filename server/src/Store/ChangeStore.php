@@ -34,7 +34,7 @@ final class ChangeStore
             $current = $this->context->current($this->context->lock($profile));
             $today   = $this->context->today($current['normalized']);
             $live    = $this->stored($profile, $path, $effectiveFrom);
-            if ($live !== null && json_encode($live->value) === json_encode($value)) {
+            if ($live !== null && Canonical::json($live->value) === Canonical::json($value)) {
                 return $live;
             }
             if ($live !== null && $live->effective_from <= $today) {

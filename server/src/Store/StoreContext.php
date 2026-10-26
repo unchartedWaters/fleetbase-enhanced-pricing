@@ -48,14 +48,24 @@ final class StoreContext
      */
     public function lock(Profile $profile): Profile
     {
+        return $this->fresh($profile, true);
+    }
+
+    /**
+     * A fresh copy of the profile row, so a caller's older copy never decides the current version.
+     */
+    public function fresh(Profile $profile, bool $lock = false): Profile
+    {
         $query = Profile::ofCompany($this->company)->whereKey($profile->uuid);
-        $query->getQuery()->lockForUpdate();
-        $locked = Profile::firstOf($query);
-        if ($locked === null) {
+        if ($lock) {
+            $query->getQuery()->lockForUpdate();
+        }
+        $copy = Profile::firstOf($query);
+        if ($copy === null) {
             throw new CrossCompanyReference(Profile::class, 'uuid');
         }
 
-        return $locked;
+        return $copy;
     }
 
     /**

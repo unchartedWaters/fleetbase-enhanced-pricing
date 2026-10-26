@@ -22,9 +22,9 @@ return new class extends Migration {
             $table->string('line_name');
             $table->text('note')->nullable();
             $table->char('added_by_uuid', 36)->nullable();
-            $table->timestamp('added_at');
+            $table->dateTime('added_at');
             $table->char('removed_by_uuid', 36)->nullable();
-            $table->timestamp('removed_at')->nullable();
+            $table->dateTime('removed_at')->nullable();
             $table->timestamps();
 
             $table->foreign('company_uuid', 'ep_charges_company_fk')

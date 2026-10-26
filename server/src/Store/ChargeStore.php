@@ -53,14 +53,15 @@ final class ChargeStore
     public function remove(ManualCharge $charge, ?string $userUuid): ManualCharge
     {
         $this->context->own($charge);
-        if ($charge->removed_at !== null) {
+        // One conditional update, so two removals at once can't both succeed.
+        $removed = ManualCharge::ofCompany($this->context->company)->whereKey($charge->uuid)
+            ->whereNull('removed_at')
+            ->update(['removed_by_uuid' => $userUuid, 'removed_at' => $this->context->timestamp()]);
+        if ($removed === 0) {
             throw StoreRefused::refuse('charge-removed', [], 'removed_at');
         }
-        $charge->removed_by_uuid = $userUuid;
-        $charge->removed_at      = $this->context->timestamp();
-        $charge->save();
 
-        return $charge;
+        return $charge->refresh();
     }
 
     private function isOrder(string $uuid): bool

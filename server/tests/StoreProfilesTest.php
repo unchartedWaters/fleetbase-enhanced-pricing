@@ -1,9 +1,9 @@
 <?php
 
 use Fleetbase\EnhancedPricing\Models\Customer;
-use Fleetbase\EnhancedPricing\Models\DatedChange;
+use Fleetbase\EnhancedPricing\Models\ImmutableRecord;
 use Fleetbase\EnhancedPricing\Models\Profile;
-use Fleetbase\EnhancedPricing\Models\RateCardRow;
+use Fleetbase\EnhancedPricing\Models\ProfileVersion;
 use Fleetbase\EnhancedPricing\Store\StoreRefused;
 use Fleetbase\EnhancedPricing\Tests\Support\Database;
 use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
@@ -186,5 +186,37 @@ test('another company\'s profile is refused', function () {
 
     expect(fn () => Stores::for('a')->addVersion($profile, Profiles::example()))
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
-        ->and(DatedChange::query()->count() + RateCardRow::query()->count())->toBe(0);
+        ->and(ProfileVersion::query()->where('profile_uuid', $profile->uuid)->count())->toBe(1)
+        ->and($profile->refresh()->current_version)->toBe(1);
 });
+
+test('versions can be added one after another through the same profile object', function () {
+    $profile = Stores::profile();
+
+    Stores::for()->addVersion($profile, Profiles::example());
+    $third = Stores::for()->addVersion($profile, Profiles::example());
+
+    expect($third->version)->toBe(3)->and($profile->current_version)->toBe(3);
+});
+
+test('a version can be added through a copy of the profile loaded before the last one', function () {
+    $profile = Stores::profile();
+    $copy    = Profile::query()->findOrFail($profile->uuid);
+    Stores::for()->addVersion($profile, Profiles::example());
+
+    $third = Stores::for()->addVersion($copy, Profiles::example());
+
+    expect($third->version)->toBe(3)->and($copy->current_version)->toBe(3);
+});
+
+test('a profile keeps its company, key and fixed units', function (string $field, string $value) {
+    $profile = Stores::profile();
+
+    expect(fn () => $profile->update([$field => $value]))->toThrow(ImmutableRecord::class)
+        ->and($profile->refresh()->{$field})->not->toBe($value);
+})->with([
+    'company'       => ['company_uuid', Database::company('b')],
+    'key'           => ['key', 'other'],
+    'currency'      => ['currency', 'EUR'],
+    'distance unit' => ['distance_unit', 'mi'],
+]);

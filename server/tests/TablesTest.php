@@ -40,6 +40,14 @@ test('the down migrations drop every table', function () {
     }
 });
 
+test('the times a row was added, removed or cancelled are datetimes, never updated by MySQL', function () {
+    $sql = implode("\n", Tables::statements());
+
+    foreach (['added_at', 'removed_at', 'cancelled_at'] as $column) {
+        expect($sql)->toContain("`$column` datetime")->not->toContain("`$column` timestamp");
+    }
+});
+
 test('no table has soft deletes', function () {
     foreach (Tables::names() as $table) {
         expect(Schema::hasColumn($table, 'deleted_at'))->toBeFalse("$table has deleted_at");

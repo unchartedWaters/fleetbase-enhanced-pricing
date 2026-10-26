@@ -20,6 +20,8 @@ final class RateCardRow extends PricingModel
 {
     protected const PARENTS = ['rate_card_uuid' => RateCard::class];
 
+    protected const FIXED = ['rate_card_uuid', 'table_key', 'row_key', 'key_values'];
+
     protected $table = 'enhanced_pricing_rate_card_rows';
 
     protected $fillable = [

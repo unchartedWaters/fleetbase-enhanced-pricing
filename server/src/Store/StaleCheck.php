@@ -16,12 +16,21 @@ use Fleetbase\EnhancedPricing\Profile\Problem;
  * Checks every entry stored against a profile, its customers' overrides, its live dated changes
  * and its customers' rate card rows, against a new version of the profile. Each entry carries a
  * fingerprint of what was checked, so a second pass inside the profile lock rechecks only what
- * changed since the first.
+ * changed since the first. Entries keep the record's class and uuid, not the record, and rows are
+ * read in chunks, so a large profile isn't held in memory.
  *
- * @phpstan-type Entry array{kind: string, model: PricingModel, fingerprint: string, problems: list<Problem>}
+ * @phpstan-type Entry array{
+ *     kind: string,
+ *     class: class-string<PricingModel>,
+ *     uuid: string,
+ *     fingerprint: string,
+ *     problems: list<Problem>,
+ * }
  */
 final class StaleCheck
 {
+    private const CHUNK = 500;
+
     /**
      * @param array<string, mixed> $definition the new version as saved
      * @param array<string, mixed> $normalized the new version normalized
@@ -47,18 +56,20 @@ final class StaleCheck
         $rows->getQuery()->whereIn('rate_card_uuid', array_map(self::uuid(...), RateCard::listOf($cards)));
         $changes   = DatedChange::ofCompany($this->company)->where('profile_uuid', $profile->uuid)->where('live', 1);
         $changes->getQuery()->orderBy('effective_from');
-        $rows      = RateCardRow::listOf($rows);
-        $changes   = DatedChange::listOf($changes);
 
         $entries = [];
         foreach ($customers as $customer) {
             $entries[$customer->uuid] = $this->reuse($earlier, $customer, 'customer', $this->customer(...));
         }
-        foreach ($rows as $row) {
-            $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
-        }
+        $rows->chunkById(self::CHUNK, function (iterable $chunk) use (&$entries, $earlier): void {
+            foreach ($chunk as $row) {
+                if ($row instanceof RateCardRow) {
+                    $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
+                }
+            }
+        }, 'uuid');
 
-        return $entries + $this->changes($changes, $earlier);
+        return $entries + $this->changes(DatedChange::listOf($changes), $earlier);
     }
 
     /**
@@ -77,7 +88,13 @@ final class StaleCheck
             $problems = $check($model);
         }
 
-        return ['kind' => $kind, 'model' => $model, 'fingerprint' => $fingerprint, 'problems' => $problems];
+        return [
+            'kind'        => $kind,
+            'class'       => $model::class,
+            'uuid'        => $model->uuid,
+            'fingerprint' => $fingerprint,
+            'problems'    => $problems,
+        ];
     }
 
     /**
@@ -146,7 +163,8 @@ final class StaleCheck
         foreach ($changes as $index => $change) {
             $entries[$change->uuid] = [
                 'kind'        => 'dated_change',
-                'model'       => $change,
+                'class'       => DatedChange::class,
+                'uuid'        => $change->uuid,
                 'fingerprint' => $fingerprints[$index],
                 'problems'    => $unchanged ? $earlier[$change->uuid]['problems'] : $byIndex[$index],
             ];

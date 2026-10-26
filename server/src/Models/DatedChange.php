@@ -4,7 +4,8 @@ namespace Fleetbase\EnhancedPricing\Models;
 
 /**
  * A dated change to one of a profile's global values. live is 1, or NULL once cancelled, so a
- * cancelled change never blocks its date. Only cancelling and the recheck columns ever change.
+ * cancelled change never blocks its date. Only cancelling, once, and the recheck columns ever
+ * change.
  *
  * @property string                          $profile_uuid
  * @property string                          $path
@@ -22,7 +23,9 @@ final class DatedChange extends PricingModel
 {
     protected const PARENTS = ['profile_uuid' => Profile::class];
 
-    private const FIXED = ['company_uuid', 'profile_uuid', 'path', 'value', 'effective_from', 'added_at'];
+    protected const FIXED = ['profile_uuid', 'path', 'value', 'effective_from', 'added_by_uuid', 'added_at'];
+
+    private const CANCELLATION = ['live', 'cancelled_by_uuid', 'cancelled_at'];
 
     protected $table = 'enhanced_pricing_dated_changes';
 
@@ -48,8 +51,10 @@ final class DatedChange extends PricingModel
     {
         parent::booted();
         static::updating(static function (DatedChange $change): void {
-            $revived = $change->getOriginal('live') === null && $change->live !== null;
-            if ($revived || $change->isDirty(self::FIXED)) {
+            // A cancelled change stays as it was cancelled: by whom, when, and not live. A live change
+            // is only cancelled whole: no longer live, with when it was cancelled.
+            $whole = $change->getOriginal('live') !== null && $change->live === null && $change->cancelled_at !== null;
+            if ($change->isDirty(self::CANCELLATION) && $whole === false) {
                 throw new ImmutableRecord(self::class);
             }
         });
