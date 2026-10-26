@@ -181,8 +181,9 @@ final class Fees
             $measure = $this->measure($fee, $entity);
             if ($measure === null) {
                 $this->order->note('entity-not-measured', [
-                    'entity' => $entity->number,
-                    'rule'   => R::text($fee['key']),
+                    'entity'   => $entity->number,
+                    'rule'     => R::text($fee['name']),
+                    'rule_key' => R::text($fee['key']),
                 ]);
                 continue;
             }

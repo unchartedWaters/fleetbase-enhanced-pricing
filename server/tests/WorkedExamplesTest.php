@@ -74,7 +74,7 @@ test('a customer override replaces one global value', function () {
 });
 
 test('an hourly manual charge', function () {
-    $quote = Orders::price(['manual' => [new ManualChargeInput(key: 'hourly', quantity: '1.75')]]);
+    $quote = Orders::price(['manual' => [ManualChargeInput::new('hourly', quantity: '1.75')]]);
 
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
@@ -84,7 +84,7 @@ test('an hourly manual charge', function () {
 });
 
 test('an entered manual charge within its limits', function () {
-    $quote = Orders::price(['manual' => [new ManualChargeInput(key: 'entered', amount: 6400)]]);
+    $quote = Orders::price(['manual' => [ManualChargeInput::new('entered', amount: 6400)]]);
 
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
@@ -94,7 +94,7 @@ test('an entered manual charge within its limits', function () {
 });
 
 test('an entered manual charge above its maximum is refused', function () {
-    Orders::price(['manual' => [new ManualChargeInput(key: 'entered', amount: 16000)]]);
+    Orders::price(['manual' => [ManualChargeInput::new('entered', amount: 16000)]]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.manual-charge-amount-out-of-range');
 
 test('a scheduled change takes effect at 00:00 on its date', function (string $pickup, array $overrides, int $total) {

@@ -148,7 +148,8 @@ final class OrderContext
         }
         foreach ($this->attributeDefinitions as $key => $definition) {
             if ($definition['scope'] === $scope && $this->isRequired($definition) && isset($read[$key]) === false) {
-                throw $this->fail('attribute-required', ['attribute' => $key, 'entity' => $entity]);
+                $params = ['attribute' => R::text($definition['name']), 'entity' => $entity];
+                throw $this->fail('attribute-required', $params);
             }
         }
 
@@ -160,7 +161,7 @@ final class OrderContext
      */
     private function attributeValue(array $definition, mixed $value, int $entity): bool|string|BigRational
     {
-        $invalid = $this->fail('attribute-invalid', ['attribute' => R::text($definition['key']), 'entity' => $entity]);
+        $invalid = $this->fail('attribute-invalid', ['attribute' => R::text($definition['name']), 'entity' => $entity]);
         switch ($definition['type']) {
             case 'boolean':
                 return is_bool($value) ? $value : throw $invalid;
@@ -190,9 +191,8 @@ final class OrderContext
      */
     private function isRequired(array $definition): bool
     {
-        $required = $definition['required'];
-
-        return $required === true || (is_array($required) && in_array($this->serviceRate['key'], $required, true));
+        return $definition['required'] === true
+            || in_array($this->serviceRate['key'], R::strings($definition['required_for']), true);
     }
 
     private function kilograms(EntityInput $input, int $number): ?BigRational

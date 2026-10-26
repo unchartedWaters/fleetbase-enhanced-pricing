@@ -55,7 +55,10 @@ final class Schema
             if (($spec['nullable'] ?? false) === true) {
                 return null;
             }
-            $this->add(Problem::atPath($path, 'wrong-type', ['expected' => self::string($spec['type'] ?? '')]));
+            $type = self::string($spec['type'] ?? '');
+            $this->add($type === 'raw'
+                ? Problem::atPath($path, 'value-required')
+                : Problem::atPath($path, 'wrong-type', ['expected' => $type]));
 
             return null;
         }
@@ -199,7 +202,8 @@ final class Schema
     }
 
     /**
-     * A number: up to 7 digits and 6 decimals, from min (inclusive, or exclusive with "above").
+     * A number: up to 7 digits and 6 decimals, from min (inclusive, or exclusive with "above"), up
+     * to max when there is one.
      *
      * @return array<string, mixed>
      */
@@ -240,9 +244,14 @@ final class Schema
         $number = Exact::rational($canonical);
         $min    = self::string($spec['min'] ?? '0');
         $max    = isset($spec['max']) ? self::string($spec['max']) : null;
-        $below  = ($spec['above'] ?? false) === true ? $number->isLessThanOrEqualTo($min) : $number->isLessThan($min);
-        if ($below || ($max !== null && $number->isGreaterThan($max))) {
-            $this->add(Problem::atPath($path, 'out-of-range', ['min' => $min, 'max' => $max]));
+        $above  = ($spec['above'] ?? false) === true;
+        if ($above ? $number->isLessThanOrEqualTo($min) : $number->isLessThan($min)) {
+            $this->add(Problem::atPath($path, $above ? 'number-not-above' : 'number-too-small', ['min' => $min]));
+
+            return null;
+        }
+        if ($max !== null && $number->isGreaterThan($max)) {
+            $this->add(Problem::atPath($path, 'number-too-large', ['max' => $max]));
 
             return null;
         }

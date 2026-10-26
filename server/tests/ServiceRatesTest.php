@@ -93,12 +93,12 @@ test('a blank column that a rule needs stops pricing and names the customer, car
         Orders::price(['profile' => $this->profile, 'row' => $row, 'entities' => [Orders::entity(5, 'separate')]]);
         $this->fail('Pricing should have stopped.');
     } catch (PricingFailed $failure) {
-        expect($failure->key)->toBe('enhanced-pricing.pricing.missing-amount')
+        expect($failure->key)->toBe('enhanced-pricing.pricing.missing-row-amount')
             ->and($failure->params)->toMatchArray([
                 'customer' => 'Example customer',
                 'card'     => 'Main',
                 'row'      => 'R1',
-                'rule'     => 'separate',
+                'rule'     => 'Separate entity type',
                 'column'   => 'separate_price',
             ]);
     }
@@ -238,17 +238,21 @@ test('a row missing a required column stops pricing', function () {
     Orders::price(['profile' => $this->profile, 'row' => $row]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.row-invalid');
 
-test('service rates a customer may not order', function (array $profileEdits, array $overrides, string $rate) {
-    $profile = $this->profile;
-    foreach ($profileEdits as $path => $value) {
-        $profile = Profiles::set($profile, $path, $value);
-    }
+test(
+    'service rates a customer may not order',
+    function (array $profileEdits, array $overrides, string $rate, string $key) {
+        $profile = $this->profile;
+        foreach ($profileEdits as $path => $value) {
+            $profile = Profiles::set($profile, $path, $value);
+        }
 
-    Orders::price(['profile' => $profile, 'overrides' => $overrides, 'service_rate' => $rate]);
-})->throws(PricingFailed::class, 'enhanced-pricing.pricing.service-rate-not-allowed')->with([
-    'disabled in the profile'  => [['service_rates.0.enabled' => false], [], 'tiered'],
-    'disabled by an override'  => [[], ['service_rates.tiered.enabled' => false], 'tiered'],
-    'not in the allowed list'  => [[], ['allowed_service_rates' => ['distance']], 'tiered'],
+        expect(fn () => Orders::price(['profile' => $profile, 'overrides' => $overrides, 'service_rate' => $rate]))
+            ->toThrow(PricingFailed::class, 'enhanced-pricing.pricing.' . $key);
+    },
+)->with([
+    'disabled in the profile'  => [['service_rates.0.enabled' => false], [], 'tiered', 'service-rate-disabled'],
+    'disabled by an override'  => [[], ['service_rates.tiered.enabled' => false], 'tiered', 'service-rate-disabled'],
+    'not in the allowed list'  => [[], ['allowed_service_rates' => ['distance']], 'tiered', 'service-rate-not-allowed'],
 ]);
 
 test('an override can enable a service rate the profile disables', function () {

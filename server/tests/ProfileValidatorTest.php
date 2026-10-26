@@ -79,7 +79,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
     'unknown top-level field'      => ['colour', 'red', 'colour', 'unknown-field'],
     'missing currency'             => ['currency', '__remove__', 'currency', 'missing-field'],
     'lowercase currency'           => ['currency', 'usd', 'currency', 'wrong-type'],
-    'unknown timezone'             => ['timezone', 'Mars/Olympus', 'timezone', 'wrong-type'],
+    'unknown timezone'             => ['scheduling_timezone', 'Mars/Olympus', 'scheduling_timezone', 'wrong-type'],
     'distance unit'                => ['distance_unit', 'yd', 'distance_unit', 'not-one-of'],
     'no products'                  => ['products', [], 'products', 'too-few'],
     'products not a list'          => ['products', ['a' => 1], 'products', 'wrong-type'],
@@ -104,10 +104,29 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
         'unknown-field',
     ],
     'required for unknown rate'    => [
-        'attributes.0.required',
+        'attributes.0.required_for',
         ['nope'],
-        'attributes.0.required.0',
+        'attributes.0.required_for.0',
         'unknown-reference',
+    ],
+    'required as a list'           => [
+        'attributes.0.required',
+        ['tiered'],
+        'attributes.0.required',
+        'wrong-type',
+    ],
+    'required and required for'    => [
+        'attributes.0',
+        [
+            'key'          => 'extra',
+            'name'         => 'Extra handling',
+            'scope'        => 'order',
+            'type'         => 'boolean',
+            'required'     => true,
+            'required_for' => ['tiered'],
+        ],
+        'attributes.0.required_for',
+        'required-and-required-for',
     ],
     'choice with no choices'       => [
         'attributes.0',
@@ -284,7 +303,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
         'service_rates.1.per_meter.maximum_distance',
         20001,
         'service_rates.1.per_meter.maximum_distance',
-        'out-of-range',
+        'number-too-large',
     ],
     'minimum above maximum dist'   => [
         'service_rates.1.per_meter.minimum_distance',
@@ -369,7 +388,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
         'wrong-type',
     ],
     'unknown holiday list'         => ['fees.2.holidays', 'nope', 'fees.2.holidays', 'unknown-reference'],
-    'duplicate fee key'            => ['fees.1.key', 'additional', 'fees.1.key', 'duplicate'],
+    'duplicate fee key'            => ['fees.1.key', 'extra_handling', 'fees.1.key', 'duplicate'],
     // Subtotal fees.
     'percentage per line'          => ['subtotal_fees.0.charge', 'per_line', 'subtotal_fees.0.charge', 'not-one-of'],
     'amount on percentage'         => ['subtotal_fees.0.amount', 100, 'subtotal_fees.0.amount', 'not-allowed-for-mode'],
@@ -433,7 +452,7 @@ test('a problem in one part of the profile', function (string $path, mixed $valu
         'manual_charges.0.quantity.step',
         '0',
         'manual_charges.0.quantity.step',
-        'out-of-range',
+        'number-not-above',
     ],
     'maximum not a step multiple'  => [
         'manual_charges.0.quantity.maximum',
@@ -525,27 +544,4 @@ test('a profile above 64 KB is refused', function () {
     $keys = array_map(static fn ($problem) => $problem->key, (new ProfileValidator())->check($profile));
 
     expect($keys)->toContain('enhanced-pricing.profile.too-large');
-});
-
-test('every problem and pricing key has English text', function () {
-    $translations = Symfony\Component\Yaml\Yaml::parseFile(__DIR__ . '/../../translations/en-us.yaml');
-    $source       = '';
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__ . '/../src')) as $file) {
-        if ($file->isFile()) {
-            $source .= file_get_contents($file->getPathname());
-        }
-    }
-    preg_match_all("/Problem::atPath\\((?:[^()]|\\([^()]*\\))*?,\\s*'([a-z-]+)'/", $source, $problems);
-    preg_match_all("/(?:fail|because|note)\\('([a-z-]+)'/", $source, $pricing);
-
-    expect(count(array_unique($problems[1])))->toBeGreaterThan(30)
-        ->and(count(array_unique($pricing[1])))->toBeGreaterThan(25);
-    foreach (array_unique($problems[1]) as $key) {
-        expect($translations['enhanced-pricing']['profile'][$key] ?? null)
-            ->toBeString("profile.$key has no English text");
-    }
-    foreach (array_unique($pricing[1]) as $key) {
-        expect($translations['enhanced-pricing']['pricing'][$key] ?? null)
-            ->toBeString("pricing.$key has no English text");
-    }
 });

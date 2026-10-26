@@ -62,7 +62,7 @@ final class ServiceFee
             default     => [
                 $this->draft(
                     1,
-                    $this->amount(R::map($this->rate['fixed_rate'])['amount'] ?? null, R::text($this->rate['key'])),
+                    $this->amount(R::map($this->rate['fixed_rate'])['amount'] ?? null, $this->ruleName()),
                     $this->lineName(),
                 ),
             ],
@@ -101,14 +101,15 @@ final class ServiceFee
             if ($end > $start) {
                 $drafts[] = $this->draft(
                     $end - $start,
-                    $this->amount($tier['price'], R::text($this->rate['key'])),
+                    $this->amount($tier['price'], $this->ruleName()),
                     $name,
                 );
             }
             $start = $limit ?? $counted;
         }
         if ($counted > $start) {
-            throw $this->order->fail('too-many-entities-for-tiers', ['entities' => $counted, 'limit' => $start]);
+            $params = ['entities' => $counted, 'limit' => $start, 'rule' => $this->ruleName()];
+            throw $this->order->fail('too-many-entities-for-tiers', $params);
         }
 
         return $drafts;
@@ -124,15 +125,15 @@ final class ServiceFee
             $column = R::text($upTo['column']);
             $limit  = $this->cell($column);
             if ($limit === null) {
-                $missing = $this->order->fail('missing-amount', [
-                    'rule'   => R::text($this->rate['key']),
+                $missing = $this->order->fail('missing-tier-limit', [
+                    'rule'   => $this->ruleName(),
                     'column' => $column,
                 ]);
                 throw $missing;
             }
         }
         if (is_int($limit) === false || $limit <= $previous) {
-            throw $this->order->fail('tiers-invalid', ['rule' => R::text($this->rate['key'])]);
+            throw $this->order->fail('tiers-invalid', ['rule' => $this->ruleName()]);
         }
 
         return $limit;
@@ -164,7 +165,7 @@ final class ServiceFee
                 'product'  => R::text($ownPrice['product']),
                 'name'     => R::text($type['name']),
                 'quantity' => count($entities),
-                'unit'     => $this->amount(['column' => $ownPrice['column']], $key),
+                'unit'     => $this->amount(['column' => $ownPrice['column']], R::text($type['name'])),
                 'source'   => 'entity_type:' . $key,
             ];
         }
@@ -218,7 +219,7 @@ final class ServiceFee
         $column = R::text($reference['column'] ?? '');
         $value  = $this->cell($column);
         if (is_int($value) === false) {
-            throw $this->order->fail('missing-amount', ['rule' => $rule, 'column' => $column]);
+            throw $this->order->fail('missing-row-amount', ['rule' => $rule, 'column' => $column]);
         }
 
         return $value;
@@ -233,10 +234,18 @@ final class ServiceFee
         $column = R::text($lineName['column'] ?? '');
         $value  = $this->cell($column);
         if (is_string($value) === false) {
-            throw $this->order->fail('missing-value', ['rule' => R::text($this->rate['key']), 'column' => $column]);
+            throw $this->order->fail('missing-value', ['rule' => $this->ruleName(), 'column' => $column]);
         }
 
         return $value;
+    }
+
+    /**
+     * The service rate's name, which messages use to name it.
+     */
+    private function ruleName(): string
+    {
+        return R::text($this->rate['name']);
     }
 
     private function cell(string $column): mixed

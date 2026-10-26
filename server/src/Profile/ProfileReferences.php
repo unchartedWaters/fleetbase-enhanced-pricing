@@ -85,15 +85,13 @@ final class ProfileReferences
             if (isset($attribute['choices'])) {
                 $this->unique(self::items($attribute['choices']), 'key', "attributes.$index.choices");
             }
-            if (is_array($attribute['required'])) {
-                foreach (self::strings($attribute['required']) as $position => $key) {
-                    if (isset($rates[$key]) === false) {
-                        $this->schema->add(Problem::atPath(
-                            "attributes.$index.required.$position",
-                            'unknown-reference',
-                            ['kind' => 'service rate', 'key' => $key],
-                        ));
-                    }
+            foreach (self::strings($attribute['required_for']) as $position => $key) {
+                if (isset($rates[$key]) === false) {
+                    $this->schema->add(Problem::atPath(
+                        "attributes.$index.required_for.$position",
+                        'unknown-reference',
+                        ['kind' => 'service_rate', 'key' => $key],
+                    ));
                 }
             }
         }
@@ -107,7 +105,7 @@ final class ProfileReferences
             $this->schema->add(Problem::atPath(
                 'default_entity_type',
                 'unknown-reference',
-                ['kind' => 'entity type', 'key' => $default],
+                ['kind' => 'entity_type', 'key' => $default],
             ));
         }
         foreach (self::items($this->profile['entity_types']) as $index => $type) {
@@ -144,7 +142,7 @@ final class ProfileReferences
             $this->schema->add(Problem::atPath(
                 "$path.rate_table",
                 'unknown-reference',
-                ['kind' => 'rate table', 'key' => $table],
+                ['kind' => 'rate_table', 'key' => $table],
             ));
 
             return;
@@ -285,7 +283,8 @@ final class ProfileReferences
         if ($definition === null) {
             $this->schema->add(Problem::atPath($path, 'unknown-reference', ['kind' => 'column', 'key' => $column]));
         } elseif ($definition['type'] !== $type) {
-            $this->schema->add(Problem::atPath($path, 'column-wrong-type', ['column' => $column, 'expected' => $type]));
+            $params = ['column' => $column, 'column_type' => $type];
+            $this->schema->add(Problem::atPath($path, 'column-wrong-type', $params));
         }
     }
 

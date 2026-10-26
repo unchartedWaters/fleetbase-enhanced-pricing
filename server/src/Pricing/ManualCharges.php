@@ -7,7 +7,8 @@ use Fleetbase\EnhancedPricing\Support\Exact;
 
 /**
  * Manual charges on the order, after the service fee. A new charge is priced from the profile and
- * checked against its limits; a stored charge bills the amount saved with it.
+ * checked against its limits; a charge already added bills the product, name and amount stored
+ * with it. Either way the profile must still have the charge's key.
  */
 final class ManualCharges
 {
@@ -32,81 +33,76 @@ final class ManualCharges
         foreach ($charges as $charge) {
             $definition = $definitions[$charge->key]
                 ?? throw $this->order->fail('unknown-manual-charge', ['charge' => $charge->key]);
-            if ($charge->stored === true) {
-                [$amount, $name] = $this->stored($definition, $charge);
-            } else {
-                [$amount, $name] = $this->priced($definition, $charge);
-            }
+            $line       = $charge->isAdded() ? $this->added($charge) : $this->priced($definition, $charge);
             $this->order->book->add([[
-                'product'  => R::text($definition['product']),
-                'name'     => $name,
+                ...$line,
                 'quantity' => 1,
-                'unit'     => $amount,
                 'source'   => 'manual_charge:' . $charge->key,
             ]]);
         }
     }
 
     /**
-     * @param array<string, mixed> $definition
+     * A charge already added bills what was stored with it.
      *
-     * @return array{0: int, 1: string}
+     * @return array{product: string, name: string, unit: int}
      */
-    private function stored(array $definition, ManualChargeInput $charge): array
+    private function added(ManualChargeInput $charge): array
     {
+        $name    = R::text($charge->name);
+        $product = R::text($charge->product);
         if ($charge->amount === null || $charge->amount < 0) {
-            throw $this->order->fail('manual-charge-amount-out-of-range', ['charge' => $charge->key]);
+            throw $this->order->fail('manual-charge-amount-invalid', ['charge' => $name]);
         }
-        $quantity = Exact::canonical($charge->quantity);
-        $name     = R::text($definition['name']);
-        if (is_array($definition['quantity']) && $quantity !== null) {
-            $name = sprintf(
-                '%s (%s %s)',
-                $name,
-                Exact::display(Exact::rational($quantity)),
-                R::text($definition['quantity']['unit']),
-            );
+        $products = array_map(
+            static fn (array $known): mixed => $known['code'],
+            R::items($this->order->profile['products']),
+        );
+        if (in_array($product, $products, true) === false) {
+            throw $this->order->fail('manual-charge-product-unknown', ['charge' => $name, 'product' => $product]);
         }
 
-        return [$charge->amount, $name];
+        return ['product' => $product, 'name' => $name, 'unit' => $charge->amount];
     }
 
     /**
      * @param array<string, mixed> $definition
      *
-     * @return array{0: int, 1: string}
+     * @return array{product: string, name: string, unit: int}
      */
     private function priced(array $definition, ManualChargeInput $charge): array
     {
-        $key = $charge->key;
+        $name = R::text($definition['name']);
+        $line = ['product' => R::text($definition['product']), 'name' => $name];
         if ($definition['offered'] !== true) {
-            throw $this->order->fail('manual-charge-not-offered', ['charge' => $key]);
+            throw $this->order->fail('manual-charge-not-offered', ['charge' => $name]);
         }
         if ($this->order->inEffect($definition) === false) {
-            throw $this->order->fail('manual-charge-not-in-effect', ['charge' => $key, 'date' => $this->order->date()]);
+            $params = ['charge' => $name, 'date' => $this->order->date()];
+            throw $this->order->fail('manual-charge-not-in-effect', $params);
         }
-        $name    = R::text($definition['name']);
         $entered = $definition['entered'];
         if (is_array($entered)) {
-            return [$this->entered(R::map($entered), $charge), $name];
+            return $line + ['unit' => $this->entered(R::map($entered), $charge, $name)];
         }
         if ($charge->amount !== null) {
-            throw $this->order->fail('manual-charge-amount-not-entered', ['charge' => $key]);
+            throw $this->order->fail('manual-charge-amount-not-entered', ['charge' => $name]);
         }
         $amount   = is_int($definition['amount']) ? $definition['amount'] : 0;
         $quantity = $definition['quantity'];
         if (is_array($quantity) === false) {
             if ($charge->quantity !== null) {
-                throw $this->order->fail('manual-charge-quantity-invalid', ['charge' => $key]);
+                throw $this->order->fail('manual-charge-takes-no-quantity', ['charge' => $name]);
             }
 
-            return [$amount, $name];
+            return $line + ['unit' => $amount];
         }
-        $value = $this->quantity($charge, R::map($quantity));
+        $value = $this->quantity($charge, R::map($quantity), $name);
 
         return [
-            Exact::round($value->multipliedBy($amount)),
-            sprintf('%s (%s %s)', $name, Exact::display($value), R::text($quantity['unit'])),
+            'product' => $line['product'],
+            'name'    => sprintf('%s (%s %s)', $name, Exact::display($value), R::text($quantity['unit'])),
+            'unit'    => Exact::round($value->multipliedBy($amount)),
         ];
     }
 
@@ -115,11 +111,10 @@ final class ManualCharges
      *
      * @param array<string, mixed> $entered
      */
-    private function entered(array $entered, ManualChargeInput $charge): int
+    private function entered(array $entered, ManualChargeInput $charge, string $name): int
     {
-        $key = $charge->key;
         if ($charge->quantity !== null) {
-            throw $this->order->fail('manual-charge-quantity-invalid', ['charge' => $key]);
+            throw $this->order->fail('manual-charge-takes-no-quantity', ['charge' => $name]);
         }
         if (
             $charge->amount === null
@@ -127,7 +122,7 @@ final class ManualCharges
             || $charge->amount > $entered['maximum']
         ) {
             $outOfRange = $this->order->fail('manual-charge-amount-out-of-range', [
-                'charge'  => $key,
+                'charge'  => $name,
                 'minimum' => R::text($entered['minimum']),
                 'maximum' => R::text($entered['maximum']),
             ]);
@@ -142,11 +137,11 @@ final class ManualCharges
      *
      * @param array<string, mixed> $limits
      */
-    private function quantity(ManualChargeInput $charge, array $limits): \Brick\Math\BigRational
+    private function quantity(ManualChargeInput $charge, array $limits, string $name): \Brick\Math\BigRational
     {
         $canonical = Exact::canonical($charge->quantity);
         $invalid   = $this->order->fail('manual-charge-quantity-invalid', [
-            'charge'  => $charge->key,
+            'charge'  => $name,
             'step'    => R::text($limits['step']),
             'maximum' => R::text($limits['maximum']),
         ]);
