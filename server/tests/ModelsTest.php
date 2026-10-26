@@ -1,14 +1,10 @@
 <?php
 
 use Fleetbase\EnhancedPricing\Models\CrossCompanyReference;
-use Fleetbase\EnhancedPricing\Models\Customer;
 use Fleetbase\EnhancedPricing\Models\DatedChange;
 use Fleetbase\EnhancedPricing\Models\ImmutableRecord;
 use Fleetbase\EnhancedPricing\Models\ManualCharge;
-use Fleetbase\EnhancedPricing\Models\Profile;
 use Fleetbase\EnhancedPricing\Models\ProfileVersion;
-use Fleetbase\EnhancedPricing\Models\RateCard;
-use Fleetbase\EnhancedPricing\Models\RateCardRow;
 use Fleetbase\EnhancedPricing\Tests\Support\Database;
 use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
 use Fleetbase\EnhancedPricing\Tests\Support\Stores;
@@ -23,46 +19,13 @@ beforeEach(function () {
     Database::seed();
 });
 
-/**
- * One of everything for a company, through the store.
- *
- * @return array{profile: Profile, version: ProfileVersion, customer: Customer, card: RateCard, row: RateCardRow, change: DatedChange, charge: ManualCharge}
- */
-function everything(string $company): array
-{
-    $store    = Stores::for($company);
-    $profile  = Stores::profile($company);
-    $customer = Stores::customer($company, $profile);
-    $card     = $store->saveCard($customer, 'Main branch');
-    $rows     = $store->saveRows($card, 'rows', [['values' => Stores::row()]]);
-    $change   = $store->addDatedChange($profile, 'subtotal_fees.percent.percentage', 1300, '2026-12-01');
-    $version  = $profile->currentVersion();
-    $charge   = $store->addManualCharge(Database::order($company), $version, [
-        'charge_key' => 'hourly',
-        'product'    => 'HOURLY',
-        'quantity'   => '1.5',
-        'amount'     => 6300,
-        'line_name'  => 'Hourly charge (1.5 h)',
-    ]);
-
-    return [
-        'profile'  => $profile,
-        'version'  => $version,
-        'customer' => $customer,
-        'card'     => $card,
-        'row'      => $rows[0],
-        'change'   => $change,
-        'charge'   => $charge,
-    ];
-}
-
 test('a company reads only its own records, for every model', function () {
-    $a = everything('a');
-    everything('b');
+    $a = Stores::everything('a');
+    Stores::everything('b');
 
     foreach ($a as $record) {
         $class = $record::class;
-        $uuids = $class::query()->forCompany(Database::company('a'))->pluck('uuid')->all();
+        $uuids = $class::ofCompany(Database::company('a'))->pluck('uuid')->all();
 
         expect($uuids)->toBe([$record->uuid], "$class reads another company's rows")
             ->and($class::query()->count())->toBe(2);
@@ -79,7 +42,7 @@ test('a saved version never changes and is never deleted', function () {
 });
 
 test('a manual charge can only be removed, and only once', function () {
-    $charge = everything('a')['charge'];
+    $charge = Stores::everything('a')['charge'];
 
     $charge->amount = 1;
     expect(fn () => $charge->save())->toThrow(ImmutableRecord::class);
@@ -94,7 +57,7 @@ test('a manual charge can only be removed, and only once', function () {
 });
 
 test('a dated change can only be cancelled', function () {
-    $change = everything('a')['change'];
+    $change = Stores::everything('a')['change'];
 
     $change->value = 1400;
     expect(fn () => $change->save())->toThrow(ImmutableRecord::class);
@@ -110,8 +73,8 @@ test('a dated change can only be cancelled', function () {
 });
 
 test('a record cannot point at another company\'s parent', function (string $class, string $column, string $parent) {
-    $a = everything('a');
-    $b = everything('b');
+    $a = Stores::everything('a');
+    $b = Stores::everything('b');
 
     $record            = $a[$class];
     $record->{$column} = $b[$parent]->uuid;
@@ -125,7 +88,7 @@ test('a record cannot point at another company\'s parent', function (string $cla
 ]);
 
 test('a new record cannot point at another company\'s parent', function () {
-    $b = everything('b');
+    $b = Stores::everything('b');
 
     expect(fn () => ProfileVersion::query()->create([
         'company_uuid' => Database::company('a'),
@@ -160,50 +123,51 @@ test('a customer save that changes only meta never rechecks its overrides', func
         ->and($customer->problems)->not->toBeNull();
 });
 
-test('unique keys hold in the database', function (string $table, \Closure $duplicate) {
-    $a = everything('a');
+test('unique keys hold in the database', function (string $table, array $duplicate) {
+    $a   = Stores::everything('a');
+    $row = array_map(static fn ($value) => is_array($value) ? $a[$value[0]]->{$value[1]} : $value, $duplicate);
 
-    expect(fn () => Capsule::table($table)->insert($duplicate($a)))->toThrow(QueryException::class);
+    expect(fn () => Capsule::table($table)->insert($row))->toThrow(QueryException::class, 'UNIQUE constraint failed');
 })->with([
-    'profile key per company' => ['enhanced_pricing_profiles', fn (array $a) => [
+    'profile key per company' => ['enhanced_pricing_profiles', [
         'uuid'            => 'p2',
-        'company_uuid'    => $a['profile']->company_uuid,
+        'company_uuid'    => ['profile', 'company_uuid'],
         'key'             => 'main',
         'name'            => 'Again',
         'currency'        => 'USD',
         'distance_unit'   => 'km',
         'current_version' => 1,
     ]],
-    'version per profile' => ['enhanced_pricing_profile_versions', fn (array $a) => [
+    'version per profile' => ['enhanced_pricing_profile_versions', [
         'uuid'         => 'v2',
-        'company_uuid' => $a['profile']->company_uuid,
-        'profile_uuid' => $a['profile']->uuid,
+        'company_uuid' => ['profile', 'company_uuid'],
+        'profile_uuid' => ['profile', 'uuid'],
         'version'      => 1,
         'definition'   => '{}',
     ]],
-    'customer per company' => ['enhanced_pricing_customers', fn (array $a) => [
+    'customer per company' => ['enhanced_pricing_customers', [
         'uuid'          => 'c2',
-        'company_uuid'  => $a['customer']->company_uuid,
-        'customer_uuid' => $a['customer']->customer_uuid,
-        'profile_uuid'  => $a['profile']->uuid,
+        'company_uuid'  => ['customer', 'company_uuid'],
+        'customer_uuid' => ['customer', 'customer_uuid'],
+        'profile_uuid'  => ['profile', 'uuid'],
     ]],
-    'card label per customer' => ['enhanced_pricing_rate_cards', fn (array $a) => [
+    'card label per customer' => ['enhanced_pricing_rate_cards', [
         'uuid'                  => 'k2',
-        'company_uuid'          => $a['card']->company_uuid,
-        'pricing_customer_uuid' => $a['customer']->uuid,
+        'company_uuid'          => ['card', 'company_uuid'],
+        'pricing_customer_uuid' => ['customer', 'uuid'],
         'label'                 => 'Main branch',
     ]],
-    'row key per card and table' => ['enhanced_pricing_rate_card_rows', fn (array $a) => [
+    'row key per card and table' => ['enhanced_pricing_rate_card_rows', [
         'uuid'           => 'r2',
-        'company_uuid'   => $a['row']->company_uuid,
-        'rate_card_uuid' => $a['card']->uuid,
+        'company_uuid'   => ['row', 'company_uuid'],
+        'rate_card_uuid' => ['card', 'uuid'],
         'table_key'      => 'rows',
-        'row_key'        => $a['row']->row_key,
+        'row_key'        => ['row', 'row_key'],
     ]],
-    'live change per path and date' => ['enhanced_pricing_dated_changes', fn (array $a) => [
+    'live change per path and date' => ['enhanced_pricing_dated_changes', [
         'uuid'           => 'd2',
-        'company_uuid'   => $a['change']->company_uuid,
-        'profile_uuid'   => $a['profile']->uuid,
+        'company_uuid'   => ['change', 'company_uuid'],
+        'profile_uuid'   => ['profile', 'uuid'],
         'path'           => 'subtotal_fees.percent.percentage',
         'value'          => '1400',
         'effective_from' => '2026-12-01',
@@ -213,7 +177,7 @@ test('unique keys hold in the database', function (string $table, \Closure $dupl
 ]);
 
 test('cancelled changes never block their date', function () {
-    $a    = everything('a');
+    $a    = Stores::everything('a');
     $base = [
         'company_uuid'   => $a['change']->company_uuid,
         'profile_uuid'   => $a['profile']->uuid,
@@ -229,13 +193,13 @@ test('cancelled changes never block their date', function () {
 });
 
 test('deleting a company row removes every pricing row of that company only', function () {
-    $a = everything('a');
-    everything('b');
+    $a = Stores::everything('a');
+    Stores::everything('b');
 
     Capsule::table('companies')->where('uuid', Database::company('a'))->delete();
 
     foreach ($a as $record) {
-        expect($record::query()->forCompany(Database::company('a'))->count())->toBe(0)
-            ->and($record::query()->forCompany(Database::company('b'))->count())->toBe(1);
+        expect($record::ofCompany(Database::company('a'))->count())->toBe(0)
+            ->and($record::ofCompany(Database::company('b'))->count())->toBe(1);
     }
 });

@@ -16,17 +16,18 @@ beforeEach(function () {
     Database::seed();
 });
 
-test('a customer must be a customer contact of the company', function (\Closure $contact) {
+test('a customer must be a customer contact of the company', function (string $contact) {
     $profile = Stores::profile();
 
-    expect(Stores::refusal(fn () => Stores::for()->saveCustomer($contact(), $profile)))->toBe(['not-a-customer'])
+    expect(Stores::refusal(fn () => Stores::for()->saveCustomer($contact, $profile)))->toBe(['not-a-customer'])
         ->and(Customer::query()->count())->toBe(0);
 })->with([
-    'another company\'s customer' => [fn () => Database::customer('b')],
+    'another company\'s customer'      => [fn () => Database::customer('b')],
     'a contact that isn\'t a customer' => [fn () => Database::contact('a')],
-    'an unknown contact' => [fn () => Database::customer('a', 9)],
-    'a deleted customer' => [function () {
-        Capsule::table('contacts')->where('uuid', Database::customer('a'))->update(['deleted_at' => '2026-01-01 00:00:00']);
+    'an unknown contact'               => [fn () => Database::customer('a', 9)],
+    'a deleted customer'               => [function () {
+        Capsule::table('contacts')->where('uuid', Database::customer('a'))
+            ->update(['deleted_at' => '2026-01-01 00:00:00']);
 
         return Database::customer('a');
     }],
@@ -72,7 +73,7 @@ test('meta is at most 4 KB', function () {
     $profile = Stores::profile();
 
     expect(Stores::refusal(
-        fn () => Stores::for()->saveCustomer(Database::customer('a'), $profile, null, ['note' => str_repeat('x', 4100)]),
+        fn () => Stores::for()->saveCustomer(Database::customer('a'), $profile, null, ['n' => str_repeat('x', 4100)]),
     ))->toBe(['meta-too-large']);
 });
 
@@ -142,7 +143,8 @@ test('keys of several columns cannot collide', function () {
 });
 
 test('a number key is the same key however it is written', function () {
-    $profile = Profiles::set(Profiles::example(), 'rate_tables.0.columns.5', ['key' => 'zone', 'type' => 'number', 'required' => true]);
+    $zone    = ['key' => 'zone', 'type' => 'number', 'required' => true];
+    $profile = Profiles::set(Profiles::example(), 'rate_tables.0.columns.5', $zone);
     $profile = Profiles::set($profile, 'rate_tables.0.row_key', ['zone']);
     $card    = Stores::card('a', Stores::customer('a', Stores::profile('a', $profile)));
 
@@ -158,7 +160,8 @@ test('a rerun updates a row without changing its uuid or key', function () {
     $card  = Stores::card();
     $first = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1')]])[0];
 
-    $again = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['first' => 1500]), 'meta' => ['n' => 1]]])[0];
+    $rerun = [['values' => Stores::row('R1', ['first' => 1500]), 'meta' => ['n' => 1]]];
+    $again = Stores::for()->saveRows($card, 'rows', $rerun)[0];
 
     expect($again->uuid)->toBe($first->uuid)
         ->and($again->row_key)->toBe($first->row_key)
@@ -179,7 +182,8 @@ test('the row check agrees with the engine on every column type', function (stri
 
     expect(RowCheck::valueFits($column, $value))->toBe($fits);
 })->with(function () {
-    $values = [0, 1, -1, 100000, 100001, 100000000, 100000001, 1.5, '1.5', '1.50', '-1', 'x', '', str_repeat('y', 255), str_repeat('y', 256), true, null, [1]];
+    $values = [0, 1, -1, 100000, 100001, 100000000, 100000001, 1.5, '1.5', '1.50', '-1', 'x', '', true, null, [1]];
+    $values = [...$values, str_repeat('y', 255), str_repeat('y', 256), str_repeat('é', 255)];
     foreach (['text', 'money', 'integer', 'number'] as $type) {
         foreach ($values as $index => $value) {
             yield "$type #$index" => [$type, $value];
@@ -192,7 +196,7 @@ test('another company\'s card or customer is refused', function () {
 
     expect(fn () => Stores::for('a')->saveRows($card, 'rows', [['values' => Stores::row()]]))
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
-        ->and(fn () => Stores::for('a')->saveCard($card->customer()->firstOrFail(), 'Other'))
+        ->and(fn () => Stores::for('a')->saveCard(Customer::query()->findOrFail($card->pricing_customer_uuid), 'Other'))
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
         ->and(fn () => Stores::for('a')->saveCustomer(Database::customer('a'), Stores::profile('b', null, 'b2')))
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class);

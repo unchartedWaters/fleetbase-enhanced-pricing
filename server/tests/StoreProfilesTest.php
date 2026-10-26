@@ -17,19 +17,6 @@ beforeEach(function () {
     Database::seed();
 });
 
-/**
- * The example profile without the fee keyed $key.
- *
- * @return array<string, mixed>
- */
-function withoutFee(string $key): array
-{
-    $profile         = Profiles::example();
-    $profile['fees'] = array_values(array_filter($profile['fees'], static fn (array $fee) => $fee['key'] !== $key));
-
-    return $profile;
-}
-
 test('a new profile starts at version 1, with its currency and distance unit', function () {
     $profile = Stores::profile();
 
@@ -76,7 +63,12 @@ test('the currency and distance unit are fixed for the life of a profile', funct
     'distance unit' => ['distance_unit', 'mi'],
 ]);
 
-test('a unit cannot change under a stored override or live dated change', function (string $path, mixed $value, string $field, mixed $unit) {
+test('a unit cannot change under a stored override or live dated change', function (
+    string $path,
+    mixed $value,
+    string $field,
+    mixed $unit,
+) {
     $profile = Stores::profile();
     Stores::customer('a', $profile, [$path => $value]);
 
@@ -84,7 +76,12 @@ test('a unit cannot change under a stored override or live dated change', functi
         fn () => Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), $field, $unit)),
     ))->toBe(['unit-changed']);
 })->with([
-    'a parcel fee unit'           => ['fees.parcel.thresholds', [['over' => 30, 'amount' => 50]], 'fees.1.unit', 'lb'],
+    'a parcel fee unit' => [
+        'fees.parcel.thresholds',
+        [['over' => 30, 'amount' => 50]],
+        'fees.1.unit',
+        'lb',
+    ],
     'a manual charge quantity unit' => ['manual_charges.hourly.amount', 5000, 'manual_charges.0.quantity.unit', 'min'],
 ]);
 
@@ -102,7 +99,10 @@ test('a live dated change also holds its rule\'s unit', function () {
     Stores::for()->addDatedChange($profile, 'manual_charges.hourly.amount', 4500, '2026-12-01');
 
     expect(Stores::refusal(
-        fn () => Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), 'manual_charges.0.quantity.unit', 'min')),
+        fn () => Stores::for()->addVersion(
+            $profile,
+            Profiles::set(Profiles::example(), 'manual_charges.0.quantity.unit', 'min'),
+        ),
     ))->toBe(['unit-changed']);
 });
 
@@ -122,7 +122,7 @@ test('a version that leaves entries stale is refused with the list', function ()
     $change   = Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
 
     try {
-        Stores::for()->addVersion($profile, withoutFee('additional'));
+        Stores::for()->addVersion($profile, Stores::withoutFee('additional'));
         $refused = null;
     } catch (StoreRefused $caught) {
         $refused = $caught;
@@ -137,10 +137,14 @@ test('a version that leaves entries stale is refused with the list', function ()
 test('a version accepted with stale entries records them', function () {
     $profile  = Stores::profile();
     $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
-    $fine     = Stores::for()->saveCustomer(Database::customer('a', 2), $profile, ['fees.parcel.thresholds' => [['over' => 30, 'amount' => 50]]]);
+    $fine     = Stores::for()->saveCustomer(
+        Database::customer('a', 2),
+        $profile,
+        ['fees.parcel.thresholds' => [['over' => 30, 'amount' => 50]]],
+    );
     $change   = Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
 
-    Stores::for()->addVersion($profile, withoutFee('additional'), acceptStale: true);
+    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
 
     expect($customer->refresh()->checked_version)->toBe(2)
         ->and($customer->problems[0]['key'] ?? null)->toBe('enhanced-pricing.profile.unknown-override')
@@ -168,7 +172,7 @@ test('a row that no longer fits is stale', function () {
 test('fixing a stale customer clears its mark', function () {
     $profile  = Stores::profile();
     $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
-    Stores::for()->addVersion($profile, withoutFee('additional'), acceptStale: true);
+    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
 
     $fixed = Stores::for()->saveCustomer($customer->customer_uuid, $profile->refresh(), []);
 

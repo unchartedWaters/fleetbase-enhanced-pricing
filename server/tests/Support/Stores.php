@@ -3,8 +3,12 @@
 namespace Fleetbase\EnhancedPricing\Tests\Support;
 
 use Fleetbase\EnhancedPricing\Models\Customer;
+use Fleetbase\EnhancedPricing\Models\DatedChange;
+use Fleetbase\EnhancedPricing\Models\ManualCharge;
 use Fleetbase\EnhancedPricing\Models\Profile;
+use Fleetbase\EnhancedPricing\Models\ProfileVersion;
 use Fleetbase\EnhancedPricing\Models\RateCard;
+use Fleetbase\EnhancedPricing\Models\RateCardRow;
 use Fleetbase\EnhancedPricing\Store\PricingStore;
 use Fleetbase\EnhancedPricing\Store\StoreRefused;
 
@@ -44,7 +48,7 @@ final class Stores
         );
     }
 
-    public static function card(string $company = 'a', ?Customer $customer = null, string $label = 'Main branch'): RateCard
+    public static function card(string $company = 'a', ?Customer $customer = null, string $label = 'Main'): RateCard
     {
         return self::for($company)->saveCard($customer ?? self::customer($company), $label);
     }
@@ -70,11 +74,76 @@ final class Stores
             $call();
         } catch (StoreRefused $refused) {
             return array_map(
-                static fn ($problem): string => (string) preg_replace('/^enhanced-pricing\.[a-z]+\./', '', $problem->key),
+                static fn ($problem): string => (string) preg_replace('/^enhanced-pricing\.\w+\./', '', $problem->key),
                 $refused->problems,
             );
         }
 
         return [];
+    }
+
+    /**
+     * One of everything for a company, through the store.
+     *
+     * @return array{
+     *     profile: Profile,
+     *     version: ProfileVersion,
+     *     customer: Customer,
+     *     card: RateCard,
+     *     row: RateCardRow,
+     *     change: DatedChange,
+     *     charge: ManualCharge,
+     * }
+     */
+    public static function everything(string $company): array
+    {
+        $store    = self::for($company);
+        $profile  = self::profile($company);
+        $customer = self::customer($company, $profile);
+        $card     = $store->saveCard($customer, 'Main branch');
+        $rows     = $store->saveRows($card, 'rows', [['values' => self::row()]]);
+        $change   = $store->addDatedChange($profile, 'subtotal_fees.percent.percentage', 1300, '2026-12-01');
+        $version  = $profile->currentVersion() ?? throw new \LogicException('no version');
+        $charge   = $store->addManualCharge(Database::order($company), $version, self::hourly());
+
+        return [
+            'profile'  => $profile,
+            'version'  => $version,
+            'customer' => $customer,
+            'card'     => $card,
+            'row'      => $rows[0],
+            'change'   => $change,
+            'charge'   => $charge,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function hourly(string $quantity = '1.5'): array
+    {
+        return [
+            'charge_key' => 'hourly',
+            'product'    => 'HOURLY',
+            'quantity'   => $quantity,
+            'amount'     => 6300,
+            'line_name'  => "Hourly charge ($quantity h)",
+            'note'       => 'Waited at the dock',
+        ];
+    }
+
+    /**
+     * The example profile without the fee keyed $key.
+     *
+     * @return array<string, mixed>
+     */
+    public static function withoutFee(string $key): array
+    {
+        $profile         = Profiles::example();
+        $profile['fees'] = array_values(
+            array_filter($profile['fees'], static fn (array $fee) => $fee['key'] !== $key),
+        );
+
+        return $profile;
     }
 }

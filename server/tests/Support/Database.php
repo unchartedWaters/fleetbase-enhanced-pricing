@@ -74,17 +74,19 @@ final class Database
     }
 
     /**
-     * Two companies, each with a customer contact, a contact that isn't a customer, and an order.
+     * Two companies, each with two customer contacts, a contact that isn't a customer, and an order.
      */
     public static function seed(): void
     {
         foreach (['a', 'b'] as $company) {
-            Capsule::table('companies')->insert(['uuid' => self::company($company), 'name' => "Company $company"]);
+            $uuid = self::company($company);
+            Capsule::table('companies')->insert(['uuid' => $uuid, 'name' => "Company $company"]);
             Capsule::table('contacts')->insert([
-                ['uuid' => self::customer($company), 'company_uuid' => self::company($company), 'type' => 'customer'],
-                ['uuid' => self::contact($company), 'company_uuid' => self::company($company), 'type' => 'contact'],
+                ['uuid' => self::customer($company), 'company_uuid' => $uuid, 'type' => 'customer'],
+                ['uuid' => self::customer($company, 2), 'company_uuid' => $uuid, 'type' => 'customer'],
+                ['uuid' => self::contact($company), 'company_uuid' => $uuid, 'type' => 'contact'],
             ]);
-            Capsule::table('orders')->insert(['uuid' => self::order($company), 'company_uuid' => self::company($company)]);
+            Capsule::table('orders')->insert(['uuid' => self::order($company), 'company_uuid' => $uuid]);
         }
     }
 

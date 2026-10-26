@@ -70,3 +70,29 @@ enhanced-pricing:
     unknown-entity-type: "Item {entity} has an unknown type, {type}."
     unknown-manual-charge: "There is no manual charge named {charge}."
     unknown-service-rate: "There is no service rate named {service_rate}."
+  store:
+    change-in-effect: "The change dated {date} is already in effect, so it can't be changed or cancelled. Add a change dated later instead."
+    change-too-far: "A change can be dated at most two years ahead, up to {latest}."
+    change-too-soon: "A change must be dated after today, {today}."
+    change-was-cancelled: "The change dated {date} was cancelled, so it isn't added again."
+    charge-removed: This manual charge has already been removed.
+    customer-has-cards: "This customer has rate cards for its profile, so it can't move to another profile."
+    duplicate-row: This row's key is sent more than once.
+    fixed-unit-changed: "A profile's {field} can't change; it is {value}."
+    immutable: This record can't be changed once saved.
+    meta-too-large: "Metadata can be at most {max} bytes."
+    not-a-customer: This contact isn't one of the company's customers.
+    not-found: The record wasn't found.
+    order-not-found: The order wasn't found.
+    profile-exists: "A profile with the key {key} already exists."
+    row-key-changed: "The rate table {table} has new key columns, so this row's key no longer matches."
+    row-missing-value: "The row needs a value for {column}."
+    row-unknown-column: "The rate table has no column {column}."
+    row-unknown-table: "The profile has no rate table {table}."
+    row-wrong-type: "The value for {column} must be a {type} value."
+    stale-entries: "{count} stored entries don't fit this version. Fix them first, or save the version anyway."
+    too-many-charges: "An order can have at most {max} manual charges."
+    too-many-rows: "Send at most {max} rows."
+    unit-changed: "The unit of {rule} can't change while an override or a dated change uses it. Use a new rule key instead."
+    value-has-change-in-effect: "{path} has a dated change in effect, so its undated value can't change. Add a dated change instead."
+    version-outdated: "The profile has a newer version, {current}. Start from the newest version."

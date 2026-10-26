@@ -39,13 +39,19 @@ test('a new change must be dated after today and at most two years ahead', funct
     'past two years' => ['2028-11-03', ['change-too-far']],
 ]);
 
-test('a change must name a value that can change by date, with the right type', function (string $path, mixed $value, string $key) {
+test('a change must name a value that can change by date, with the right type', function (
+    string $path,
+    mixed $value,
+    string $key,
+) {
     $profile = Stores::profile();
 
-    expect(Stores::refusal(fn () => Stores::for()->addDatedChange($profile, $path, $value, '2026-12-01')))->toContain($key);
+    $add = fn () => Stores::for()->addDatedChange($profile, $path, $value, '2026-12-01');
+
+    expect(Stores::refusal($add))->toContain($key);
 })->with([
-    'unknown'   => ['fees.nothing.amount', 100, 'unknown-override'],
-    'not dated' => ['fees.additional.enabled', false, 'not-dated'],
+    'unknown'    => ['fees.nothing.amount', 100, 'unknown-override'],
+    'not dated'  => ['fees.additional.enabled', false, 'not-dated'],
     'wrong type' => [RATE, 'high', 'wrong-type'],
 ]);
 
@@ -115,8 +121,7 @@ test('today is judged in the profile\'s scheduling timezone', function () {
 test('an existing stale change does not block new ones', function () {
     $profile = Stores::profile();
     Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
-    $fees    = array_values(array_filter(Profiles::example()['fees'], static fn (array $fee) => $fee['key'] !== 'additional'));
-    Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), 'fees', $fees), acceptStale: true);
+    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
 
     $change = Stores::for()->addDatedChange($profile->refresh(), RATE, 1300, '2026-12-01');
 
