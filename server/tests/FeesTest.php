@@ -202,7 +202,7 @@ test('an entity with no weight is not checked, and the quote says so', function 
     expect($quote->total())->toBe(2700)
         ->and($quote->notes)->toBe([[
             'key'    => 'enhanced-pricing.pricing.entity-not-measured',
-            'params' => ['entity' => 1, 'rule' => 'parcel'],
+            'params' => ['entity' => 1, 'rule' => 'Parcel fee', 'rule_key' => 'parcel'],
         ]]);
 });
 
@@ -308,7 +308,7 @@ test('a manual charge line can make a per-order fee apply', function () {
     $quote = Orders::price([
         'profile'    => $profile,
         'attributes' => ['extra' => true],
-        'manual'     => [new ManualChargeInput(key: 'hourly', quantity: '1')],
+        'manual'     => [ManualChargeInput::new('hourly', quantity: '1')],
     ]);
 
     expect(Orders::lines($quote)[2])->toBe(['ADDITIONAL', 'Additional fee', 1, 1600, 1600]);
@@ -385,8 +385,8 @@ test('a fee the profile turns off can be turned on for one customer', function (
     expect($quote->total())->toBe(4300);
 });
 
-test('a required attribute that is missing stops pricing', function (mixed $required, string $rate, bool $stops) {
-    $profile = Profiles::set($this->profile, 'attributes.0.required', $required);
+test('a required attribute that is missing stops pricing', function (string $field, mixed $required, string $rate, bool $stops) {
+    $profile = Profiles::set($this->profile, "attributes.0.$field", $required);
     $options = ['profile' => $profile, 'service_rate' => $rate, 'distance_meters' => 10000];
     if ($rate === 'distance') {
         $options['row'] = null;
@@ -399,10 +399,10 @@ test('a required attribute that is missing stops pricing', function (mixed $requ
         expect(Orders::price($options)->total())->toBeGreaterThan(0);
     }
 })->with([
-    'always'                       => [true, 'tiered', true],
-    'for this service rate'        => [['tiered'], 'tiered', true],
-    'for another service rate'     => [['tiered'], 'distance', false],
-    'not required'                 => [false, 'tiered', false],
+    'always'                       => ['required', true, 'tiered', true],
+    'for this service rate'        => ['required_for', ['tiered'], 'tiered', true],
+    'for another service rate'     => ['required_for', ['tiered'], 'distance', false],
+    'not required'                 => ['required', false, 'tiered', false],
 ]);
 
 test('an attribute value of the wrong kind stops pricing', function (array $attributes) {

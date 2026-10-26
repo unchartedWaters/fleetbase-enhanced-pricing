@@ -47,7 +47,7 @@ final class RuleSupport
             return null;
         }
 
-        throw $this->order->fail('missing-amount', ['rule' => R::text($rule['key']), 'column' => null]);
+        throw $this->order->fail('missing-amount', ['rule' => R::text($rule['name']), 'rule_key' => R::text($rule['key'])]);
     }
 
     /**

@@ -58,11 +58,12 @@ final class ProfileShapes
     {
         $type   = $this->discriminator($raw, 'type', ['boolean', 'choice', 'number'], $path);
         $fields = [
-            'key'      => S::type('key'),
-            'name'     => S::type('text'),
-            'scope'    => S::enum(['order', 'entity']),
-            'type'     => S::type('raw'),
-            'required' => S::optional(S::type('raw'), false),
+            'key'          => S::type('key'),
+            'name'         => S::type('text'),
+            'scope'        => S::enum(['order', 'entity']),
+            'type'         => S::type('raw'),
+            'required'     => S::optional(S::type('boolean'), false),
+            'required_for' => S::optional(S::listOf(S::type('key'), 0, 20), []),
         ];
         if ($type === 'choice') {
             $fields['choices'] = S::listOf(S::object(['key' => S::type('key'), 'name' => S::type('text')]), 1, 50);
@@ -75,8 +76,8 @@ final class ProfileShapes
             return null;
         }
         $attribute = $this->schema->fields($raw, $fields, $path);
-        if ($attribute !== null) {
-            $attribute['required'] = $this->required($attribute['required'], S::join($path, 'required'));
+        if ($attribute !== null && $attribute['required'] === true && $attribute['required_for'] !== []) {
+            $this->schema->add(Problem::atPath(S::join($path, 'required_for'), 'required-and-required-for'));
         }
 
         return $attribute;
@@ -381,21 +382,6 @@ final class ProfileShapes
         $value    = $this->schema->fields($raw, $optional, $path);
 
         return $value === null ? null : array_filter($value, static fn (mixed $item): bool => $item !== null);
-    }
-
-    /**
-     * An attribute's "required": true, false, or a list of service rate keys.
-     *
-     * @return bool|list<mixed>|null
-     */
-    private function required(mixed $raw, string $path): bool|array|null
-    {
-        if (is_bool($raw)) {
-            return $raw;
-        }
-        $keys = $this->schema->value($raw, S::listOf(S::type('key'), 1, 20), $path);
-
-        return is_array($keys) ? array_values($keys) : null;
     }
 
     /**

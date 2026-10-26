@@ -117,11 +117,16 @@ also one tenth, and a float that needs more than 6 decimals, such as
 `g`, `oz`, `lb` and `kg`; length units are `mm`, `cm`, `m`, `in`, `ft` and
 `yd`.
 
-A `ManualChargeInput` has the charge's `key`, a `quantity` for a charge with
-quantity limits, an `amount` in cents for an entered charge, and `stored`.
-A new charge (`stored: false`) is checked against the profile's limits. A
-charge already on the order (`stored: true`) bills the `amount` saved when it
-was added, so a later profile change does not reprice it.
+A `ManualChargeInput` comes in two shapes:
+
+- `ManualChargeInput::new($key, quantity: ..., amount: ...)` is a charge being
+  added: a `quantity` for a charge with quantity limits, an `amount` in cents
+  for an entered charge. It is priced and checked against the profile's limits.
+- `ManualChargeInput::added($key, $product, $name, $amount)` is a charge
+  already on the order, with the product, line name and amount stored when it
+  was added. It bills exactly those, so a later profile change does not
+  reprice or rename it. The profile must still have the charge's key and the
+  product.
 
 The caller looks up the timezone and the distance. Both depend on the
 pickup place and the routing provider, and keeping them out of the engine
@@ -144,7 +149,10 @@ In this order, the engine:
 6. checks the row against the service rate's rate table;
 7. checks the order's attributes and entities.
 
-The first problem stops pricing with a `PricingFailed`.
+The first problem stops pricing with a `PricingFailed`. When the overrides or
+a dated change are refused, its `path` parameter names the first one at fault.
+When the profile is refused only after they are applied, `path` names the
+value by rule key, for example `fees.heavy.minimum`.
 
 ## The quote
 
@@ -168,8 +176,10 @@ quote, it lets a price be explained later.
 ## Errors
 
 `PricingFailed` has a `key` under `enhanced-pricing.pricing` and `params`
-that name what was wrong. Errors raised while reading the order also carry
-the `customer`, `card` and `row` labels. The English text for each key is in
+that name what was wrong. A rule, charge, service rate or attribute is named
+by its `name`, with `rule_key` beside it where the key is needed. Errors
+raised while reading the order also carry the `customer`, `card` and `row`
+labels, and the messages use them. The English text for each key is in
 [`translations/en-us.yaml`](../translations/en-us.yaml), with `{name}`
 standing for each parameter.
 
@@ -187,7 +197,10 @@ $problems = (new ChangeValidator())->check($profile, $changes);
 ```
 
 Each `Problem` has the `path` of the value, a translation `key` under
-`enhanced-pricing.profile` and its `params`.
+`enhanced-pricing.profile` and its `params`. An `expected` parameter is a type
+code with its text under `enhanced-pricing.types`, and a `kind` parameter a
+code with its text under `enhanced-pricing.kinds`: show that text, not the
+code.
 
 ## Money
 

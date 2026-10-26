@@ -4,6 +4,7 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ChangeValidator;
 use Fleetbase\EnhancedPricing\Profile\InvalidProfile;
+use Fleetbase\EnhancedPricing\Profile\OverridePaths;
 use Fleetbase\EnhancedPricing\Profile\OverrideValidator;
 use Fleetbase\EnhancedPricing\Profile\ProfileResolver;
 use Fleetbase\EnhancedPricing\Profile\ProfileValidator;
@@ -36,7 +37,7 @@ final class RequestResolver
         );
         $problems          = (new ProfileValidator())->recheck($resolved['profile']);
         if ($problems !== []) {
-            throw PricingFailed::because('profile-invalid-for-order', ['path' => $problems[0]->path]);
+            throw PricingFailed::because('profile-invalid-for-order', ['path' => OverridePaths::keyed($resolved['profile'], $problems[0]->path)]);
         }
 
         return [
@@ -60,11 +61,13 @@ final class RequestResolver
         } catch (InvalidProfile $invalid) {
             throw PricingFailed::because('profile-invalid', ['problems' => count($invalid->problems)]);
         }
-        if ((new OverrideValidator())->check($request->profile, $request->overrides) !== []) {
-            throw PricingFailed::because('overrides-invalid');
+        $problems = (new OverrideValidator())->check($request->profile, $request->overrides);
+        if ($problems !== []) {
+            throw PricingFailed::because('overrides-invalid', ['path'     => $problems[0]->path, 'customer' => $request->labels['customer'] ?? '']);
         }
-        if ((new ChangeValidator())->checkEach($request->profile, $request->valueChanges) !== []) {
-            throw PricingFailed::because('changes-invalid');
+        $problems = (new ChangeValidator())->checkEach($request->profile, $request->valueChanges);
+        if ($problems !== []) {
+            throw PricingFailed::because('changes-invalid', ['path' => $problems[0]->path]);
         }
         try {
             return [$profile, $request->pickupAt->setTimezone(new \DateTimeZone($request->timezone))];

@@ -102,6 +102,29 @@ final class OverridePaths
     }
 
     /**
+     * A path into a normalized profile with each rule's position replaced by its key, for
+     * example "fees.1.minimum" as "fees.parcel.minimum", the way overrides and dated changes
+     * name it. A path that doesn't start at a rule is returned as it is.
+     *
+     * @param array<string, mixed> $profile
+     */
+    public static function keyed(array $profile, string $path): string
+    {
+        $parts = explode('.', $path);
+        if (count($parts) < 2 || ctype_digit($parts[1]) === false) {
+            return $path;
+        }
+        $rule = R::items($profile[$parts[0]] ?? [])[(int) $parts[1]] ?? null;
+        $key  = $rule['key'] ?? $rule['code'] ?? null;
+        if (is_string($key) === false) {
+            return $path;
+        }
+        $parts[1] = $key;
+
+        return implode('.', $parts);
+    }
+
+    /**
      * Sets a value at a pointer in a profile.
      *
      * @param array<string, mixed> $profile

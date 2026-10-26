@@ -132,10 +132,12 @@ share a product.
 | `choices` | `choice` only: 1 to 50 `{ "key", "name" }` |
 | `unit` | `number` only, optional: the unit shown, for example `h` |
 | `maximum` | `number` only, optional, default 1,000,000 |
-| `required` | optional, default `false`; `true`, or service rate keys |
+| `required` | optional, default `false`: `true` needs a value on every order |
+| `required_for` | optional, default `[]`: service rate keys that need a value |
 
-A required attribute must have a value on every order (or every entity) using
-one of the listed service rates, or on every order when `required` is `true`.
+A required attribute must have a value on every order (or every entity) when
+`required` is `true`, or on every order using one of the service rates in
+`required_for`. Set one or the other, not both.
 Pricing stops with a message when one is missing. A missing boolean that is not
 required counts as `false`; a missing choice or number matches nothing. A value
 of the wrong kind, an unknown choice, a negative number or one above `maximum`
@@ -705,8 +707,14 @@ tables; the engine already applies them.
 ## Errors
 
 The profile checks return every problem they find, each with the path of the
-value (for example `fees.2.thresholds.0.over`), a translation key and its
-parameters. The English text for each key is in
+value in the JSON being checked (for example `fees.2.thresholds.0.over`), a
+translation key and its parameters. The English text for each key is in
 [`translations/en-us.yaml`](../translations/en-us.yaml), under
-`enhanced-pricing.profile`. Pricing errors and notes use keys under
-`enhanced-pricing.pricing`.
+`enhanced-pricing.profile`. An `expected` parameter is a type, with its text
+under `enhanced-pricing.types`, and a `kind` parameter a kind of rule or list,
+with its text under `enhanced-pricing.kinds`.
+
+Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
+rules, charges and service rates by their names, and the customer, card and
+row by the labels the caller gives. A path in a pricing error uses rule keys,
+as overrides do (for example `fees.heavy.minimum`).
