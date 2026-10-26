@@ -57,7 +57,10 @@ final class Customers
         asort($order);
         $pageUuids = array_slice(array_keys($order), ($page - 1) * $perPage, $perPage);
         $customers = Customer::listOf(Customer::ofCompany($this->company)->whereKey($pageUuids));
-        usort($customers, static fn (Customer $left, Customer $right): int => $order[$left->uuid] <=> $order[$right->uuid]);
+        usort(
+            $customers,
+            static fn (Customer $left, Customer $right): int => $order[$left->uuid] <=> $order[$right->uuid],
+        );
         $cardQuery = RateCard::ofCompany($this->company);
         $cardQuery->getQuery()->whereIn('pricing_customer_uuid', $pageUuids);
         $cards     = Counts::by($cardQuery, 'pricing_customer_uuid');
