@@ -79,7 +79,7 @@ test('a manual charge can make a flat subtotal fee apply', function () {
 
     $quote = Orders::price([
         'profile' => $profile,
-        'manual'  => [new ManualChargeInput(key: 'hourly', quantity: '0.5')],
+        'manual'  => [ManualChargeInput::new('hourly', quantity: '0.5')],
     ]);
 
     expect(Orders::lines($quote)[2])->toBe(['FLAT_A', 'Flat subtotal fee A', 1, 400, 400]);

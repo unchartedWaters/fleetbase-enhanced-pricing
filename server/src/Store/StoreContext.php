@@ -19,7 +19,7 @@ final class StoreContext
     public const MAX_META_BYTES = 4096;
 
     /** The profile field that gives the timezone in which "today" is judged for dated changes. */
-    public const TIMEZONE_FIELD = 'timezone';
+    public const TIMEZONE_FIELD = 'scheduling_timezone';
 
     /** @var \Closure(): \DateTimeImmutable */
     private readonly \Closure $clock;

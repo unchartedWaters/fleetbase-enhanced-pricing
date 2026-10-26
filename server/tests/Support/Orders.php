@@ -67,7 +67,7 @@ final class Orders
             distanceMeters: is_int($options['distance_meters'] ?? null) ? $options['distance_meters'] : null,
             manualCharges: $manual,
             overrides: $overrides,
-            valueChanges: $changes,
+            datedChanges: $changes,
             labels: $labels,
         );
     }

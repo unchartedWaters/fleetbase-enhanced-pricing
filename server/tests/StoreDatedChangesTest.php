@@ -52,7 +52,7 @@ test('a change must name a value that can change by date, with the right type', 
     expect(Stores::refusal($add))->toContain($key);
 })->with([
     'unknown'    => ['fees.nothing.amount', 100, 'unknown-override'],
-    'not dated'  => ['fees.additional.enabled', false, 'not-dated'],
+    'not dated'  => ['fees.extra_handling.enabled', false, 'not-dated'],
     'wrong type' => [RATE, 'high', 'wrong-type'],
 ]);
 
@@ -67,7 +67,7 @@ test('sending the same change again does nothing, even once it is in effect', fu
 
 test('a list value sent again with its keys in another order is the same change', function () {
     $profile = Stores::profile();
-    $path    = 'fees.parcel.thresholds';
+    $path    = 'fees.heavy.thresholds';
     $first   = Stores::for()->addDatedChange($profile, $path, [['over' => 30, 'amount' => 50]], '2026-12-01');
 
     $again = Stores::for('a', '2026-12-10T12:00:00Z')
@@ -132,7 +132,7 @@ test('a change can be cancelled until the day before its date', function () {
 });
 
 test('today is judged in the profile\'s scheduling timezone', function () {
-    $toronto = Profiles::set(Profiles::example(), 'timezone', 'America/Toronto');
+    $toronto = Profiles::set(Profiles::example(), 'scheduling_timezone', 'America/Toronto');
     $profile = Stores::profile('a', $toronto);
 
     // 02:00 UTC on 3 November is still 2 November in Toronto, so 3 November is tomorrow there.
@@ -143,8 +143,8 @@ test('today is judged in the profile\'s scheduling timezone', function () {
 
 test('an existing stale change does not block new ones', function () {
     $profile = Stores::profile();
-    Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
-    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
+    Stores::for()->addDatedChange($profile, 'fees.extra_handling.amount', 1800, '2026-12-01');
+    Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'), acceptStale: true);
 
     $change = Stores::for()->addDatedChange($profile->refresh(), RATE, 1300, '2026-12-01');
 

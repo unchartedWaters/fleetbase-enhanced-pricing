@@ -17,7 +17,7 @@ final class PricingEngine
     public function price(PricingRequest $request): Quote
     {
         $resolved = (new RequestResolver())->resolve($request);
-        $rate     = $this->serviceRate($resolved['profile'], $resolved['allowed'], $request->serviceRate);
+        $rate     = $this->serviceRate($resolved['profile'], $resolved['allowed'], $request);
         $order    = new OrderContext($resolved['profile'], $rate, $resolved['local'], $request->labels, $request->row);
         $this->checkRow($order, $request);
         $order->readInputs($request->attributes, $request->entities);
@@ -47,14 +47,20 @@ final class PricingEngine
      *
      * @return array<string, mixed>
      */
-    private function serviceRate(array $profile, ?array $allowed, string $key): array
+    private function serviceRate(array $profile, ?array $allowed, PricingRequest $request): array
     {
+        $key = $request->serviceRate;
         foreach (R::items($profile['service_rates']) as $rate) {
             if ($rate['key'] !== $key) {
                 continue;
             }
-            if ($rate['enabled'] !== true || ($allowed !== null && in_array($key, $allowed, true) === false)) {
-                throw PricingFailed::because('service-rate-not-allowed', ['service_rate' => $key]);
+            $name = R::text($rate['name']);
+            if ($rate['enabled'] !== true) {
+                throw PricingFailed::because('service-rate-disabled', ['service_rate' => $name]);
+            }
+            if ($allowed !== null && in_array($key, $allowed, true) === false) {
+                $params = ['service_rate' => $name, 'customer' => $request->labels['customer'] ?? ''];
+                throw PricingFailed::because('service-rate-not-allowed', $params);
             }
 
             return $rate;
@@ -70,7 +76,7 @@ final class PricingEngine
             return;
         }
         if ($request->row === null) {
-            throw $order->fail('row-required', ['service_rate' => $request->serviceRate]);
+            throw $order->fail('row-required', ['service_rate' => R::text($order->serviceRate['name'])]);
         }
         foreach (R::items($order->profile['rate_tables']) as $definition) {
             if ($definition['key'] === $table) {

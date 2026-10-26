@@ -53,8 +53,8 @@ as one of the profile's products.
   refused, so a misspelt field never goes unnoticed.
 - Fields marked *optional* below may be left out, and take the default shown.
 - Each rule (service rate, fee, subtotal fee, manual charge) has a key that is
-  unique among rules of its kind. Overrides and dated changes name a value by
-  that key, so they stay with their rule across profile versions.
+  unique in its section of the profile. Overrides and dated changes name a
+  value by that key, so they stay with their rule across profile versions.
 
 Arithmetic is exact. Unit conversions, distances, percentages and fractional
 quantities are worked out as exact fractions, and compared exactly with
@@ -66,7 +66,7 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 ```json
 {
   "currency": "CAD",
-  "timezone": "America/Edmonton",
+  "scheduling_timezone": "America/Edmonton",
   "distance_unit": "km",
   "products": [],
   "attributes": [],
@@ -84,7 +84,7 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 | Field | Meaning |
 | --- | --- |
 | `currency` | ISO 4217 code, three capital letters |
-| `timezone` | IANA name; see below |
+| `scheduling_timezone` | IANA name; see below |
 | `distance_unit` | `km` or `mi`, for per-meter rates |
 | `products` | at least one product |
 | `attributes` | optional, default `[]` |
@@ -97,9 +97,10 @@ line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 | `manual_charges` | optional, default `[]` |
 | `holiday_lists` | optional, default `{}` |
 
-The profile's `timezone` only decides which day is "tomorrow" when a dated
-change is scheduled. Each order is timed in the timezone of its pickup place's
-location, which the caller looks up and passes to the engine.
+`scheduling_timezone` only decides which day is "tomorrow" when a dated
+change is scheduled. It doesn't time orders: each order is timed in the
+timezone of its pickup place's location, which the caller looks up and passes
+to the engine. Peak hours and rule dates follow that timezone too.
 
 ## Products
 
@@ -132,10 +133,12 @@ share a product.
 | `choices` | `choice` only: 1 to 50 `{ "key", "name" }` |
 | `unit` | `number` only, optional: the unit shown, for example `h` |
 | `maximum` | `number` only, optional, default 1,000,000 |
-| `required` | optional, default `false`; `true`, or service rate keys |
+| `required` | optional, default `false`: `true` needs a value on every order |
+| `required_for` | optional, default `[]`: service rate keys that need a value |
 
-A required attribute must have a value on every order (or every entity) using
-one of the listed service rates, or on every order when `required` is `true`.
+A required attribute must have a value on every order (or every entity) when
+`required` is `true`, or on every order using one of the service rates in
+`required_for`. Set one or the other, not both.
 Pricing stops with a message when one is missing. A missing boolean that is not
 required counts as `false`; a missing choice or number matches nothing. A value
 of the wrong kind, an unknown choice, a negative number or one above `maximum`
@@ -230,7 +233,8 @@ Every order has one service rate. It decides the service fee.
 
 | Field | Meaning |
 | --- | --- |
-| `key`, `name`, `product` | as for every rule |
+| `key`, `product` | as for every rule |
+| `name` | label in the order form's rate picker and in messages |
 | `rate_table` | optional, default `null`: table whose row the order picks |
 | `line_name` | `{ "column": key }` of a text column, or `{ "text": name }` |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
@@ -553,7 +557,7 @@ charges" permission, or by another system through the API.
 | `amount` | money: the charge, or the charge per unit of quantity |
 | `entered` | `{ "minimum", "maximum" }`: the amount is typed when added |
 | `quantity` | optional, default `null`: `{ "unit", "step", "maximum" }` |
-| `offered` | optional, default `true`; `false` unless an override offers it |
+| `offered` | optional, default `true`; `false` hides it unless overridden |
 | `effective_from`, `effective_until` | optional dates, as for fees |
 
 Exactly one of `amount` and `entered` is set (the other is left out or `null`).
@@ -605,7 +609,8 @@ Overrides are a JSON object from a *path* to a value:
 }
 ```
 
-A path is the rule's kind, its key and a field, `K` below. A list is replaced
+A path is the section of the profile (`service_rates`, `fees`, `subtotal_fees`
+or `manual_charges`), the rule's key and a field, `K` below. A list is replaced
 as a whole. `null` is allowed wherever the profile allows it.
 
 | Path | Value |
@@ -622,7 +627,7 @@ as a whole. `null` is allowed wherever the profile allows it.
 | `subtotal_fees.K.F` | any field in the subtotal fee list below |
 | `manual_charges.K.F` | `amount`, `entered`, `quantity`, `offered` |
 | `holiday_lists.NAME` | a list of dates, for a list the profile has |
-| `allowed_service_rates` | service rate keys the customer may order |
+| `allowed_service_rates` | rate keys the customer may order; `[]` allows none |
 
 Every fee's `applies_to`, `minimum`, `maximum` and `enabled` can be
 overridden. So can a peak hours fee's `amount`, `if_missing`, `window`,
@@ -631,9 +636,14 @@ additional fee's `amount`, `if_missing` and `equals`. A subtotal fee's are
 `applies_to`, `requires`, `skipped_for`, `percentage`, `amount`, `if_missing`,
 `minimum`, `maximum` and `enabled`.
 
+A manual charge's `amount`, `entered` and `quantity` can be replaced, but an
+override can't set one the profile leaves `null` or clear one it sets: that
+would turn a flat charge into an entered one, or an hourly one into a flat one.
+
 The structure can't be overridden: products, service rates, entity types,
 attributes, rate tables, the kind of each fee, each charge's mode and how it is
-charged, the distance unit and maximum distance, and rule dates. An override is
+charged (including whether a manual charge is flat, entered or by quantity),
+the distance unit and maximum distance, and rule dates. An override is
 checked when it is loaded: its path must name a value the profile has, its
 value must have the right type, and the profile with every override applied
 must still pass every check in this document.
@@ -705,8 +715,14 @@ tables; the engine already applies them.
 ## Errors
 
 The profile checks return every problem they find, each with the path of the
-value (for example `fees.2.thresholds.0.over`), a translation key and its
-parameters. The English text for each key is in
+value in the JSON being checked (for example `fees.2.thresholds.0.over`), a
+translation key and its parameters. The English text for each key is in
 [`translations/en-us.yaml`](../translations/en-us.yaml), under
-`enhanced-pricing.profile`. Pricing errors and notes use keys under
-`enhanced-pricing.pricing`.
+`enhanced-pricing.profile`. An `expected` parameter is a type, with its text
+under `enhanced-pricing.types`, and a `kind` parameter is what was looked up
+(a service rate, a column), with its text under `enhanced-pricing.kinds`.
+
+Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
+rules, charges and service rates by their names, and the customer, card and
+row by the labels the caller gives. A path in a pricing error uses rule keys,
+as overrides do (for example `fees.heavy.minimum`).

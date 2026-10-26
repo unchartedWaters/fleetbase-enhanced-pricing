@@ -41,7 +41,7 @@ test('overrides must name values the profile defines, with the right type', func
         ->and(Customer::query()->count())->toBe(0);
 })->with([
     'unknown value' => [['fees.nothing.amount' => 100], 'unknown-override'],
-    'wrong type'    => [['fees.additional.amount' => 'ten'], 'wrong-type'],
+    'wrong type'    => [['fees.extra_handling.amount' => 'ten'], 'wrong-type'],
 ]);
 
 test('overrides sent replace the stored ones, absent keeps them and empty clears them', function () {
@@ -49,13 +49,13 @@ test('overrides sent replace the stored ones, absent keeps them and empty clears
     $store   = Stores::for();
     $uuid    = Database::customer('a');
 
-    $store->saveCustomer($uuid, $profile, ['fees.additional.amount' => 2000]);
+    $store->saveCustomer($uuid, $profile, ['fees.extra_handling.amount' => 2000]);
     $kept = $store->saveCustomer($uuid, $profile, null, ['branch' => 'north']);
-    expect($kept->overrides)->toBe(['fees.additional.amount' => 2000])
+    expect($kept->overrides)->toBe(['fees.extra_handling.amount' => 2000])
         ->and($kept->meta)->toBe(['branch' => 'north']);
 
-    $replaced = $store->saveCustomer($uuid, $profile, ['fees.parcel.thresholds' => [['over' => 30, 'amount' => 50]]]);
-    expect($replaced->overrides)->toBe(['fees.parcel.thresholds' => [['over' => 30, 'amount' => 50]]]);
+    $replaced = $store->saveCustomer($uuid, $profile, ['fees.heavy.thresholds' => [['over' => 30, 'amount' => 50]]]);
+    expect($replaced->overrides)->toBe(['fees.heavy.thresholds' => [['over' => 30, 'amount' => 50]]]);
 
     expect($store->saveCustomer($uuid, $profile, [])->overrides)->toBe([])
         ->and(Customer::query()->count())->toBe(1);
@@ -63,8 +63,8 @@ test('overrides sent replace the stored ones, absent keeps them and empty clears
 
 test('overrides sent again are checked again, even when unchanged', function () {
     $profile  = Stores::profile();
-    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
-    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
+    Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'), acceptStale: true);
 
     $again = fn () => Stores::for()->saveCustomer($customer->customer_uuid, $profile, $customer->overrides);
 

@@ -77,7 +77,7 @@ test('a unit cannot change under a stored override or live dated change', functi
     ))->toBe(['unit-changed']);
 })->with([
     'a parcel fee unit' => [
-        'fees.parcel.thresholds',
+        'fees.heavy.thresholds',
         [['over' => 30, 'amount' => 50]],
         'fees.1.unit',
         'lb',
@@ -87,7 +87,7 @@ test('a unit cannot change under a stored override or live dated change', functi
 
 test('the same unit change is allowed when nothing names the rule', function () {
     $profile = Stores::profile();
-    Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
+    Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
 
     $version = Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), 'fees.1.unit', 'lb'));
 
@@ -118,11 +118,11 @@ test('the undated value cannot change under a dated change already in effect', f
 
 test('a version that leaves entries stale is refused with the list', function () {
     $profile  = Stores::profile();
-    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
-    $change   = Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
+    $change   = Stores::for()->addDatedChange($profile, 'fees.extra_handling.amount', 1800, '2026-12-01');
 
     try {
-        Stores::for()->addVersion($profile, Stores::withoutFee('additional'));
+        Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'));
         $refused = null;
     } catch (StoreRefused $caught) {
         $refused = $caught;
@@ -136,15 +136,15 @@ test('a version that leaves entries stale is refused with the list', function ()
 
 test('a version accepted with stale entries records them', function () {
     $profile  = Stores::profile();
-    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
     $fine     = Stores::for()->saveCustomer(
         Database::customer('a', 2),
         $profile,
-        ['fees.parcel.thresholds' => [['over' => 30, 'amount' => 50]]],
+        ['fees.heavy.thresholds' => [['over' => 30, 'amount' => 50]]],
     );
-    $change   = Stores::for()->addDatedChange($profile, 'fees.additional.amount', 1800, '2026-12-01');
+    $change   = Stores::for()->addDatedChange($profile, 'fees.extra_handling.amount', 1800, '2026-12-01');
 
-    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
+    Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'), acceptStale: true);
 
     expect($customer->refresh()->checked_version)->toBe(2)
         ->and($customer->problems[0]['key'] ?? null)->toBe('enhanced-pricing.profile.unknown-override')
@@ -171,8 +171,8 @@ test('a row that no longer fits is stale', function () {
 
 test('fixing a stale customer clears its mark', function () {
     $profile  = Stores::profile();
-    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
-    Stores::for()->addVersion($profile, Stores::withoutFee('additional'), acceptStale: true);
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
+    Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'), acceptStale: true);
 
     $fixed = Stores::for()->saveCustomer($customer->customer_uuid, $profile->refresh(), []);
 

@@ -123,7 +123,7 @@ test('no record moves to another company, and a row keeps its key', function () 
 test('a customer save that changes only meta never rechecks its overrides', function () {
     $store    = Stores::for();
     $profile  = Stores::profile();
-    $customer = Stores::customer('a', $profile, ['fees.additional.amount' => 2000]);
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
     $removed  = Profiles::set(Profiles::example(), 'fees', [Profiles::example()['fees'][1]]);
     $store->addVersion($profile, $removed, acceptStale: true);
 

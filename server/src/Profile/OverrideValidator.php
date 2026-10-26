@@ -72,7 +72,7 @@ final class OverrideValidator
                 $schema->add(Problem::atPath(
                     OverridePaths::ALLOWED_SERVICE_RATES,
                     'unknown-reference',
-                    ['kind' => 'service rate', 'key' => $key],
+                    ['kind' => 'service_rate', 'key' => $key],
                 ));
             }
         }
