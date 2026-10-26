@@ -239,7 +239,33 @@ test('invalid overrides and dated changes name the path at fault', function () {
     expect(english($overrides->key, $overrides->params))
         ->toBe("Example customer's overrides aren't valid at fees.nope.amount.")
         ->and(english($changes->key, $changes->params))
-        ->toBe("The profile's dated changes aren't valid at 0.path.");
+        ->toBe("The profile's dated change to fees.nope.amount isn't valid.");
+});
+
+test('too many overrides or dated changes name no path', function () {
+    $overrides = [];
+    for ($index = 0; $index < 201; $index++) {
+        $overrides["fees.nope$index.amount"] = 1;
+    }
+    $failed = failure(fn () => Orders::price(['overrides' => $overrides]));
+
+    expect(english($failed->key, $failed->params))->toBe("Example customer's overrides aren't valid.");
+});
+
+test('every type a value can be expected to have has English text', function () {
+    $profile = Profiles::set(Profiles::example(), 'distance_unit', null);
+    $profile = Profiles::set($profile, 'holiday_lists', null);
+
+    try {
+        (new ProfileValidator())->normalize($profile);
+    } catch (InvalidProfile $invalid) {
+        foreach ($invalid->problems as $problem) {
+            expect(english($problem->key, $problem->params))->not->toContain('<no text');
+        }
+
+        return;
+    }
+    throw new RuntimeException('The profile was accepted.');
 });
 
 test('a profile made invalid by overrides and changes together is named by rule key', function () {

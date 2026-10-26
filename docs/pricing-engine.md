@@ -104,7 +104,7 @@ skipped for distance orders, and the other requires the additional fee.
 | `manualCharges` | a list of `ManualChargeInput` |
 | `overrides` | the customer's overrides, by path |
 | `datedChanges` | dated changes: `path`, `value`, `effective_from` |
-| `labels` | `customer`, `card` and `row` names, used in error details |
+| `labels` | `customer`, `card` and `row` names; messages use them, so give all three |
 
 An `EntityInput` has a `type` (an entity type key, or `null` for the
 profile's default), `weight` with `weightUnit`, `length`, `width` and
@@ -150,7 +150,8 @@ In this order, the engine:
 7. checks the order's attributes and entities.
 
 The first problem stops pricing with a `PricingFailed`. When the overrides or
-a dated change are refused, its `path` parameter names the first one at fault.
+a dated change are refused, its `path` parameter names the first one at fault:
+the override's path, or the path the dated change sets.
 When the profile is refused only after they are applied, `path` names the
 value by rule key, for example `fees.heavy.minimum`.
 

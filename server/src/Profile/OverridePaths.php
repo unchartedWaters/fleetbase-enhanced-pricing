@@ -99,7 +99,7 @@ final class OverridePaths
 
     /**
      * A path into a normalized profile with each rule's position replaced by its key, for
-     * example "fees.1.minimum" as "fees.parcel.minimum", the way overrides and dated changes
+     * example "fees.1.minimum" as "fees.heavy.minimum", the way overrides and dated changes
      * name it. A path that doesn't start at a rule is returned as it is.
      *
      * @param array<string, mixed> $profile

@@ -37,7 +37,7 @@ enhanced-pricing:
     too-long: "The text is longer than {max} characters."
     too-many: "Give no more than {max} entries."
     too-short: "Give at least {min} character."
-    changes-charge-mode: "An override can't add or remove {field}, because that changes how the charge works."
+    changes-charge-mode: "An override or dated change can't add or remove {field}, because that changes how the charge works."
     required-and-required-for: "Use either required or required_for, not both."
     unknown-field: "{field} isn't a field here."
     unknown-override: "{path} isn't a value that can be overridden."
@@ -51,7 +51,8 @@ enhanced-pricing:
     amount-too-large: "A line or the total is above the largest amount, {max} cents."
     attribute-invalid: "The value of {attribute} isn't valid."
     attribute-required: "{attribute} is required."
-    changes-invalid: "The profile's dated changes aren't valid at {path}."
+    changes-invalid: "The profile's dated change to {path} isn't valid."
+    changes-invalid-all: The profile's dated changes aren't valid.
     distance-required: This service rate needs the order's distance.
     distance-too-long: "The distance {distance} is above the maximum of {maximum}."
     entity-invalid: "Entity {entity} has a weight or size that isn't valid."
@@ -70,6 +71,7 @@ enhanced-pricing:
     missing-value: "{rule} has no line name in {column}, row {row} of {customer}'s card {card}."
     no-entities: The order has no entities to price.
     overrides-invalid: "{customer}'s overrides aren't valid at {path}."
+    overrides-invalid-all: "{customer}'s overrides aren't valid."
     profile-invalid: "The pricing profile isn't valid. Problems found: {problems}."
     profile-invalid-for-order: "With this customer's overrides and changes, the profile isn't valid at {path}."
     row-invalid: "Row {row} of {customer}'s card {card} has a value for {column} that isn't valid."
@@ -90,9 +92,11 @@ enhanced-pricing:
     code: a product code (letters, digits, _, - and .)
     currency: a three-letter currency code, such as CAD
     date: a date written YYYY-MM-DD
+    enum: one of the listed choices
     integer: a whole number
     key: a key (lowercase letters, digits, _ and -)
     list: a list
+    map: an object of named entries
     money: a whole number of cents
     number: a number
     object: an object with named fields
