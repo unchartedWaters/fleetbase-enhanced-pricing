@@ -1,0 +1,28 @@
+<div class="space-y-3">
+    {{#if this.variants.length}}
+        <div class="pricing-field">
+            <div class="mb-1 text-sm font-semibold text-gray-700 dark:text-gray-200">{{pricing-label (or this.kind.discriminator "variant")}}</div>
+            <select class="form-select form-input-sm w-full max-w-md" disabled={{@env.readOnly}} data-test-variant {{on "change" this.setVariant}}>
+                {{#unless this.variant}}
+                    <option value="" selected>{{t "enhanced-pricing.console.input.none"}}</option>
+                {{/unless}}
+                {{#each this.variants as |variant|}}
+                    <option value={{variant}} selected={{eq variant this.variant}}>{{t (concat "enhanced-pricing.console.variant." variant)}}</option>
+                {{/each}}
+            </select>
+        </div>
+    {{/if}}
+    {{#each this.fields key="path" as |entry|}}
+        <Pricing::Field @env={{@env}} @field={{entry.field}} @value={{get this.value entry.field.name}} @path={{entry.path}} @context={{this.context}} @onChange={{fn this.setField entry.field.name}} />
+    {{/each}}
+    {{#each this.unknown key="path" as |entry|}}
+        <div class="rounded border border-yellow-300 bg-yellow-50 p-2 text-sm dark:border-yellow-700 dark:bg-yellow-900" data-test-unknown={{entry.path}}>
+            <span class="font-mono">{{entry.name}}</span>
+            <code class="ml-2 text-xs">{{pricing-json entry.value}}</code>
+            <p class="text-xs">{{t "enhanced-pricing.console.editor.unknown-field"}}</p>
+            {{#unless @env.readOnly}}
+                <Button class="mt-1" @size="xs" @type="danger" @text={{t "enhanced-pricing.console.editor.remove-field"}} @onClick={{fn this.removeUnknown entry.name}} data-test-remove-unknown />
+            {{/unless}}
+        </div>
+    {{/each}}
+</div>

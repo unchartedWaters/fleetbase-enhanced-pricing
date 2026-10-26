@@ -1,0 +1,83 @@
+<div class="space-y-6">
+    <section>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+            {{t "enhanced-pricing.console.customers.checked-version" number=@customer.checked_version}}
+            ·
+            {{t "enhanced-pricing.console.customers.current-version" number=@customer.profile.current_version}}
+        </p>
+        {{#if @customer.problems}}
+            <div class="mt-2 rounded-lg border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950" data-test-customer-problems>
+                <p class="mb-1 text-sm font-semibold">{{t "enhanced-pricing.console.customers.stale-help"}}</p>
+                <Pricing::ProblemList @problems={{@customer.problems}} />
+            </div>
+        {{/if}}
+    </section>
+
+    <section>
+        <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-white">{{t "enhanced-pricing.console.customers.overrides"}}</h3>
+        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.customers.read-only"}}</p>
+        {{#if this.overrides.length}}
+            <div class="table-wrapper table-fluid">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.path"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.value"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.profile-value"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.change-in-effect"}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each this.overrides key="path" as |override|}}
+                            <tr data-test-override={{override.path}}>
+                                <td class="px-3 py-2 font-mono">{{override.path}}</td>
+                                <td class="px-3 py-2 font-semibold" data-test-value>{{override.value}}</td>
+                                <td class="px-3 py-2" data-test-default>{{or override.default (t "enhanced-pricing.console.input.not-set")}}</td>
+                                <td class="px-3 py-2">
+                                    {{#if override.change}}
+                                        <span data-test-change>{{t "enhanced-pricing.console.value-from" value=override.change.value date=override.change.from}}</span>
+                                    {{/if}}
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        {{else}}
+            <p class="text-sm text-gray-600 dark:text-gray-300" data-test-no-overrides>{{t "enhanced-pricing.console.customers.no-overrides"}}</p>
+        {{/if}}
+    </section>
+
+    <section>
+        <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-white">{{t "enhanced-pricing.console.customers.cards"}}</h3>
+        {{#each this.cards key="uuid" as |card|}}
+            <div class="mb-4 rounded-lg border border-gray-200 p-3 dark:border-gray-700" data-test-card={{card.uuid}}>
+                <h4 class="mb-2 text-sm font-semibold" data-test-card-label>{{card.label}}</h4>
+                <div class="table-wrapper table-fluid">
+                    <table class="w-full text-sm">
+                        <tbody>
+                            {{#each card.rows key="uuid" as |row|}}
+                                <tr data-test-row={{row.key}}>
+                                    <td class="px-3 py-1 font-mono text-xs text-gray-500 dark:text-gray-400">{{row.table_key}}</td>
+                                    {{#each row.cells as |cell|}}
+                                        <td class="px-3 py-1">
+                                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{cell.column}}</span>
+                                            <span data-test-column={{cell.column}}>{{cell.value}}</span>
+                                        </td>
+                                    {{/each}}
+                                    {{#if row.problems}}
+                                        <td class="px-3 py-1" data-test-problems>
+                                            <Pricing::ProblemList @problems={{row.problems}} @hidePath={{true}} />
+                                        </td>
+                                    {{/if}}
+                                </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {{else}}
+            <p class="text-sm text-gray-600 dark:text-gray-300" data-test-no-cards>{{t "enhanced-pricing.console.customers.no-cards"}}</p>
+        {{/each}}
+    </section>
+</div>

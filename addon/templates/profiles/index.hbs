@@ -1,0 +1,6 @@
+<Layout::Section::Header @title={{t "enhanced-pricing.console.profiles.title"}}>
+    <Button @type="primary" @icon="plus" @text={{t "enhanced-pricing.console.profiles.new"}} @onClick={{this.create}} />
+</Layout::Section::Header>
+<Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
+    <Pricing::ProfilesList @profiles={{@model}} @onOpen={{this.open}} />
+</Layout::Section::Body>

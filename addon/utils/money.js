@@ -72,3 +72,33 @@ export function formatPercent(points) {
 
     return text === '' ? '' : `${text}%`;
 }
+
+// What an override or dated change path holds, by its last field: subtotal_fees.K.percentage is
+// basis points; an amount, minimum, maximum, rate or base fee is cents. Anything else (a list,
+// an object, a number or a flag) is shown as it is stored.
+const MONEY_FIELDS = new Set(['amount', 'minimum', 'maximum', 'rate', 'base_fee']);
+
+export function valueKind(path) {
+    const field = String(path ?? '')
+        .split('.')
+        .pop();
+    if (field === 'percentage') {
+        return 'percent';
+    }
+
+    return MONEY_FIELDS.has(field) ? 'money' : null;
+}
+
+export function formatValue(path, value, currency) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    switch (valueKind(path)) {
+        case 'percent':
+            return Number.isInteger(value) ? formatPercent(value) : JSON.stringify(value);
+        case 'money':
+            return Number.isInteger(value) ? formatMoney(value, currency) : JSON.stringify(value);
+        default:
+            return typeof value === 'string' ? value : JSON.stringify(value);
+    }
+}

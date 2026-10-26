@@ -1,0 +1,23 @@
+<Layout::Section::Header @title={{@model.profile.name}} @subtitle={{concat @model.profile.key " · " @model.profile.currency " · " @model.profile.distance_unit}} @subtitleClass="ml-3 font-mono text-xs text-gray-500 dark:text-gray-400">
+    <Button @icon="calculator" @text={{t "enhanced-pricing.console.profile.preview"}} @onClick={{this.preview}} />
+    <Button @type="primary" @icon="pencil" @text={{t "enhanced-pricing.console.profile.edit"}} @onClick={{this.edit}} data-test-edit />
+</Layout::Section::Header>
+<Layout::Section::Body class="overflow-y-auto h-full">
+    <nav class="flex space-x-4 border-b border-gray-200 px-4 lg:px-10 dark:border-gray-700" aria-label={{@model.profile.name}}>
+        <LinkTo @route="profiles.details.index" @model={{@model.key}} @query={{hash version=null}} class="pricing-tab py-3 text-sm" @activeClass="font-semibold border-b-2 border-blue-500">
+            {{t "enhanced-pricing.console.profile.tabs.overview"}}
+        </LinkTo>
+        <LinkTo @route="profiles.details.versions" @model={{@model.key}} class="pricing-tab py-3 text-sm" @activeClass="font-semibold border-b-2 border-blue-500">
+            {{t "enhanced-pricing.console.profile.tabs.versions"}}
+        </LinkTo>
+        <LinkTo @route="profiles.details.subtotal-fees" @model={{@model.key}} class="pricing-tab py-3 text-sm" @activeClass="font-semibold border-b-2 border-blue-500">
+            {{t "enhanced-pricing.console.profile.tabs.subtotal-fees"}}
+        </LinkTo>
+        <LinkTo @route="profiles.details.customers" @model={{@model.key}} class="pricing-tab py-3 text-sm" @activeClass="font-semibold border-b-2 border-blue-500">
+            {{t "enhanced-pricing.console.profile.tabs.customers"}}
+        </LinkTo>
+    </nav>
+    <div class="px-4 py-4 lg:px-10">
+        {{outlet}}
+    </div>
+</Layout::Section::Body>

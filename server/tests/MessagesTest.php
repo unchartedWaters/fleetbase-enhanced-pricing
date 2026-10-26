@@ -1,5 +1,6 @@
 <?php
 
+use Fleetbase\EnhancedPricing\Admin\ProfileForm;
 use Fleetbase\EnhancedPricing\Pricing\ManualChargeInput;
 use Fleetbase\EnhancedPricing\Profile\InvalidProfile;
 use Fleetbase\EnhancedPricing\Profile\Problem;
@@ -214,4 +215,84 @@ test('a profile made invalid by overrides and changes together is named by rule 
 
     expect($failed->key)->toBe('enhanced-pricing.pricing.profile-invalid-for-order')
         ->and($failed->params['path'])->toStartWith('fees.heavy.');
+});
+
+/**
+ * The whole text keys the console's templates and code name, under enhanced-pricing.console.
+ *
+ * @return list<string>
+ */
+function consoleKeys(): array
+{
+    $keys  = [];
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__ . '/../../addon'));
+    foreach ($files as $file) {
+        if ($file->isFile() && in_array($file->getExtension(), ['hbs', 'js'], true)) {
+            $source = (string) file_get_contents($file->getPathname());
+            preg_match_all('/enhanced-pricing\.console\.[a-z0-9.-]*+/', $source, $found);
+            // A key ending in a dot is the start of one made in the template, checked below.
+            $keys = [...$keys, ...array_filter($found[0], static fn (string $key) => !str_ends_with($key, '.'))];
+        }
+    }
+
+    return array_values(array_unique($keys));
+}
+
+/**
+ * @param array<string, mixed> $tree
+ */
+function hasText(array $tree, string $key): bool
+{
+    $value = $tree;
+    foreach (explode('.', $key) as $part) {
+        if (is_array($value) === false || array_key_exists($part, $value) === false) {
+            return false;
+        }
+        $value = $value[$part];
+    }
+
+    return is_string($value);
+}
+
+test('every console text has English text, including each section, variant and choice', function () {
+    $all  = ['enhanced-pricing' => Messages::translations()];
+    $spec = ProfileForm::spec();
+    $keys = consoleKeys();
+    foreach ($spec['sections'] as $section) {
+        $keys[] = 'enhanced-pricing.console.section.' . $section['key'];
+    }
+    foreach ($spec['kinds'] as $kind) {
+        foreach (array_keys($kind['variants'] ?? []) as $variant) {
+            $keys[] = "enhanced-pricing.console.variant.$variant";
+        }
+        foreach ($kind['fields'] as $field) {
+            foreach (array_keys($field['choices'] ?? []) as $choice) {
+                $keys[] = "enhanced-pricing.console.choice.$choice";
+            }
+        }
+        foreach ($kind['variants'] ?? [] as $fields) {
+            foreach ($fields as $field) {
+                foreach (array_keys($field['choices'] ?? []) as $choice) {
+                    $keys[] = "enhanced-pricing.console.choice.$choice";
+                }
+            }
+        }
+    }
+    foreach (['upcoming', 'in-effect', 'stale', 'cancelled'] as $state) {
+        $keys[] = "enhanced-pricing.console.change-state.$state";
+    }
+    foreach (['customer', 'row', 'dated_change'] as $kind) {
+        $keys[] = "enhanced-pricing.console.stale-kind.$kind";
+    }
+    foreach (range(1, 7) as $day) {
+        $keys[] = "enhanced-pricing.console.weekday.$day";
+    }
+    foreach (['length', 'width', 'height'] as $side) {
+        $keys[] = "enhanced-pricing.console.preview.$side";
+    }
+
+    expect(count($keys))->toBeGreaterThan(150);
+    foreach (array_unique($keys) as $key) {
+        expect(hasText($all, $key))->toBeTrue("$key has no English text");
+    }
 });

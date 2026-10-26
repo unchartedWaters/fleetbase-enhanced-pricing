@@ -1,0 +1,37 @@
+{{#if @profiles.length}}
+    <div class="table-wrapper table-fluid">
+        <table class="w-full text-sm">
+            <thead>
+                <tr>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.name"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.key"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.currency"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.distance-unit"}}</th>
+                    <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.profile.version"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.saved"}}</th>
+                    <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.profile.customers"}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each @profiles key="key" as |profile|}}
+                    <tr data-test-profile={{profile.key}}>
+                        <td class="px-3 py-2">
+                            <button type="button" class="font-semibold text-blue-600 hover:underline dark:text-blue-400" data-test-open {{on "click" (fn (optional @onOpen) profile.key)}}>{{profile.name}}</button>
+                        </td>
+                        <td class="px-3 py-2 font-mono">{{profile.key}}</td>
+                        <td class="px-3 py-2">{{profile.currency}}</td>
+                        <td class="px-3 py-2">{{profile.distance_unit}}</td>
+                        <td class="px-3 py-2 text-right" data-test-version>{{profile.current_version}}</td>
+                        <td class="px-3 py-2">
+                            <span data-test-saved-by>{{or profile.saved_by.name (t "enhanced-pricing.console.unknown-person")}}</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{pricing-time profile.saved_at}}</span>
+                        </td>
+                        <td class="px-3 py-2 text-right" data-test-customers>{{profile.customers}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+{{else}}
+    <p class="py-6 text-sm text-gray-600 dark:text-gray-300" data-test-empty>{{t "enhanced-pricing.console.profiles.empty"}}</p>
+{{/if}}

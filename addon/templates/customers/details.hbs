@@ -1,0 +1,7 @@
+<Layout::Section::Header @title={{or @model.name (t "enhanced-pricing.console.unknown-person")}} @subtitle={{@model.profile.name}} @subtitleClass="ml-3 text-xs text-gray-500 dark:text-gray-400">
+    <Button @icon="arrow-left" @text={{@model.profile.name}} @onClick={{this.openProfile}} />
+    <Button @type="primary" @icon="calculator" @text={{t "enhanced-pricing.console.profile.preview"}} @onClick={{this.preview}} />
+</Layout::Section::Header>
+<Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
+    <Pricing::CustomerDetails @customer={{@model}} />
+</Layout::Section::Body>

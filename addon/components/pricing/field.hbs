@@ -1,0 +1,76 @@
+<div class="pricing-field" data-test-field={{@path}}>
+    <div class="mb-1 flex items-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+        {{pricing-label this.field.name}}
+        {{#if this.field.optional}}
+            <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.input.optional"}}</span>
+        {{/if}}
+        {{#if (and this.field.fixed (not this.env.isNew))}}
+            <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.input.fixed"}}</span>
+        {{/if}}
+    </div>
+
+    {{#if this.isScalar}}
+        <Pricing::Input
+            @type={{this.field.type}}
+            @value={{@value}}
+            @options={{this.options}}
+            @nullable={{this.field.nullable}}
+            @optional={{this.field.optional}}
+            @currency={{this.env.currency}}
+            @disabled={{this.disabled}}
+            @onChange={{@onChange}}
+            @onError={{this.reportError}}
+        />
+    {{else if (eq this.field.type "choice")}}
+        <div class="flex flex-wrap items-start gap-2">
+            <select class="form-select form-input-sm w-40" disabled={{this.disabled}} data-test-choice-kind {{on "change" this.setChoiceKind}}>
+                {{#if this.field.nullable}}
+                    <option value="" selected={{eq this.chosen null}}>{{t "enhanced-pricing.console.input.none"}}</option>
+                {{/if}}
+                {{#each this.choiceNames as |name|}}
+                    <option value={{name}} selected={{eq name this.chosen}}>{{t (concat "enhanced-pricing.console.choice." name)}}</option>
+                {{/each}}
+            </select>
+            {{#if this.chosenSpec}}
+                <div class="flex-1">
+                    <Pricing::Input
+                        @type={{this.chosenSpec.type}}
+                        @value={{get @value this.chosen}}
+                        @options={{this.chosenOptions}}
+                        @currency={{this.env.currency}}
+                        @disabled={{this.disabled}}
+                        @choiceValue={{true}}
+                        @onChange={{this.setChoiceValue}}
+                        @onError={{this.reportError}}
+                    />
+                </div>
+            {{/if}}
+        </div>
+    {{else if (eq this.field.type "object")}}
+        {{#if @value}}
+            <div class="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <Pricing::Fields @env={{this.env}} @kind={{this.field.of}} @value={{@value}} @path={{@path}} @context={{@context}} @onChange={{@onChange}} />
+                {{#if (and this.field.nullable (not this.env.readOnly))}}
+                    <Button class="mt-2" @size="xs" @type="link" @text={{t "enhanced-pricing.console.editor.remove-object"}} @onClick={{this.removeObject}} data-test-remove-object />
+                {{/if}}
+            </div>
+        {{else}}
+            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                {{t "enhanced-pricing.console.input.not-set"}}
+                {{#unless this.env.readOnly}}
+                    <Button class="ml-2" @size="xs" @text={{t "enhanced-pricing.console.editor.add-object"}} @onClick={{this.addObject}} data-test-add-object />
+                {{/unless}}
+            </div>
+        {{/if}}
+    {{else if (eq this.field.type "list")}}
+        <Pricing::ItemList @env={{this.env}} @kind={{this.field.of}} @items={{@value}} @path={{@path}} @context={{@context}} @max={{this.field.max}} @nested={{true}} @onChange={{@onChange}} />
+    {{/if}}
+
+    {{#if this.problems.length}}
+        <ul class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-field-problems>
+            {{#each this.problems as |problem|}}
+                <li>{{pricing-message problem}}</li>
+            {{/each}}
+        </ul>
+    {{/if}}
+</div>

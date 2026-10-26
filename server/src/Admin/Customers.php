@@ -102,6 +102,7 @@ final class Customers
                 'name'            => $profile->name,
                 'currency'        => $profile->currency,
                 'current_version' => $profile->current_version,
+                'columns'         => self::columns($state->normalized),
             ],
             'checked_version' => $customer->checked_version,
             'problems'        => $customer->problems,
@@ -113,6 +114,33 @@ final class Customers
             ], $paths),
             'cards'           => $this->cards($customer),
         ];
+    }
+
+    /**
+     * Each rate table's column types, so the console shows money columns in the profile's
+     * currency.
+     *
+     * @param array<string, mixed> $normalized
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function columns(array $normalized): array
+    {
+        $tables = [];
+        foreach (is_array($normalized['rate_tables'] ?? null) ? $normalized['rate_tables'] : [] as $table) {
+            if (is_array($table) === false || is_string($table['key'] ?? null) === false) {
+                continue;
+            }
+            $columns = [];
+            foreach (is_array($table['columns'] ?? null) ? $table['columns'] : [] as $column) {
+                if (is_array($column) && is_string($column['key'] ?? null) && is_string($column['type'] ?? null)) {
+                    $columns[$column['key']] = $column['type'];
+                }
+            }
+            $tables[$table['key']] = $columns;
+        }
+
+        return $tables;
     }
 
     /**

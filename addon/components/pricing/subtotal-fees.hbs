@@ -1,0 +1,52 @@
+<div class="space-y-6">
+    <p class="text-sm text-gray-600 dark:text-gray-300">{{t "enhanced-pricing.console.fees.help" today=@schedule.today}}</p>
+    {{#each @schedule.subtotal_fees key="key" as |fee|}}
+        <Pricing::SubtotalFee @fee={{fee}} @currency={{@currency}} @onSchedule={{@onSchedule}} @onCancel={{@onCancel}} />
+    {{else}}
+        <p class="text-sm text-gray-600 dark:text-gray-300" data-test-no-fees>{{t "enhanced-pricing.console.fees.none"}}</p>
+    {{/each}}
+
+    <section>
+        <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-white">{{t "enhanced-pricing.console.fees.all-changes"}}</h3>
+        {{#if this.changes.length}}
+            <div class="table-wrapper table-fluid">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.path"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.value"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.effective-from"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.state"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.added-by"}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each this.changes key="uuid" as |change|}}
+                            <tr data-test-change={{change.uuid}}>
+                                <td class="px-3 py-2 font-mono">{{change.path}}</td>
+                                <td class="px-3 py-2">{{change.shown}}</td>
+                                <td class="px-3 py-2">{{change.effective_from}}</td>
+                                <td class="px-3 py-2">
+                                    {{t (concat "enhanced-pricing.console.change-state." change.state)}}
+                                    {{#if change.problems}}
+                                        <Pricing::ProblemList @problems={{change.problems}} @hidePath={{true}} />
+                                    {{/if}}
+                                </td>
+                                <td class="px-3 py-2">
+                                    {{or change.added_by.name (t "enhanced-pricing.console.unknown-person")}}
+                                    {{#if change.cancelled_at}}
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">
+                                            {{t "enhanced-pricing.console.fees.cancelled-by" name=(or change.cancelled_by.name (t "enhanced-pricing.console.unknown-person"))}}
+                                        </span>
+                                    {{/if}}
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        {{else}}
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{t "enhanced-pricing.console.fees.no-changes"}}</p>
+        {{/if}}
+    </section>
+</div>

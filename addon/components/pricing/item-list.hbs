@@ -1,0 +1,65 @@
+<div class="space-y-3">
+    {{#each this.entries key="path" as |entry|}}
+        {{#if @nested}}
+            <div class="rounded border border-gray-200 p-3 dark:border-gray-700" data-test-nested-item={{entry.path}}>
+                <div class="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>#{{entry.number}}</span>
+                    {{#unless @env.readOnly}}
+                        <span class="flex items-center space-x-1">
+                            <Button @size="xs" @icon="arrow-up" @disabled={{entry.first}} @onClick={{fn this.move entry.index -1}} data-test-nested-move-up />
+                            <Button @size="xs" @icon="arrow-down" @disabled={{entry.last}} @onClick={{fn this.move entry.index 1}} data-test-nested-move-down />
+                            <Button @size="xs" @type="danger" @icon="trash" @onClick={{fn this.remove entry.index}} data-test-nested-remove />
+                        </span>
+                    {{/unless}}
+                </div>
+                <Pricing::Fields @env={{@env}} @kind={{@kind}} @value={{entry.item}} @path={{entry.path}} @context={{@context}} @onChange={{fn this.setItem entry.index}} />
+            </div>
+        {{else}}
+            <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800" data-test-item={{entry.path}}>
+                <header class="mb-3 flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                        {{entry.title}}
+                        {{#if entry.problems}}
+                            <span class="ml-2 rounded bg-red-100 px-1.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-200">{{t "enhanced-pricing.console.editor.problem-count" count=entry.problems}}</span>
+                        {{/if}}
+                    </h3>
+                    {{#unless @env.readOnly}}
+                        <span class="flex items-center space-x-1">
+                            <Button @size="xs" @icon="arrow-up" @disabled={{entry.first}} @onClick={{fn this.move entry.index -1}} data-test-move-up />
+                            <Button @size="xs" @icon="arrow-down" @disabled={{entry.last}} @onClick={{fn this.move entry.index 1}} data-test-move-down />
+                            <Button @size="xs" @type="danger" @icon="trash" @text={{t "enhanced-pricing.console.editor.remove"}} @onClick={{fn this.remove entry.index}} data-test-remove />
+                        </span>
+                    {{/unless}}
+                </header>
+                <Pricing::Fields @env={{@env}} @kind={{@kind}} @value={{entry.item}} @path={{entry.path}} @onChange={{fn this.setItem entry.index}} />
+            </section>
+        {{/if}}
+    {{else}}
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-test-list-empty>{{t "enhanced-pricing.console.editor.empty-list"}}</p>
+    {{/each}}
+
+    {{#if this.canAdd}}
+        <div class="flex items-center space-x-2">
+            {{#if this.variants.length}}
+                {{#if @nested}}
+                    <select class="form-select form-input-sm w-48" data-test-nested-add-variant {{on "change" this.chooseVariant}}>
+                        {{#each this.variants as |variant|}}
+                            <option value={{variant}} selected={{eq variant this.chosenVariant}}>{{t (concat "enhanced-pricing.console.variant." variant)}}</option>
+                        {{/each}}
+                    </select>
+                {{else}}
+                    <select class="form-select form-input-sm w-48" data-test-add-variant {{on "change" this.chooseVariant}}>
+                        {{#each this.variants as |variant|}}
+                            <option value={{variant}} selected={{eq variant this.chosenVariant}}>{{t (concat "enhanced-pricing.console.variant." variant)}}</option>
+                        {{/each}}
+                    </select>
+                {{/if}}
+            {{/if}}
+            {{#if @nested}}
+                <Button @size="xs" @icon="plus" @text={{t "enhanced-pricing.console.editor.add"}} @onClick={{this.add}} data-test-nested-add />
+            {{else}}
+                <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.editor.add"}} @onClick={{this.add}} data-test-add />
+            {{/if}}
+        </div>
+    {{/if}}
+</div>

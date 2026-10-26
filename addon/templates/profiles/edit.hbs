@@ -1,0 +1,15 @@
+<Layout::Section::Header @title={{t "enhanced-pricing.console.editor.title" name=@model.profile.name}} @subtitle={{t "enhanced-pricing.console.profile.viewing" number=@model.profile.version.number current=@model.profile.current_version}} @subtitleClass="ml-3 text-xs text-gray-500 dark:text-gray-400" />
+<Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
+    {{#each (array @model.profile.version.number) as |number|}}
+        <Pricing::ProfileEditor
+            @form={{@model.form}}
+            @profile={{@model.profile}}
+            @definition={{@model.profile.version.definition}}
+            @builtOn={{number}}
+            @onSave={{this.save}}
+            @onOpenNewer={{this.openNewer}}
+            @onDirty={{this.setDirty}}
+            @onCancel={{this.cancel}}
+        />
+    {{/each}}
+</Layout::Section::Body>

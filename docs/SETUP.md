@@ -1,8 +1,12 @@
 # Setup
 
 Enhanced Pricing prices Fleet-Ops orders from pricing profiles. This release
-contains the profile checks and the pricing engine; it adds no tables,
-routes, permissions or console screens yet.
+contains the profile checks, the pricing engine, the tables that store
+profiles, customers, rate cards and dated changes, and the console's
+**Pricing** page: profiles and their versions, the profile editor, subtotal
+fees and their dated changes, each customer's overrides and rate cards
+(read-only), and a quote preview. The order form fields and the order details
+panel come in a later release.
 
 The package lives in
 [watersAbove/fleetbase-enhanced-pricing](https://github.com/watersAbove/fleetbase-enhanced-pricing),
@@ -35,9 +39,31 @@ current one. `flb install` installs `@unchartedwaters/enhanced-pricing-engine`
 and `unchartedwaters/enhanced-pricing-api`. Then rebuild or restart the
 console so it includes the engine.
 
-This release has no migrations or permissions, so there is nothing to run
-after install. Later releases that add tables and permissions will say which
-commands to run.
+Then, in the Fleetbase API, run the migrations and create the extension's
+permissions:
+
+```bash
+php artisan migrate
+php artisan fleetbase:create-permissions
+```
+
+`fleetbase:create-permissions` reads `server/src/Auth/Schemas/EnhancedPricing.php`
+and makes these permissions, which an administrator gives to roles or users
+in the console's IAM settings:
+
+| Permission | Allows |
+| --- | --- |
+| `enhanced-pricing see extension` | the Pricing item in the console header |
+| `enhanced-pricing manage pricing-profile` | reading and saving profiles, their versions and dated changes; reading customers and previewing quotes |
+| `enhanced-pricing manage rate-card` | reading profiles, customers' overrides and rate cards; previewing quotes |
+| `enhanced-pricing manage manual-charge` | manual charges on orders (a later release) |
+
+Any of the three `manage` permissions also counts as `see extension`.
+
+It also makes two policies: `EnhancedPricingManager`, with all of them, and
+`EnhancedPricingRateCards`, with the Pricing page and rate cards.
+Administrators have every permission. Drivers, customers and contacts are
+refused on every Pricing endpoint, whatever they hold.
 
 ## Publishing
 

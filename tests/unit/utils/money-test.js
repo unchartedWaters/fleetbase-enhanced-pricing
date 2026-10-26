@@ -1,5 +1,14 @@
 import { module, test } from 'qunit';
-import { centsToDecimal, decimalToCents, basisPointsToPercent, percentToBasisPoints, formatMoney, formatPercent } from '@unchartedwaters/enhanced-pricing-engine/utils/money';
+import {
+    centsToDecimal,
+    decimalToCents,
+    basisPointsToPercent,
+    percentToBasisPoints,
+    formatMoney,
+    formatPercent,
+    valueKind,
+    formatValue,
+} from '@unchartedwaters/enhanced-pricing-engine/utils/money';
 
 // Profiles store money as integer cents and percents as integer basis points. The console shows
 // and takes dollars and percents, so "45" can't be saved as 45 cents, nor "31" as 0.31%.
@@ -72,5 +81,17 @@ module('Unit | Utility | money', () => {
         assert.strictEqual(formatMoney(4500, 'USD'), '$45.00');
         assert.strictEqual(formatMoney(null, 'USD'), '');
         assert.strictEqual(formatPercent(1250), '12.5%');
+    });
+
+    test('an override path is shown in its unit', (assert) => {
+        assert.strictEqual(valueKind('subtotal_fees.percent.percentage'), 'percent');
+        assert.strictEqual(valueKind('fees.heavy.minimum'), 'money');
+        assert.strictEqual(valueKind('service_rates.distance.per_meter.rate'), 'money');
+        assert.strictEqual(valueKind('service_rates.distance.per_meter.minimum_distance'), null);
+        assert.strictEqual(formatValue('subtotal_fees.percent.percentage', 900, 'USD'), '9%');
+        assert.strictEqual(formatValue('fees.heavy.minimum', 500, 'USD'), '$5.00');
+        assert.strictEqual(formatValue('allowed_service_rates', ['tiered'], 'USD'), '["tiered"]');
+        assert.strictEqual(formatValue('service_rates.tiered.enabled', false, 'USD'), 'false');
+        assert.strictEqual(formatValue('fees.heavy.minimum', null, 'USD'), '');
     });
 });

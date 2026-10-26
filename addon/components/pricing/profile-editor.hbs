@@ -1,0 +1,116 @@
+<div class="pricing-profile-editor flex flex-col lg:flex-row lg:space-x-6" data-test-profile-editor>
+    <nav class="mb-4 w-full shrink-0 lg:mb-0 lg:w-56" aria-label={{t "enhanced-pricing.console.editor.sections"}}>
+        <ul class="space-y-1">
+            {{#each this.sections key="key" as |section|}}
+                <li>
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-between rounded px-3 py-1.5 text-left text-sm {{if section.active 'bg-blue-100 font-semibold text-blue-900 dark:bg-blue-900 dark:text-blue-100' 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'}}"
+                        aria-current={{if section.active "true"}}
+                        data-test-section={{section.key}}
+                        {{on "click" (fn this.setSection section.key)}}
+                    >
+                        <span>{{t (concat "enhanced-pricing.console.section." section.key)}}</span>
+                        {{#if section.problems}}
+                            <span class="rounded bg-red-100 px-1.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-200" data-test-problem-count>{{section.problems}}</span>
+                        {{/if}}
+                    </button>
+                </li>
+            {{/each}}
+        </ul>
+    </nav>
+
+    <div class="min-w-0 flex-1 space-y-4">
+        {{#if this.problems.length}}
+            <div class="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-950" role="alert">
+                <h3 class="mb-2 text-sm font-semibold text-red-800 dark:text-red-200">{{t "enhanced-pricing.console.editor.refused" count=this.problems.length}}</h3>
+                <Pricing::ProblemList @problems={{this.problems}} @onSelect={{this.selectProblem}} />
+            </div>
+        {{/if}}
+
+        {{#if this.stale}}
+            <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950" role="alert" data-test-stale>
+                <h3 class="mb-2 text-sm font-semibold text-yellow-900 dark:text-yellow-100">{{t "enhanced-pricing.console.editor.stale-title" count=this.stale.length}}</h3>
+                <p class="mb-2 text-sm text-yellow-900 dark:text-yellow-100">{{t "enhanced-pricing.console.editor.stale-help"}}</p>
+                <ul class="mb-3 space-y-2 text-sm">
+                    {{#each this.stale as |entry|}}
+                        <li data-test-stale-entry={{entry.uuid}}>
+                            <span class="font-semibold">{{entry.label}}</span>
+                            <span class="text-xs text-gray-600 dark:text-gray-300">({{t (concat "enhanced-pricing.console.stale-kind." entry.kind)}})</span>
+                            <Pricing::ProblemList @problems={{entry.problems}} @hidePath={{true}} />
+                        </li>
+                    {{/each}}
+                </ul>
+                <Button @type="warning" @text={{t "enhanced-pricing.console.editor.save-anyway"}} @isLoading={{this.saving}} @onClick={{this.saveStale}} data-test-save-stale />
+            </div>
+        {{/if}}
+
+        {{#if this.outdated}}
+            <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950" role="alert" data-test-outdated>
+                <p class="mb-3 text-sm text-yellow-900 dark:text-yellow-100">
+                    {{t "enhanced-pricing.console.editor.outdated" number=this.outdated.number name=(or this.outdated.saved_by.name "—") at=this.outdated.saved_at}}
+                </p>
+                {{#if (eq this.confirming "open-newer")}}
+                    <p class="mb-2 text-sm">{{t "enhanced-pricing.console.editor.confirm-open-newer"}}</p>
+                    <Button @type="danger" @text={{t "enhanced-pricing.console.editor.open-newer"}} @onClick={{this.openNewer}} data-test-confirm-open-newer />
+                    <Button @text={{t "enhanced-pricing.console.cancel"}} @onClick={{fn this.confirm null}} />
+                {{else if (eq this.confirming "replace")}}
+                    <p class="mb-2 text-sm">{{t "enhanced-pricing.console.editor.confirm-replace" number=this.outdated.number}}</p>
+                    <Button @type="danger" @text={{t "enhanced-pricing.console.editor.replace"}} @isLoading={{this.saving}} @onClick={{this.replace}} data-test-confirm-replace />
+                    <Button @text={{t "enhanced-pricing.console.cancel"}} @onClick={{fn this.confirm null}} />
+                {{else}}
+                    <Button @text={{t "enhanced-pricing.console.editor.open-newer"}} @onClick={{fn this.confirm "open-newer"}} data-test-open-newer />
+                    <Button @text={{t "enhanced-pricing.console.editor.replace"}} @onClick={{fn this.confirm "replace"}} data-test-replace />
+                {{/if}}
+            </div>
+        {{/if}}
+
+        {{#if this.failure}}
+            <div class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200" role="alert" data-test-failure>
+                <Pricing::Refusal @refusal={{this.failure}} />
+            </div>
+        {{/if}}
+
+        {{#if (and @isNew (eq this.section "general"))}}
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    {{t "enhanced-pricing.console.profile.key"}}
+                    <input type="text" class="form-input form-input-sm mt-1 w-full font-mono" value={{this.key}} placeholder="courier" data-test-new-key {{on "input" this.typeKey}} />
+                    <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.profile.key-help"}}</span>
+                </label>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    {{t "enhanced-pricing.console.profile.name"}}
+                    <input type="text" class="form-input form-input-sm mt-1 w-full" value={{this.name}} data-test-new-name {{on "input" this.typeName}} />
+                </label>
+            </div>
+        {{/if}}
+
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{t (concat "enhanced-pricing.console.section." this.current.key)}}</h2>
+        {{#if (eq this.current.key "general")}}
+            <Pricing::Fields @env={{this.env}} @kind={{this.current.kind}} @value={{this.draft}} @path="" @ignore={{this.sectionKeys}} @onChange={{this.setGeneral}} />
+        {{else if this.current.map}}
+            <Pricing::HolidayLists @env={{this.env}} @value={{get this.draft this.current.key}} @max={{this.current.max}} @onChange={{fn this.setSectionValue this.current.key}} />
+        {{else}}
+            <Pricing::ItemList
+                @env={{this.env}}
+                @kind={{this.current.kind}}
+                @items={{get this.draft this.current.key}}
+                @path={{this.current.key}}
+                @max={{this.current.max}}
+                @onChange={{fn this.setSectionValue this.current.key}}
+            />
+        {{/if}}
+
+        {{#unless @readOnly}}
+            <div class="sticky bottom-0 flex items-center space-x-2 border-t border-gray-200 bg-white py-3 dark:border-gray-700 dark:bg-gray-900">
+                <Button @type="primary" @icon="save" @text={{t (if @isNew "enhanced-pricing.console.editor.create" "enhanced-pricing.console.editor.save")}} @isLoading={{this.saving}} @disabled={{this.cannotSave}} @onClick={{this.save}} data-test-save />
+                {{#if this.inputErrors.size}}
+                    <span class="text-sm text-red-600 dark:text-red-400">{{t "enhanced-pricing.console.editor.fix-inputs"}}</span>
+                {{/if}}
+                {{#if @onCancel}}
+                    <Button @text={{t "enhanced-pricing.console.cancel"}} @onClick={{@onCancel}} data-test-cancel />
+                {{/if}}
+            </div>
+        {{/unless}}
+    </div>
+</div>

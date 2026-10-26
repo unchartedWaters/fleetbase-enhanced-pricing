@@ -1,0 +1,40 @@
+{{#if this.page.customers.length}}
+    <div class="table-wrapper table-fluid">
+        <table class="w-full text-sm">
+            <thead>
+                <tr>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.name"}}</th>
+                    <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.customers.overrides"}}</th>
+                    <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.customers.cards"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.checked"}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each this.page.customers key="uuid" as |customer|}}
+                    <tr data-test-customer={{customer.uuid}}>
+                        <td class="px-3 py-2">
+                            <button type="button" class="font-semibold text-blue-600 hover:underline dark:text-blue-400" data-test-open {{on "click" (fn (optional @onOpen) customer.uuid)}}>
+                                {{or customer.name (t "enhanced-pricing.console.unknown-person")}}
+                            </button>
+                        </td>
+                        <td class="px-3 py-2 text-right" data-test-overrides>{{customer.overrides}}</td>
+                        <td class="px-3 py-2 text-right" data-test-cards>{{customer.cards}}</td>
+                        <td class="px-3 py-2">
+                            {{t "enhanced-pricing.console.customers.checked-version" number=customer.checked_version}}
+                            {{#if customer.problems}}
+                                <span class="ml-2 rounded bg-yellow-100 px-1.5 text-xs text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100" data-test-stale>{{t "enhanced-pricing.console.customers.stale"}}</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-3 flex items-center space-x-2 text-sm" data-test-paging>
+        <span>{{t "enhanced-pricing.console.paging" from=this.from to=this.to total=this.page.total}}</span>
+        <Button @size="xs" @icon="chevron-left" @disabled={{not this.hasPrevious}} @onClick={{fn (optional @onPage) this.previous}} data-test-previous />
+        <Button @size="xs" @icon="chevron-right" @disabled={{not this.hasNext}} @onClick={{fn (optional @onPage) this.next}} data-test-next />
+    </div>
+{{else}}
+    <p class="py-6 text-sm text-gray-600 dark:text-gray-300" data-test-empty>{{t "enhanced-pricing.console.customers.empty"}}</p>
+{{/if}}

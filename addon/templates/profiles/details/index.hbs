@@ -1,0 +1,14 @@
+<p class="mb-4 text-sm text-gray-600 dark:text-gray-300" data-test-viewing>
+    {{#if this.isOld}}
+        {{t "enhanced-pricing.console.profile.viewing-old" number=@model.profile.version.number current=@model.profile.current_version}}
+        <LinkTo @route="profiles.details.index" @model={{@model.key}} @query={{hash version=null}} class="ml-2 text-blue-600 hover:underline dark:text-blue-400">
+            {{t "enhanced-pricing.console.profile.view-current"}}
+        </LinkTo>
+    {{else}}
+        {{t "enhanced-pricing.console.profile.viewing" number=@model.profile.version.number current=@model.profile.current_version}}
+        · {{or @model.profile.version.saved_by.name (t "enhanced-pricing.console.unknown-person")}} · {{pricing-time @model.profile.version.saved_at}}
+    {{/if}}
+</p>
+{{#each (array @model.profile.version.number) as |number|}}
+    <Pricing::ProfileEditor @form={{@model.form}} @profile={{@model.profile}} @definition={{@model.profile.version.definition}} @builtOn={{number}} @readOnly={{true}} />
+{{/each}}

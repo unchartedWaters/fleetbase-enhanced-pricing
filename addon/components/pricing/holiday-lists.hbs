@@ -1,0 +1,28 @@
+<div class="space-y-3">
+    {{#each this.entries key="index" as |entry|}}
+        <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800" data-test-holiday-list={{entry.name}}>
+            <div class="mb-2 flex items-center justify-between">
+                <input type="text" class="form-input form-input-sm w-60 font-mono" value={{entry.name}} disabled={{@env.readOnly}} aria-label={{t "enhanced-pricing.console.editor.list-name"}} {{on "change" (fn this.rename entry.index)}} />
+                {{#unless @env.readOnly}}
+                    <Button @size="xs" @type="danger" @icon="trash" @text={{t "enhanced-pricing.console.editor.remove"}} @onClick={{fn this.remove entry.index}} data-test-remove />
+                {{/unless}}
+            </div>
+            <Pricing::Input @type="dates" @value={{entry.dates}} @disabled={{@env.readOnly}} @onChange={{fn this.setDates entry.index}} />
+            {{#if entry.problems.length}}
+                <ul class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-field-problems>
+                    {{#each entry.problems as |problem|}}
+                        <li>{{problem.path}}: {{pricing-message problem}}</li>
+                    {{/each}}
+                </ul>
+            {{/if}}
+        </section>
+    {{else}}
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-test-list-empty>{{t "enhanced-pricing.console.editor.empty-list"}}</p>
+    {{/each}}
+    {{#unless @env.readOnly}}
+        <div class="flex items-center space-x-2">
+            <input type="text" class="form-input form-input-sm w-60 font-mono" value={{this.newName}} placeholder={{t "enhanced-pricing.console.editor.list-name"}} data-test-new-list-name {{on "input" this.typeName}} />
+            <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.editor.add"}} @disabled={{not this.canAdd}} @onClick={{this.add}} data-test-add />
+        </div>
+    {{/unless}}
+</div>

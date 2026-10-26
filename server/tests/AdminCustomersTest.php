@@ -101,10 +101,18 @@ test('one customer shows its cards and their rows', function () {
     $card     = Stores::card('a', $customer, 'North');
     Stores::for('a')->saveRows($card, 'rows', [['values' => Stores::row('R2')], ['values' => Stores::row('R1')]]);
 
-    $cards = adminCustomers()->show($customer->uuid)['cards'];
+    $shown = adminCustomers()->show($customer->uuid);
+    $cards = $shown['cards'];
 
     expect($cards)->toHaveCount(1)
         ->and($cards[0]['label'])->toBe('North')
+        ->and($shown['profile']['columns']['rows'])->toBe([
+            'code'           => 'text',
+            'first'          => 'money',
+            'second'         => 'money',
+            'third'          => 'money',
+            'separate_price' => 'money',
+        ])
         ->and(array_column($cards[0]['rows'], 'key_values'))->toBe([['R1'], ['R2']])
         ->and($cards[0]['rows'][0])
         ->toMatchArray(['table_key' => 'rows', 'values' => Stores::row('R1'), 'problems' => null]);
