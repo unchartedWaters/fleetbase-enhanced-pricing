@@ -25,9 +25,9 @@ final class PricingStore
     private readonly StoreContext $context;
 
     /**
-     * @param (\Closure(): \DateTimeImmutable)|null $clock
+     * @param (callable(): \DateTimeImmutable)|null $clock
      */
-    public function __construct(public readonly string $company, ?\Closure $clock = null)
+    public function __construct(public readonly string $company, ?callable $clock = null)
     {
         $this->context = new StoreContext($company, $clock);
     }

@@ -7,7 +7,6 @@ use Fleetbase\EnhancedPricing\Models\PricingModel;
 use Fleetbase\EnhancedPricing\Models\Profile;
 use Fleetbase\EnhancedPricing\Models\ProfileVersion;
 use Fleetbase\EnhancedPricing\Profile\InvalidProfile;
-use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Profile\ProfileValidator;
 use Illuminate\Database\ConnectionInterface;
 
@@ -26,11 +25,13 @@ final class StoreContext
     private readonly \Closure $clock;
 
     /**
-     * @param (\Closure(): \DateTimeImmutable)|null $clock now, for tests; the system clock otherwise
+     * @param (callable(): \DateTimeImmutable)|null $clock now, for tests; the system clock otherwise
      */
-    public function __construct(public readonly string $company, ?\Closure $clock = null)
+    public function __construct(public readonly string $company, ?callable $clock = null)
     {
-        $this->clock = $clock ?? static fn (): \DateTimeImmutable => new \DateTimeImmutable('now');
+        $this->clock = $clock === null
+            ? static fn (): \DateTimeImmutable => new \DateTimeImmutable('now')
+            : \Closure::fromCallable($clock);
     }
 
     /**
@@ -94,9 +95,9 @@ final class StoreContext
      */
     public function today(array $normalized): string
     {
-        $zone = new \DateTimeZone(R::text($normalized[self::TIMEZONE_FIELD] ?? null));
+        $zone = $normalized[self::TIMEZONE_FIELD] ?? null;
 
-        return $this->now()->setTimezone($zone)->format('Y-m-d');
+        return $this->now()->setTimezone(new \DateTimeZone(is_string($zone) ? $zone : ''))->format('Y-m-d');
     }
 
     public function now(): \DateTimeImmutable
