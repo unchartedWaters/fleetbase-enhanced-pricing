@@ -10,19 +10,21 @@ use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
 
 test('valid overrides have no problems', function () {
     $problems = (new OverrideValidator())->check(Profiles::example(), [
-        'service_rates.distance.per_meter.rate'   => 160,
-        'service_rates.tiered.enabled'            => false,
-        'service_rates.tiered.minimum'            => 1000,
-        'service_rates.tiered.tiers'              => [['up_to' => null, 'price' => ['value' => 2000]]],
-        'fees.parcel.thresholds'                  => [['over' => 30, 'amount' => 50]],
-        'fees.peak.weekdays'                      => [7],
-        'fees.peak.window'                        => ['from' => '22:00', 'to' => '05:00'],
-        'fees.additional.amount'                  => null,
-        'fees.additional.if_missing'              => 'skip',
-        'subtotal_fees.percent.percentage'        => 900,
-        'subtotal_fees.flat_a.skipped_for'        => [],
-        'manual_charges.hourly.offered'           => false,
-        'allowed_service_rates'                   => ['distance'],
+        'service_rates.distance.per_meter.rate'       => 160,
+        'service_rates.tiered.enabled'                => false,
+        'service_rates.tiered.minimum'                => 1000,
+        'service_rates.tiered.tiers'                  => [['up_to' => null, 'price' => ['value' => 2000]]],
+        'fees.heavy.thresholds'                       => [['over' => 30, 'amount' => 50]],
+        'fees.peak.weekdays'                          => [7],
+        'fees.peak.window'                            => ['from' => '22:00', 'to' => '05:00'],
+        'fees.extra_handling.amount'                  => null,
+        'fees.extra_handling.if_missing'              => 'skip',
+        'subtotal_fees.percent.percentage'            => 900,
+        'subtotal_fees.flat_a.skipped_for'            => [],
+        'manual_charges.hourly.offered'               => false,
+        'manual_charges.hourly.quantity'              => ['unit' => 'h', 'step' => '0.5', 'maximum' => '12'],
+        'manual_charges.entered.entered'              => ['minimum' => 500, 'maximum' => 9000],
+        'allowed_service_rates'                       => ['distance'],
     ]);
 
     expect($problems)->toBe([]);
@@ -35,7 +37,7 @@ test('an override that the profile cannot take is refused', function (string $pa
 })->with([
     'an unknown rule'                  => ['fees.nope.amount', 100, 'enhanced-pricing.profile.unknown-override'],
     'a structure field'                => [
-        'fees.parcel.kind',
+        'fees.heavy.kind',
         'additional',
         'enhanced-pricing.profile.unknown-override',
     ],
@@ -66,8 +68,12 @@ test('an override that the profile cannot take is refused', function (string $pa
     ],
     'a field of another fee kind'      => ['fees.peak.thresholds', [], 'enhanced-pricing.profile.unknown-override'],
     'an unknown holiday list'          => ['holiday_lists.nope', [], 'enhanced-pricing.profile.unknown-override'],
-    'money of the wrong type'          => ['fees.additional.amount', '16.00', 'enhanced-pricing.profile.wrong-type'],
-    'negative money'                   => ['fees.additional.amount', -1, 'enhanced-pricing.profile.out-of-range'],
+    'money of the wrong type'          => [
+        'fees.extra_handling.amount',
+        '16.00',
+        'enhanced-pricing.profile.wrong-type',
+    ],
+    'negative money'                   => ['fees.extra_handling.amount', -1, 'enhanced-pricing.profile.out-of-range'],
     'a percentage as a fraction'       => [
         'subtotal_fees.percent.percentage',
         0.11,
@@ -103,8 +109,29 @@ test('an override that breaks the rule order checks is refused', function (strin
         2000,
         'enhanced-pricing.profile.minimum-above-maximum',
     ],
-    'an amount and entered'   => ['manual_charges.entered.amount', 100, 'enhanced-pricing.profile.needs-exactly-one'],
 ]);
+
+test('an override cannot change how a manual charge works', function (string $path, mixed $value) {
+    $problems = (new OverrideValidator())->check(Profiles::example(), [$path => $value]);
+
+    expect(array_map(static fn ($problem) => [$problem->path, $problem->key], $problems))
+        ->toContain([$path, 'enhanced-pricing.profile.changes-charge-mode']);
+})->with([
+    'an amount on an entered charge'   => ['manual_charges.entered.amount', 100],
+    'a flat charge made entered'       => ['manual_charges.hourly.entered', ['minimum' => 100, 'maximum' => 900]],
+    'an entered charge made flat'      => ['manual_charges.entered.entered', null],
+    'a per-hour charge made flat'      => ['manual_charges.hourly.quantity', null],
+    'a quantity on an entered charge'  => [
+        'manual_charges.entered.quantity',
+        ['unit' => 'h', 'step' => '1', 'maximum' => '5'],
+    ],
+]);
+
+test('a dated change cannot change how a manual charge works', function () {
+    Orders::price([
+        'changes' => [['path' => 'manual_charges.hourly.amount', 'value' => null, 'effective_from' => '2027-01-01']],
+    ]);
+})->throws(PricingFailed::class, 'enhanced-pricing.pricing.changes-invalid');
 
 test('minimum above maximum is caught across two overrides', function () {
     $problems = (new OverrideValidator())->check(Profiles::example(), [

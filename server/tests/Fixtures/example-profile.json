@@ -1,6 +1,6 @@
 {
   "currency": "USD",
-  "timezone": "UTC",
+  "scheduling_timezone": "UTC",
   "distance_unit": "km",
   "products": [
     {
@@ -166,7 +166,7 @@
   ],
   "fees": [
     {
-      "key": "additional",
+      "key": "extra_handling",
       "kind": "additional",
       "name": "Additional fee",
       "product": "ADDITIONAL",
@@ -187,7 +187,7 @@
       "equals": null
     },
     {
-      "key": "parcel",
+      "key": "heavy",
       "kind": "parcel",
       "name": "Parcel fee",
       "product": "PARCEL",

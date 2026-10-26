@@ -17,7 +17,7 @@ final class PricingRequest
      *                                                                                       row's values
      * @param list<ManualChargeInput>                                         $manualCharges
      * @param array<string, mixed>                                            $overrides     the customer's overrides
-     * @param list<array{path: string, value: mixed, effective_from: string}> $valueChanges  dated changes to global
+     * @param list<array{path: string, value: mixed, effective_from: string}> $datedChanges  dated changes to global
      *                                                                                       values
      * @param array<string, string>                                           $labels        customer, card and row,
      *                                                                                       for messages
@@ -33,7 +33,7 @@ final class PricingRequest
         public readonly ?int $distanceMeters = null,
         public readonly array $manualCharges = [],
         public readonly array $overrides = [],
-        public readonly array $valueChanges = [],
+        public readonly array $datedChanges = [],
         public readonly array $labels = [],
     ) {
     }

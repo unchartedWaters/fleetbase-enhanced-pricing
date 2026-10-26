@@ -49,7 +49,7 @@ final class RuleKindReferences
             $this->schema->add(Problem::atPath(
                 "$path.holidays",
                 'unknown-reference',
-                ['kind' => 'holiday list', 'key' => $holidays],
+                ['kind' => 'holiday_list', 'key' => $holidays],
             ));
         }
     }

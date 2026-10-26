@@ -1,10 +1,12 @@
 # English text for the keys the server stores. A profile problem is shown with
 # the path of the value it is about; {name} is replaced with the problem's
-# detail of that name.
+# detail of that name. An {expected} detail is a code under types, and a {kind}
+# detail a code under kinds: show their text, not the code. Rules, charges,
+# service rates and attributes are named by their names.
 enhanced-pricing:
   profile:
     column-needs-rate-table: A column can be used only when the service rate names a rate table.
-    column-wrong-type: "The rate table column {column} must be a {expected} column."
+    column-wrong-type: "The rate table column {column} must be a {column_type} column."
     divisor-not-allowed: A divisor is used only for weight measured as dimensional or greater.
     duplicate: "{value} is listed more than once."
     entered-takes-no-quantity: A charge with an entered amount has no quantity settings.
@@ -21,6 +23,9 @@ enhanced-pricing:
     not-increasing: Each limit must be higher than the one before it.
     not-one-of: "Choose one of: {choices}."
     open-tier-not-last: Only the last tier can be open-ended.
+    number-not-above: "The value must be more than {min}."
+    number-too-large: "The value must be at most {max}."
+    number-too-small: "The value must be at least {min}."
     out-of-range: "The value must be from {min} to {max}."
     own-product: "A rule can't apply to its own product {code}."
     per-unit-needs-number: A per-unit charge needs a number attribute.
@@ -32,42 +37,54 @@ enhanced-pricing:
     too-long: "The text is longer than {max} characters."
     too-many: "Give no more than {max} entries."
     too-short: "Give at least {min} character."
+    changes-charge-mode: "An override or dated change can't add or remove {field}, because that changes how the charge works."
+    required-and-required-for: "Use either required or required_for, not both."
+    unknown-field: "{field} isn't a field here."
     unknown-override: "{path} isn't a value that can be overridden."
     unknown-product: "{code} isn't one of the profile's products."
     unknown-reference: "There is no {kind} named {key}."
     until-before-from: The end date is before the start date.
+    value-required: A value is required here.
     window-empty: The start and end times are the same.
-    wrong-type: "The value must be a {expected}."
+    wrong-type: "The value must be {expected}."
   pricing:
     amount-too-large: "A line or the total is above the largest amount, {max} cents."
     attribute-invalid: "The value of {attribute} isn't valid."
     attribute-required: "{attribute} is required."
-    changes-invalid: The customer's dated changes aren't valid.
+    changes-invalid: "The profile's dated change to {path} isn't valid."
+    changes-invalid-all: The profile's dated changes aren't valid.
     distance-required: This service rate needs the order's distance.
     distance-too-long: "The distance {distance} is above the maximum of {maximum}."
-    entity-invalid: "Item {entity} has a weight or size that isn't valid."
-    entity-not-measured: "Item {entity} has no weight or size, so {rule} wasn't charged for it."
+    entity-invalid: "Entity {entity} has a weight or size that isn't valid."
+    entity-not-measured: "Entity {entity} has no weight or size, so {rule} wasn't charged for it."
     manual-charge-amount-not-entered: "{charge} needs an amount."
-    manual-charge-amount-out-of-range: "The amount for {charge} must be from {minimum} to {maximum}."
+    manual-charge-amount-invalid: "The amount for {charge} isn't valid."
+    manual-charge-amount-out-of-range: "The amount for {charge} must be from {minimum} to {maximum} cents."
     manual-charge-not-in-effect: "{charge} isn't in effect on {date}."
     manual-charge-not-offered: "{charge} isn't offered to this customer."
+    manual-charge-product-unknown: "{charge} is billed as {product}, which isn't one of the profile's products."
     manual-charge-quantity-invalid: "The quantity for {charge} must be in steps of {step}, up to {maximum}."
-    missing-amount: "{rule} has no amount to charge."
-    missing-value: "{rule} has no line name in the rate card row."
-    no-entities: The order has no items to price.
-    overrides-invalid: The customer's overrides aren't valid.
-    profile-invalid: "The pricing profile has {problems} problems."
+    manual-charge-takes-no-quantity: "{charge} doesn't take a quantity."
+    missing-amount: "{rule} has no amount set for {customer}."
+    missing-row-amount: "{rule} has no amount in {column}, row {row} of {customer}'s card {card}."
+    missing-tier-limit: "{rule} has no tier limit in {column}, row {row} of {customer}'s card {card}."
+    missing-value: "{rule} has no line name in {column}, row {row} of {customer}'s card {card}."
+    no-entities: The order has no entities to price.
+    overrides-invalid: "{customer}'s overrides aren't valid at {path}."
+    overrides-invalid-all: "{customer}'s overrides aren't valid."
+    profile-invalid: "The pricing profile isn't valid. Problems found: {problems}."
     profile-invalid-for-order: "With this customer's overrides and changes, the profile isn't valid at {path}."
-    row-invalid: "The rate card row has a value for {column} that isn't valid."
+    row-invalid: "Row {row} of {customer}'s card {card} has a value for {column} that isn't valid."
     row-required: "{service_rate} needs a rate card row."
-    service-rate-not-allowed: "{service_rate} isn't allowed for this customer."
+    service-rate-disabled: "{service_rate} is turned off."
+    service-rate-not-allowed: "{service_rate} isn't allowed for {customer}."
     tiers-invalid: "The tiers of {rule} don't increase."
     timezone-invalid: "{timezone} isn't a known timezone."
-    too-many-entities: "An order can have at most {max} items."
-    too-many-entities-for-tiers: "The order has {entities} items, but the tiers price only {limit}."
+    too-many-entities: "An order can have at most {max} entities."
+    too-many-entities-for-tiers: "The order has {entities} entities, but the tiers of {rule} price only {limit}."
     too-many-lines: "The quote has more than {max} lines."
     too-many-manual-charges: "An order can have at most {max} manual charges."
-    unknown-entity-type: "Item {entity} has an unknown type, {type}."
+    unknown-entity-type: "Entity {entity} has an unknown type, {type}."
     unknown-manual-charge: "There is no manual charge named {charge}."
     unknown-service-rate: "There is no service rate named {service_rate}."
   store:
@@ -97,3 +114,28 @@ enhanced-pricing:
     unit-changed: "The unit of {rule} can't change while an override or a dated change uses it. Use a new rule key instead."
     value-has-change-in-effect: "{path} has a dated change in effect, so its undated value can't change. Add a dated change instead."
     version-outdated: "The profile has a newer version, {current}. Start from the newest version."
+  types:
+    boolean: true or false
+    code: a product code (letters, digits, _, - and .)
+    currency: a three-letter currency code, such as CAD
+    date: a date written YYYY-MM-DD
+    enum: one of the listed choices
+    integer: a whole number
+    key: a key (lowercase letters, digits, _ and -)
+    list: a list
+    map: an object of named entries
+    money: a whole number of cents
+    number: a number
+    object: an object with named fields
+    percent: a whole number of basis points (100 is 1%)
+    text: text
+    time: a time written HH:MM
+    timezone: a timezone name, such as America/Edmonton
+  kinds:
+    attribute: attribute
+    choice: choice
+    column: column
+    entity_type: entity type
+    holiday_list: holiday list
+    rate_table: rate table
+    service_rate: service rate
