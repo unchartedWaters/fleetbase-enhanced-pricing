@@ -25,7 +25,7 @@
         "friendsofphp/php-cs-fixer": "^3.34.1",
         "nunomaduro/collision": "^5.11.0|^6.4.0",
         "pestphp/pest": "^1.22.6",
-        "phpstan/phpstan": "^1.10.38",
+        "phpstan/phpstan": "^2.3.1",
         "symfony/var-dumper": "^5.4.29",
         "symfony/yaml": "^6.4|^7.0"
     },

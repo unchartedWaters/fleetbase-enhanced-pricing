@@ -88,7 +88,7 @@ final class ManualCharges
         $name    = R::text($definition['name']);
         $entered = $definition['entered'];
         if (is_array($entered)) {
-            return [$this->entered($entered, $charge), $name];
+            return [$this->entered(R::map($entered), $charge), $name];
         }
         if ($charge->amount !== null) {
             throw $this->order->fail('manual-charge-amount-not-entered', ['charge' => $key]);
@@ -102,7 +102,7 @@ final class ManualCharges
 
             return [$amount, $name];
         }
-        $value = $this->quantity($charge, $quantity);
+        $value = $this->quantity($charge, R::map($quantity));
 
         return [
             Exact::round($value->multipliedBy($amount)),

@@ -171,7 +171,7 @@ final class ProfileShapes
                 ['value' => S::type('money'), 'column' => S::type('key')],
                 S::join($tierPath, 'price'),
             );
-            $normalized[]  = $tier;
+            $normalized[]  = ProfileReferences::map($tier);
         }
 
         return $normalized;
