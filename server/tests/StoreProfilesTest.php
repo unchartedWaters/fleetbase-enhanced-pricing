@@ -155,6 +155,23 @@ test('a version accepted with stale entries records them', function () {
         ->and($fine->problems)->toBeNull();
 });
 
+test('a version accepted for a list of stale entries is saved only when it covers them all', function () {
+    $profile  = Stores::profile();
+    $customer = Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
+    $change   = Stores::for()->addDatedChange($profile, 'fees.extra_handling.amount', 1800, '2026-12-01');
+    $without  = Stores::withoutFee('extra_handling');
+
+    // The console shows the list and sends back what it showed. An entry that turned stale since
+    // then, as the change here, was never shown, so nothing is saved.
+    expect(Stores::refusal(fn () => Stores::for()->addVersion($profile, $without, acceptStale: [$customer->uuid])))
+        ->toBe(['stale-entries'])
+        ->and($profile->refresh()->current_version)->toBe(1);
+
+    Stores::for()->addVersion($profile, $without, acceptStale: [$customer->uuid, $change->uuid]);
+
+    expect($profile->refresh()->current_version)->toBe(2);
+});
+
 test('a row that no longer fits is stale', function () {
     $profile  = Stores::profile();
     $card     = Stores::card('a', Stores::customer('a', $profile));

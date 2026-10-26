@@ -48,10 +48,13 @@ final class VersionStore
 
     /**
      * Saves a new version. It is refused when it was built on an older version, changes a unit that
-     * stored values depend on, or leaves stored entries that no longer fit, unless $acceptStale.
+     * stored values depend on, or leaves stored entries that no longer fit, unless $acceptStale:
+     * true accepts any, and a list of uuids accepts only stale entries that are all in it, so a
+     * person accepts only the entries they were shown.
      * Every entry checked records the version and its problems.
      *
-     * @param array<string, mixed> $definition the new version, as saved
+     * @param array<string, mixed> $definition  the new version, as saved
+     * @param bool|list<string>    $acceptStale
      *
      * @throws StoreRefused
      */
@@ -60,7 +63,7 @@ final class VersionStore
         array $definition,
         ?string $userUuid = null,
         ?int $builtOn = null,
-        bool $acceptStale = false,
+        bool|array $acceptStale = false,
     ): ProfileVersion {
         $this->context->own($profile);
         $new     = $this->context->normalize($definition);
@@ -80,7 +83,7 @@ final class VersionStore
             $this->checkUnits($locked, $current['normalized'], $new);
             $entries = $check->run($locked, $first);
             $stale   = array_values(array_filter($entries, static fn (array $entry) => $entry['problems'] !== []));
-            if ($stale !== [] && $acceptStale === false) {
+            if ($stale !== [] && self::accepts($acceptStale, $stale) === false) {
                 $list = array_map(static fn (array $entry) => [
                     'kind'     => $entry['kind'],
                     'uuid'     => $entry['uuid'],
@@ -97,6 +100,19 @@ final class VersionStore
         };
 
         return $this->context->transaction($save);
+    }
+
+    /**
+     * @param bool|list<string>              $accepted
+     * @param list<array{uuid: string, ...}> $stale
+     */
+    private static function accepts(bool|array $accepted, array $stale): bool
+    {
+        if (is_bool($accepted)) {
+            return $accepted;
+        }
+
+        return array_diff(array_column($stale, 'uuid'), $accepted) === [];
     }
 
     /**

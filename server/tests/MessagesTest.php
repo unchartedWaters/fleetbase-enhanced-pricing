@@ -27,6 +27,17 @@ test('every problem and pricing key has English text, however its call is writte
     }
 });
 
+test('every admin page refusal has English text', function () {
+    $all   = Messages::translations();
+    $admin = Messages::keysPassedTo(['invalid']);
+
+    expect($admin)->toContain('change-not-allowed')
+        ->and(count($admin))->toBeGreaterThanOrEqual(6);
+    foreach ($admin as $key) {
+        expect($all['admin'][$key] ?? null)->toBeString("admin.$key has no English text");
+    }
+});
+
 test('a misspelt field is named in the message', function () {
     $profile = Profiles::set(Profiles::example(), 'entity_types.1.priced', true);
 

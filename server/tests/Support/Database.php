@@ -74,7 +74,8 @@ final class Database
     }
 
     /**
-     * Two companies, each with two customer contacts, a contact that isn't a customer, and an order.
+     * Two companies, each with two customer contacts, a contact that isn't a customer, a user and an
+     * order.
      */
     public static function seed(): void
     {
@@ -82,9 +83,29 @@ final class Database
             $uuid = self::company($company);
             Capsule::table('companies')->insert(['uuid' => $uuid, 'name' => "Company $company"]);
             Capsule::table('contacts')->insert([
-                ['uuid' => self::customer($company), 'company_uuid' => $uuid, 'type' => 'customer'],
-                ['uuid' => self::customer($company, 2), 'company_uuid' => $uuid, 'type' => 'customer'],
-                ['uuid' => self::contact($company), 'company_uuid' => $uuid, 'type' => 'contact'],
+                [
+                    'uuid'         => self::customer($company),
+                    'company_uuid' => $uuid,
+                    'type'         => 'customer',
+                    'name'         => "Customer $company 1",
+                ],
+                [
+                    'uuid'         => self::customer($company, 2),
+                    'company_uuid' => $uuid,
+                    'type'         => 'customer',
+                    'name'         => "Customer $company 2",
+                ],
+                [
+                    'uuid'         => self::contact($company),
+                    'company_uuid' => $uuid,
+                    'type'         => 'contact',
+                    'name'         => "Contact $company",
+                ],
+            ]);
+            Capsule::table('users')->insert([
+                'uuid'         => self::user($company),
+                'company_uuid' => $uuid,
+                'name'         => "User $company",
             ]);
             Capsule::table('orders')->insert(['uuid' => self::order($company), 'company_uuid' => $uuid]);
         }
@@ -110,13 +131,18 @@ final class Database
         return self::uuid($company, '4');
     }
 
+    public static function user(string $company): string
+    {
+        return self::uuid($company, '5');
+    }
+
     private static function uuid(string $company, string $kind, int $number = 1): string
     {
         return sprintf('%08x-0000-4000-8000-%s%011d', crc32($company), $kind, $number);
     }
 
     /**
-     * The columns of core's companies, and of Fleet-Ops' contacts and orders, that the extension
+     * The columns of core's companies and users, and of Fleet-Ops' contacts and orders, that the extension
      * reads. companies.uuid is a string(191), as in core.
      */
     private static function hostTables(): void
@@ -129,7 +155,13 @@ final class Database
             $table->string('uuid', 191)->unique();
             $table->string('company_uuid', 191)->nullable();
             $table->string('type')->nullable();
+            $table->string('name')->nullable();
             $table->timestamp('deleted_at')->nullable();
+        });
+        Schema::create('users', static function (Blueprint $table): void {
+            $table->string('uuid', 191)->unique();
+            $table->string('company_uuid', 191)->nullable();
+            $table->string('name')->nullable();
         });
         Schema::create('orders', static function (Blueprint $table): void {
             $table->string('uuid', 191)->unique();
