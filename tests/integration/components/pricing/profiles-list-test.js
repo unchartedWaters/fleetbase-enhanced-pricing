@@ -31,4 +31,16 @@ module('Integration | Component | pricing/profiles-list', (hooks) => {
 
         assert.dom('[data-test-empty]').hasText('No pricing profiles yet. Create one to start pricing orders.');
     });
+
+    test('the page warns that prices are before GST, which only QuickBooks adds', async function (assert) {
+        for (const profiles of [fixture('profiles').profiles, []]) {
+            this.profiles = profiles;
+
+            await render(hbs`<Pricing::ProfilesList @profiles={{this.profiles}} />`);
+
+            assert.dom('[data-test-gst-notice]').includesText('QuickBooks');
+            assert.dom('[data-test-gst-notice]').includesText("Don't send customers Ledger's public invoice link");
+            assert.dom('[data-test-gst-notice]').includesText('payment gateway');
+        }
+    });
 });

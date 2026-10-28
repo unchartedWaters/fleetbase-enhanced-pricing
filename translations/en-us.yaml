@@ -138,6 +138,7 @@ enhanced-pricing:
       title: "Pricing profiles"
       new: "New profile"
       empty: "No pricing profiles yet. Create one to start pricing orders."
+      gst-notice: "Prices here are before GST, which is charged in QuickBooks only, so Ledger's invoices for priced orders show totals without GST. Don't send customers Ledger's public invoice link, and don't set up a payment gateway in Ledger."
     profile:
       key: "Key"
       key-help: "Lowercase letters, digits, _ and -. It can't change later."
