@@ -81,14 +81,27 @@ final class Changes
     /**
      * @return array<string, mixed>
      */
-    public function add(string $profileKey, string $path, mixed $value, string $effectiveFrom, ?string $userUuid): array
-    {
+    public function add(
+        string $profileKey,
+        string $path,
+        mixed $value,
+        string $effectiveFrom,
+        ?string $userUuid,
+        bool $acceptLargeChange = false,
+    ): array {
         $state = ProfileState::load($this->company, $profileKey, $this->context);
         if ($this->allowed($state->normalized, $path) === false) {
             throw AdminRefused::invalid('change-not-allowed', ['path' => $path], 'path');
         }
         try {
-            $change = $this->store->addDatedChange($state->profile, $path, $value, $effectiveFrom, $userUuid);
+            $change = $this->store->addDatedChange(
+                $state->profile,
+                $path,
+                $value,
+                $effectiveFrom,
+                $userUuid,
+                $acceptLargeChange,
+            );
         } catch (StoreRefused $refused) {
             throw AdminRefused::fromStore($refused);
         }
