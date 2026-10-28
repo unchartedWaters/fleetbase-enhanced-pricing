@@ -58,7 +58,7 @@ test(
     },
 )->with([
     'entered with a quantity' => ['entered', '1', 1000, 'enhanced-pricing.pricing.manual-charge-takes-no-quantity'],
-    'entered with no amount'  => ['entered', null, null, 'enhanced-pricing.pricing.manual-charge-amount-out-of-range'],
+    'entered with no amount'  => ['entered', null, null, 'enhanced-pricing.pricing.manual-charge-amount-required'],
     'entered below minimum'   => ['entered', null, 799, 'enhanced-pricing.pricing.manual-charge-amount-out-of-range'],
     'flat with an amount'     => ['hourly', '1', 1000, 'enhanced-pricing.pricing.manual-charge-amount-not-entered'],
 ]);

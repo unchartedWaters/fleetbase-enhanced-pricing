@@ -59,6 +59,9 @@ final class PricingStore
     }
 
     /**
+     * Saves a customer. A money or percent override ten or more times away from the profile's value
+     * is refused as a likely unit slip, unless $acceptLargeChange.
+     *
      * @param array<string, mixed>|null $overrides null keeps the stored ones, [] clears them
      * @param array<mixed>|null         $meta      null keeps the stored meta
      */
@@ -67,8 +70,26 @@ final class PricingStore
         Profile $profile,
         ?array $overrides = null,
         ?array $meta = null,
+        bool $acceptLargeChange = false,
     ): Customer {
-        return (new RateStore($this->context))->saveCustomer($customerUuid, $profile, $overrides, $meta);
+        return (new RateStore($this->context))->saveCustomer(
+            $customerUuid,
+            $profile,
+            $overrides,
+            $meta,
+            $acceptLargeChange,
+        );
+    }
+
+    /**
+     * The profile's customers with their own override at a path. A dated change of that path
+     * doesn't reach them.
+     *
+     * @return list<Customer>
+     */
+    public function customersWithOverride(Profile $profile, string $path): array
+    {
+        return (new RateStore($this->context))->withOverride($profile, $path);
     }
 
     /**
@@ -89,14 +110,26 @@ final class PricingStore
         return (new RateStore($this->context))->saveRows($card, $tableKey, $rows);
     }
 
+    /**
+     * Adds a dated change. A money or percent value ten or more times away from the profile's value
+     * is refused as a likely unit slip, unless $acceptLargeChange.
+     */
     public function addDatedChange(
         Profile $profile,
         string $path,
         mixed $value,
         string $effectiveFrom,
         ?string $userUuid = null,
+        bool $acceptLargeChange = false,
     ): DatedChange {
-        return (new ChangeStore($this->context))->add($profile, $path, $value, $effectiveFrom, $userUuid);
+        return (new ChangeStore($this->context))->add(
+            $profile,
+            $path,
+            $value,
+            $effectiveFrom,
+            $userUuid,
+            $acceptLargeChange,
+        );
     }
 
     public function cancelDatedChange(DatedChange $change, ?string $userUuid = null): DatedChange

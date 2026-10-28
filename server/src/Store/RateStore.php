@@ -33,15 +33,20 @@ final class RateStore
      *
      * @throws StoreRefused
      */
-    public function saveCustomer(string $customerUuid, Profile $profile, ?array $overrides, ?array $meta): Customer
-    {
+    public function saveCustomer(
+        string $customerUuid,
+        Profile $profile,
+        ?array $overrides,
+        ?array $meta,
+        bool $acceptLargeChange = false,
+    ): Customer {
         $this->context->own($profile);
         $this->context->checkMeta($meta);
         if ($this->isCustomer($customerUuid) === false) {
             throw StoreRefused::refuse('not-a-customer', [], 'customer_uuid');
         }
 
-        return $this->context->transaction(function () use ($customerUuid, $profile, $overrides, $meta): Customer {
+        $save = function () use ($customerUuid, $profile, $overrides, $meta, $acceptLargeChange): Customer {
             $this->context->lock($profile);
             $customer = Customer::firstOf(
                 Customer::ofCompany($this->context->company)->where('customer_uuid', $customerUuid),
@@ -49,21 +54,43 @@ final class RateStore
             if ($customer->exists && $customer->profile_uuid !== $profile->uuid && $customer->hasCards()) {
                 throw StoreRefused::refuse('customer-has-cards', [], 'profile_uuid');
             }
+            $stored                 = $customer->profile_uuid === $profile->uuid ? $customer->overrides ?? [] : [];
             $customer->profile_uuid = $profile->uuid;
             if ($overrides !== null) {
                 $customer->overrides = $overrides;
+                $customer->checkOverrides();
+            }
+            if ($overrides !== null && $acceptLargeChange === false) {
+                SlipCheck::run($this->context->current($profile)['normalized'], $overrides, $stored);
             }
             if ($meta !== null) {
                 $customer->meta = $meta;
             }
-            $unchanged = $customer->exists && $customer->isDirty(['overrides', 'profile_uuid']) === false;
-            if ($overrides !== null && $unchanged) {
-                $customer->checkOverrides();
-            }
             $customer->save();
 
             return $customer;
-        });
+        };
+
+        return $this->context->transaction($save);
+    }
+
+    /**
+     * The profile's customers with an override at a path, which a dated change of that path
+     * won't reach.
+     *
+     * @return list<Customer>
+     */
+    public function withOverride(Profile $profile, string $path): array
+    {
+        $this->context->own($profile);
+        $customers = Customer::listOf(
+            Customer::ofCompany($this->context->company)->where('profile_uuid', $profile->uuid),
+        );
+
+        return array_values(array_filter(
+            $customers,
+            static fn (Customer $customer): bool => array_key_exists($path, $customer->overrides ?? []),
+        ));
     }
 
     /**

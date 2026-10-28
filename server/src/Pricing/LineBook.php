@@ -2,17 +2,22 @@
 
 namespace Fleetbase\EnhancedPricing\Pricing;
 
+use Fleetbase\EnhancedPricing\Support\Exact;
+
 /**
  * The lines made so far. Lines with the same product, name and unit amount are kept as one line
- * with a quantity, a $0 line is left off, and no line, total or number of lines may pass its
- * cap. Rules ask it about the lines before them; each question is answered from an index, so an
- * order with many lines still prices quickly.
+ * with a quantity, a $0 line is left off, a name too long for an invoice line is shortened, and
+ * no line, total or number of lines may pass its cap. Rules ask it about the lines before them;
+ * each question is answered from an index, so an order with many lines still prices quickly.
  */
 final class LineBook
 {
     public const MAX_AMOUNT = 100000000;
 
     public const MAX_LINES = 10000;
+
+    /** The longest line name, in characters: Ledger's invoice item description holds 191. */
+    public const MAX_NAME = 191;
 
     /** @var list<array{product: string, name: string, quantity: int, unit: int, sources: list<string>}> */
     private array $lines = [];
@@ -25,6 +30,10 @@ final class LineBook
     /** @var array<string, array{sum: int, lines: int}> by product */
     private array $products = [];
 
+    public function __construct(private readonly string $currency = '')
+    {
+    }
+
     /**
      * @param list<array{product: string, name: string, quantity: int, unit: int, source: string}> $drafts
      */
@@ -36,7 +45,8 @@ final class LineBook
             }
             $amount = $draft['quantity'] * $draft['unit'];
             if ($amount > self::MAX_AMOUNT || $this->total + $amount > self::MAX_AMOUNT) {
-                throw PricingFailed::because('amount-too-large', ['max' => self::MAX_AMOUNT]);
+                $params = ['max' => Exact::money(self::MAX_AMOUNT), 'currency' => $this->currency];
+                throw PricingFailed::because('amount-too-large', $params);
             }
             $this->total += $amount;
             $this->merge($draft, $amount);
@@ -114,7 +124,10 @@ final class LineBook
     private function merge(array $draft, int $amount): void
     {
         $product = $draft['product'];
-        $key     = $product . "\0" . $draft['name'] . "\0" . $draft['unit'];
+        $name    = mb_strlen($draft['name']) > self::MAX_NAME
+            ? mb_substr($draft['name'], 0, self::MAX_NAME - 1) . '…'
+            : $draft['name'];
+        $key     = $product . "\0" . $name . "\0" . $draft['unit'];
         $index   = $this->positions[$key] ?? null;
         if ($index === null && count($this->lines) >= self::MAX_LINES) {
             throw PricingFailed::because('too-many-lines', ['max' => self::MAX_LINES]);
@@ -135,7 +148,7 @@ final class LineBook
         $this->products[$product]['lines']++;
         $this->lines[] = [
             'product'  => $product,
-            'name'     => $draft['name'],
+            'name'     => $name,
             'quantity' => $draft['quantity'],
             'unit'     => $draft['unit'],
             'sources'  => [$draft['source']],

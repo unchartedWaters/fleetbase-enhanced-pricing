@@ -204,7 +204,9 @@ the columns that form a row's key.
 ```
 
 Column types are `text`, `money`, `integer` and `number`; `required` is
-optional, default `false`. `row_key` lists 1 to 5 columns that are required. A
+optional, default `false`. A column may also have a `name`, optional, default
+`null`: the label shown for it, for example `"First package"`; messages use it
+in place of the key. `row_key` lists 1 to 5 columns that are required. A
 row must have every required column, and every value must match its column's
 type. A blank value in a column that is not required is a missing amount:
 pricing stops when a rule needs it, with a message naming the customer, card,
@@ -236,7 +238,7 @@ Every order has one service rate. It decides the service fee.
 | `key`, `product` | as for every rule |
 | `name` | label in the order form's rate picker and in messages |
 | `rate_table` | optional, default `null`: table whose row the order picks |
-| `line_name` | `{ "column": key }` of a text column, or `{ "text": name }` |
+| `line_name` | `{ "text": name }`, `{ "column": key }` of a text column, or both |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
 | `minimum` | optional, default `null`: money, the lowest service fee |
 | `enabled` | optional, default `true`; `false` refuses orders using it |
@@ -261,7 +263,13 @@ per entity:
 Entities whose type has no `own_price` are counted. When the last tier has a
 limit and the order has more entities, pricing stops. A tiered service rate
 needs at least one entity. Each tier that covers any entities makes a line:
-that number of entities × the tier's price, named with `line_name`.
+that number of entities × the tier's price, named with `line_name`. A tier may
+have a `name`, optional, default `null`, which is added to its line's name:
+with `"name": "first package"`, the line is `North - Zone 1 (first package)`.
+
+A `line_name` with both a text and a column shows them as `text: value`, for
+example `{ "text": "Route delivery", "column": "code" }` gives
+`Route delivery: North - Zone 1`.
 
 Each entity type with its own price makes a line: the number of those entities
 × the row's value in its `own_price.column`, under its `own_price.product`,
@@ -516,7 +524,9 @@ A subtotal fee applies when all of these hold, judged on the lines before it:
 
 Manual charge lines count for all three lists.
 
-- `percentage`: the total of the lines for `applies_to` × the percentage.
+- `percentage`: the total of the lines for `applies_to` × the percentage. The
+  line's name shows the percentage and the total it is of, for example
+  `Fuel (11% of 330.00)`, unless the `minimum` or `maximum` replaced it.
 - `flat`, `per_order`: the amount, once.
 - `flat`, `per_line`: the amount for each line of more than $0 for
   `applies_to`, as one line with that quantity. Lines are counted after they
@@ -591,6 +601,9 @@ amount, combining never changes the total.
 A line whose amount is $0 is left off. A line or an order total above
 $1,000,000 stops pricing, and so does a quote of more than 10,000 lines.
 
+A line name longer than 191 characters, which is as much as a Ledger invoice
+line holds, is cut to 190 characters and ends in `…`.
+
 ## Customer overrides
 
 Each customer uses one profile, and the profile's values are its defaults. A
@@ -644,9 +657,23 @@ The structure can't be overridden: products, service rates, entity types,
 attributes, rate tables, the kind of each fee, each charge's mode and how it is
 charged (including whether a manual charge is flat, entered or by quantity),
 the distance unit and maximum distance, and rule dates. An override is
-checked when it is loaded: its path must name a value the profile has, its
-value must have the right type, and the profile with every override applied
-must still pass every check in this document.
+checked when it is loaded: its path must name a rule the profile has and a
+value of it that can be overridden, its value must have the right type, and
+the profile with every override applied must still pass every check in this
+document.
+
+Money is in cents and percentages in basis points, so `31` meant as 31% is
+0.31%. When an override or a dated change is saved, a money or percent value
+(an `amount`, `percentage`, `minimum`, `maximum`, `rate` or `base_fee`, or
+the cents of a `{ "value": cents }` or an entered charge's limits) ten or more
+times above or below the value it replaces is refused as a likely unit slip,
+with the key `enhanced-pricing.store.large-change`, until it is sent again
+marked as intended. An override replaces the customer's own earlier override
+of that value, else the profile's; a dated change replaces the live change in
+effect before its date, else the profile's value. Values of 0, lists such as
+`thresholds` and `tiers`, and values already stored are not checked. The
+override checks run first, so a save that has both an invalid override and a
+large change is refused for the invalid override.
 
 A customer's rate cards are not overrides: they are the customer's own rates,
 rows of the profile's rate tables.
@@ -672,8 +699,9 @@ maximums, `thresholds` and `tiers` (each a whole list).
 The value used on an order is, in this order: the customer's override, if it
 has one; else the latest dated change whose `effective_from` is on or before
 the order's pricing date; else the profile's value. So a scheduled change only
-reaches customers without an override for that value. A value can have only
-one change on a date.
+reaches customers without an override for that value; the store lists the
+customers with an override at a path, so a screen can show who a change won't
+reach. A value can have only one change on a date.
 
 The pricing date is the pickup's local date in the pickup place's timezone.
 Rule dates (`effective_from` and `effective_until`) are judged on the same
@@ -711,6 +739,7 @@ tables; the engine already applies them.
 | Percent | up to 100,000 basis points (1,000%) |
 | A line or an order total | up to 100,000,000 cents |
 | Lines in one quote | 10,000 |
+| A line name | 191 characters |
 
 ## Errors
 
@@ -723,6 +752,9 @@ under `enhanced-pricing.types`, and a `kind` parameter is what was looked up
 (a service rate, a column), with its text under `enhanced-pricing.kinds`.
 
 Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
-rules, charges and service rates by their names, and the customer, card and
-row by the labels the caller gives. A path in a pricing error uses rule keys,
-as overrides do (for example `fees.heavy.minimum`).
+rules, charges and service rates by their names, columns by their `name` (with
+the key as `column_key`), entities by the label the caller gives or else their
+position, and the customer, card and row by the labels the caller gives. Money
+is given as an amount such as `150.00` with a `currency` parameter, not in
+cents. A path in a pricing error uses rule keys, as overrides do (for example
+`fees.heavy.minimum`).

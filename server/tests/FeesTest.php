@@ -201,8 +201,8 @@ test('an entity with no weight is not checked, and the quote says so', function 
 
     expect($quote->total())->toBe(2700)
         ->and($quote->notes)->toBe([[
-            'key'    => 'enhanced-pricing.pricing.entity-not-measured',
-            'params' => ['entity' => 1, 'rule' => 'Parcel fee', 'rule_key' => 'heavy'],
+            'key'    => 'enhanced-pricing.pricing.entities-not-measured',
+            'params' => ['entities' => '1', 'rule' => 'Parcel fee', 'rule_key' => 'heavy'],
         ]]);
 });
 

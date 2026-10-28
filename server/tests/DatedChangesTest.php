@@ -57,7 +57,7 @@ test('other values cannot change by date', function (array $change, string $key)
     ],
     'an unknown path' => [
         ['path' => 'fees.nope.amount', 'value' => 1, 'effective_from' => '2027-04-01'],
-        'enhanced-pricing.profile.unknown-override',
+        'enhanced-pricing.profile.unknown-reference',
     ],
     'a bad date'      => [
         ['path' => 'fees.peak.amount', 'value' => 1, 'effective_from' => '2027-02-30'],

@@ -24,6 +24,14 @@ checked out on its own, not inside the Fleetbase repository.
 - PHP `^8.2` with `fleetbase/core-api` `^1.6`.
 - `brick/math` `^0.12`, for exact arithmetic.
 - Node `>= 22` for the Ember engine.
+- A current timezone database on production servers, and a current PHP.
+  Peak hours fees and the day a dated change starts are judged in a
+  timezone such as `America/Edmonton`. If the server's tzdata is out of
+  date when daylight saving rules change, those times are an hour off.
+  PHP uses its own copy of the database unless it was built to read the
+  system's (as Debian and Ubuntu packages are) or has the `timezonedb`
+  extension, so update whichever one it reads. `php -r 'echo
+  timezone_version_get();'` prints the version in use.
 
 ## Install
 
@@ -64,6 +72,17 @@ It also makes two policies: `EnhancedPricingManager`, with all of them, and
 `EnhancedPricingRateCards`, with the Pricing page and rate cards.
 Administrators have every permission. Drivers, customers and contacts are
 refused on every Pricing endpoint, whatever they hold.
+
+## Invoices and GST
+
+Prices from the engine are before tax, and the engine adds no tax lines.
+GST is added in QuickBooks, so the QuickBooks invoice is the one customers
+receive and pay.
+
+Fleetbase Ledger writes each quote line with a tax rate of 0, so a Ledger
+invoice for a priced order shows a total without GST. Don't send customers
+Ledger's public invoice link, and don't set up a payment gateway in Ledger,
+or a customer could pay the total without GST.
 
 ## Publishing
 

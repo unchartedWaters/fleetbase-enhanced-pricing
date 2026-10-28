@@ -98,6 +98,29 @@ final class OverridePaths
     }
 
     /**
+     * The problem with a path that find() doesn't know: the rule it names doesn't exist, or the
+     * value can't be overridden.
+     *
+     * @param array<string, mixed> $profile a normalized profile
+     */
+    public static function unknown(array $profile, string $path, string $problemPath): Problem
+    {
+        $parts = explode('.', $path);
+        $kinds = [
+            'service_rates'  => 'service_rate',
+            'fees'           => 'fee',
+            'subtotal_fees'  => 'subtotal_fee',
+            'manual_charges' => 'manual_charge',
+        ];
+        $kind = count($parts) >= 3 ? ($kinds[$parts[0]] ?? null) : null;
+        if ($kind !== null && self::indexOf($profile, $parts[0], $parts[1]) === null) {
+            return Problem::atPath($problemPath, 'unknown-reference', ['kind' => $kind, 'key' => $parts[1]]);
+        }
+
+        return Problem::atPath($problemPath, 'unknown-override', ['path' => $path]);
+    }
+
+    /**
      * A path into a normalized profile with each rule's position replaced by its key, for
      * example "fees.1.minimum" as "fees.heavy.minimum", the way overrides and dated changes
      * name it. A path that doesn't start at a rule is returned as it is.

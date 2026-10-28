@@ -51,7 +51,7 @@ test('a change must name a value that can change by date, with the right type', 
 
     expect(Stores::refusal($add))->toContain($key);
 })->with([
-    'unknown'    => ['fees.nothing.amount', 100, 'unknown-override'],
+    'unknown'    => ['fees.nothing.amount', 100, 'unknown-reference'],
     'not dated'  => ['fees.extra_handling.enabled', false, 'not-dated'],
     'wrong type' => [RATE, 'high', 'wrong-type'],
 ]);

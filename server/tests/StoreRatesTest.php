@@ -40,7 +40,7 @@ test('overrides must name values the profile defines, with the right type', func
     expect(Stores::refusal(fn () => Stores::customer('a', $profile, $overrides)))->toContain($key)
         ->and(Customer::query()->count())->toBe(0);
 })->with([
-    'unknown value' => [['fees.nothing.amount' => 100], 'unknown-override'],
+    'unknown value' => [['fees.nothing.amount' => 100], 'unknown-reference'],
     'wrong type'    => [['fees.extra_handling.amount' => 'ten'], 'wrong-type'],
 ]);
 
@@ -68,7 +68,7 @@ test('overrides sent again are checked again, even when unchanged', function () 
 
     $again = fn () => Stores::for()->saveCustomer($customer->customer_uuid, $profile, $customer->overrides);
 
-    expect(Stores::refusal($again))->toContain('unknown-override');
+    expect(Stores::refusal($again))->toContain('unknown-reference');
 });
 
 test('a customer with cards cannot move to another profile', function () {

@@ -35,7 +35,7 @@ test('an override that the profile cannot take is refused', function (string $pa
 
     expect(array_map(static fn ($problem) => [$problem->path, $problem->key], $problems))->toContain([$path, $key]);
 })->with([
-    'an unknown rule'                  => ['fees.nope.amount', 100, 'enhanced-pricing.profile.unknown-override'],
+    'an unknown rule'                  => ['fees.nope.amount', 100, 'enhanced-pricing.profile.unknown-reference'],
     'a structure field'                => [
         'fees.heavy.kind',
         'additional',
