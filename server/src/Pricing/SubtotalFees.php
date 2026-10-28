@@ -8,7 +8,7 @@ use Fleetbase\EnhancedPricing\Support\Exact;
 /**
  * Subtotal fees, last, in the profile's order: a percentage of the lines for their chosen
  * products, or a flat amount, when the products they require are on the order and the ones they
- * are skipped for are not.
+ * are skipped for are not. A percentage's line names the percentage and the amount it is of.
  */
 final class SubtotalFees
 {
@@ -52,11 +52,16 @@ final class SubtotalFees
             if ($percentage === null) {
                 return [];
             }
-            $amount = Exact::round(
-                Exact::rational($this->order->book->sum($chosen))->multipliedBy($percentage)->dividedBy(10000),
+            $base   = $this->order->book->sum($chosen);
+            $amount = Exact::round(Exact::rational($base)->multipliedBy($percentage)->dividedBy(10000));
+            $name   = sprintf(
+                '%s (%s%% of %s)',
+                R::text($fee['name']),
+                Exact::display(Exact::rational($percentage)->dividedBy(100)),
+                Exact::money($base),
             );
 
-            return [$this->support->draft($fee, 1, $amount)];
+            return [$this->support->draft($fee, 1, $amount, $name)];
         }
         $amount = $this->support->amount($fee);
         if ($amount === null) {

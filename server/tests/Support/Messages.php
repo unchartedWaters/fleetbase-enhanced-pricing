@@ -3,6 +3,7 @@
 namespace Fleetbase\EnhancedPricing\Tests\Support;
 
 use Fleetbase\EnhancedPricing\Pricing\PricingFailed;
+use Fleetbase\EnhancedPricing\Profile\Problem;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -55,6 +56,18 @@ final class Messages
             return $failed;
         }
         throw new \RuntimeException('Pricing did not stop.');
+    }
+
+    /**
+     * The English text of each problem.
+     *
+     * @param list<Problem> $problems
+     *
+     * @return list<string>
+     */
+    public static function problems(array $problems): array
+    {
+        return array_map(static fn (Problem $problem) => self::english($problem->key, $problem->params), $problems);
     }
 
     /**

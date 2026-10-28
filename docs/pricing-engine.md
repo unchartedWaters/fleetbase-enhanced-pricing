@@ -62,7 +62,7 @@ try {
     },
     {
       "product": "PERCENT",
-      "name": "Percentage subtotal fee",
+      "name": "Percentage subtotal fee (11% of 4.80)",
       "quantity": 1,
       "unit_amount": 53,
       "amount": 53,
@@ -108,7 +108,9 @@ skipped for distance orders, and the other requires the additional fee.
 
 An `EntityInput` has a `type` (an entity type key, or `null` for the
 profile's default), `weight` with `weightUnit`, `length`, `width` and
-`height` with `dimensionsUnit`, and its entity `attributes`. Measurements may
+`height` with `dimensionsUnit`, its entity `attributes`, and an optional
+`label`, such as its tracking number, that messages name it by (without one,
+or with a blank one, it is named by its position, from 1). Measurements may
 be integers, floats or numeric strings, with up to 7 digits before the point
 and 6 after it. A string is read exactly as written, so `"0.1"` is one tenth.
 A float is read as the shortest decimal that is the same float, so `0.1` is
@@ -165,9 +167,9 @@ Each `QuoteLine` has a `product` code, a `name`, a `quantity`, a
 `fee:heavy`. Its `amount()` is always quantity × unit amount, so an invoice
 can show the line as it is.
 
-`notes` lists what the engine could not check without stopping, such as an
-entity with no weight for a weight fee. Each note has a translation `key`
-and its `params`.
+`notes` lists what the engine could not check without stopping, such as
+entities with no weight for a weight fee: one note per fee, listing the
+entities. Each note has a translation `key` and its `params`.
 
 `meta` records what the order was priced with: the `timezone`, the
 `pricing_date`, the `service_rate`, the `overrides` given, and `changes`,

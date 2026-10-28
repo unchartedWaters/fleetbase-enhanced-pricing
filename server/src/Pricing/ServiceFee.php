@@ -40,12 +40,12 @@ final class ServiceFee
             $column = $columns[(string) $key] ?? null;
             $blank  = $value === null || $value === '';
             if ($column === null || ($blank === false && self::valueFits(R::text($column['type']), $value) === false)) {
-                throw $order->fail('row-invalid', ['column' => (string) $key]);
+                throw $order->fail('row-invalid', self::columnOf($column, (string) $key));
             }
         }
         foreach ($columns as $key => $column) {
             if ($column['required'] === true && self::cellOf($row, $key) === null) {
-                throw $order->fail('row-invalid', ['column' => $key]);
+                throw $order->fail('row-invalid', self::columnOf($column, $key));
             }
         }
     }
@@ -102,7 +102,7 @@ final class ServiceFee
                 $drafts[] = $this->draft(
                     $end - $start,
                     $this->amount($tier['price'], $this->ruleName()),
-                    $name,
+                    isset($tier['name']) ? sprintf('%s (%s)', $name, R::text($tier['name'])) : $name,
                 );
             }
             $start = $limit ?? $counted;
@@ -127,7 +127,7 @@ final class ServiceFee
             if ($limit === null) {
                 $missing = $this->order->fail('missing-tier-limit', [
                     'rule'   => $this->ruleName(),
-                    'column' => $column,
+                    ...$this->columnParams($column),
                 ]);
                 throw $missing;
             }
@@ -181,13 +181,14 @@ final class ServiceFee
         $settings = R::map($this->rate['per_meter']);
         $unit     = R::text($this->order->profile['distance_unit']);
         if ($this->distanceMeters === null || $this->distanceMeters <= 0) {
-            throw $this->order->fail('distance-required');
+            throw $this->order->fail('distance-required', ['service_rate' => $this->ruleName()]);
         }
         $distance = Units::distance($this->distanceMeters, $unit);
         if ($distance->isGreaterThan(R::text($settings['maximum_distance']))) {
             $tooLong = $this->order->fail('distance-too-long', [
                 'distance' => Exact::display($distance),
                 'maximum'  => R::text($settings['maximum_distance']),
+                'unit'     => $unit,
             ]);
             throw $tooLong;
         }
@@ -219,7 +220,7 @@ final class ServiceFee
         $column = R::text($reference['column'] ?? '');
         $value  = $this->cell($column);
         if (is_int($value) === false) {
-            throw $this->order->fail('missing-row-amount', ['rule' => $rule, 'column' => $column]);
+            throw $this->order->fail('missing-row-amount', ['rule' => $rule, ...$this->columnParams($column)]);
         }
 
         return $value;
@@ -228,16 +229,52 @@ final class ServiceFee
     private function lineName(): string
     {
         $lineName = R::map($this->rate['line_name']);
-        if (isset($lineName['text'])) {
-            return R::text($lineName['text']);
+        if (isset($lineName['column']) === false) {
+            return R::text($lineName['text'] ?? '');
         }
-        $column = R::text($lineName['column'] ?? '');
+        $column = R::text($lineName['column']);
         $value  = $this->cell($column);
         if (is_string($value) === false) {
-            throw $this->order->fail('missing-value', ['rule' => $this->ruleName(), 'column' => $column]);
+            throw $this->order->fail('missing-value', ['rule' => $this->ruleName(), ...$this->columnParams($column)]);
         }
 
-        return $value;
+        return isset($lineName['text']) ? R::text($lineName['text']) . ': ' . $value : $value;
+    }
+
+    /**
+     * A column of the service rate's rate table, for messages.
+     *
+     * @return array{column: string, column_key: string}
+     */
+    private function columnParams(string $column): array
+    {
+        $table = $this->rate['rate_table'] ?? null;
+        foreach (R::items($this->order->profile['rate_tables']) as $definition) {
+            if ($definition['key'] !== $table) {
+                continue;
+            }
+            foreach (R::items($definition['columns']) as $known) {
+                if ($known['key'] === $column) {
+                    return self::columnOf($known, $column);
+                }
+            }
+        }
+
+        return self::columnOf(null, $column);
+    }
+
+    /**
+     * A column for messages: its name when the rate table gives one, else its key, and the key.
+     *
+     * @param array<string, mixed>|null $definition
+     *
+     * @return array{column: string, column_key: string}
+     */
+    private static function columnOf(?array $definition, string $key): array
+    {
+        $name = $definition['name'] ?? null;
+
+        return ['column' => is_string($name) ? $name : $key, 'column_key' => $key];
     }
 
     /**

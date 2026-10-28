@@ -31,7 +31,7 @@ test('a percentage of the lines for its chosen products only', function () {
     $quote = Orders::price(['profile' => $profile, 'entities' => [Orders::entity(5), Orders::entity(5, 'separate')]]);
 
     // 11% of $9 is $0.99.
-    expect(Orders::lines($quote)[2])->toBe(['PERCENT', 'Percentage subtotal fee', 1, 99, 99]);
+    expect(Orders::lines($quote)[2])->toBe(['PERCENT', 'Percentage subtotal fee (11% of 9.00)', 1, 99, 99]);
 });
 
 test('requires and skipped for', function (array $fields, bool $charged) {
@@ -99,8 +99,8 @@ test('a later subtotal fee sees an earlier one', function () {
 
     // 11% of $27 is $2.97, and 10% of that is $0.297, rounded to $0.30.
     expect(array_slice(Orders::lines($quote), 1))->toBe([
-        ['PERCENT', 'Percentage subtotal fee', 1, 297, 297],
-        ['FLAT_A', 'Flat subtotal fee A', 1, 30, 30],
+        ['PERCENT', 'Percentage subtotal fee (11% of 27.00)', 1, 297, 297],
+        ['FLAT_A', 'Flat subtotal fee A (10% of 2.97)', 1, 30, 30],
     ]);
 });
 

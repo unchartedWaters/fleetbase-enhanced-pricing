@@ -4,7 +4,8 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 
 /**
  * One entity of the order's payload, as Fleet-Ops stores it: its entity type (from meta.rates),
- * weight and dimensions with their units, and the profile's entity attributes.
+ * weight and dimensions with their units, and the profile's entity attributes. Its label, such as
+ * a tracking number, names it in messages; without one it is named by its position.
  */
 final class EntityInput
 {
@@ -20,6 +21,7 @@ final class EntityInput
         public readonly int|float|string|null $height = null,
         public readonly ?string $dimensionsUnit = null,
         public readonly array $attributes = [],
+        public readonly ?string $label = null,
     ) {
     }
 }

@@ -168,7 +168,7 @@ final class Fees
     }
 
     /**
-     * The measurement of each counted entity, noting the ones that cannot be measured.
+     * The measurement of each counted entity, noting the ones that cannot be measured in one note.
      *
      * @param array<string, mixed> $fee
      *
@@ -176,18 +176,22 @@ final class Fees
      */
     private function measured(array $fee): array
     {
-        $measured = [];
+        $measured   = [];
+        $unmeasured = [];
         foreach ($this->support->counted($fee) as $entity) {
             $measure = $this->measure($fee, $entity);
             if ($measure === null) {
-                $this->order->note('entity-not-measured', [
-                    'entity'   => $entity->number,
-                    'rule'     => R::text($fee['name']),
-                    'rule_key' => R::text($fee['key']),
-                ]);
+                $unmeasured[] = $entity->label;
                 continue;
             }
             $measured[] = $measure;
+        }
+        if ($unmeasured !== []) {
+            $this->order->note('entities-not-measured', [
+                'entities' => implode(', ', $unmeasured),
+                'rule'     => R::text($fee['name']),
+                'rule_key' => R::text($fee['key']),
+            ]);
         }
 
         return $measured;

@@ -122,11 +122,7 @@ final class ProfileShapes
         if ($rate === null) {
             return null;
         }
-        $rate['line_name'] = $this->choiceOf(
-            $rate['line_name'],
-            ['column' => S::type('key'), 'text' => S::type('text')],
-            S::join($path, 'line_name'),
-        );
+        $rate['line_name'] = $this->lineName($rate['line_name'], S::join($path, 'line_name'));
         $rate[$method]     = match ($method) {
             'tiers'      => $this->tiers($rate['tiers'], S::join($path, 'tiers')),
             'per_meter'  => $this->schema->value(
@@ -147,7 +143,11 @@ final class ProfileShapes
     {
         $tiers = $this->schema->value(
             $raw,
-            S::listOf(S::object(['up_to' => S::nullable(S::type('raw')), 'price' => S::type('raw')]), 1, 10),
+            S::listOf(S::object([
+                'up_to' => S::nullable(S::type('raw')),
+                'price' => S::type('raw'),
+                'name'  => S::optional(S::nullable(S::type('text'))),
+            ]), 1, 10),
             $path,
         );
         if (is_array($tiers) === false) {
@@ -172,7 +172,11 @@ final class ProfileShapes
                 ['value' => S::type('money'), 'column' => S::type('key')],
                 S::join($tierPath, 'price'),
             );
-            $normalized[]  = ProfileReferences::map($tier);
+            $normalized[]  = ProfileReferences::map(array_filter(
+                $tier,
+                static fn (mixed $item, string $field): bool => $field !== 'name' || $item !== null,
+                ARRAY_FILTER_USE_BOTH,
+            ));
         }
 
         return $normalized;
@@ -344,6 +348,7 @@ final class ProfileShapes
             'key'     => S::type('key'),
             'columns' => S::listOf(S::object([
                 'key'      => S::type('key'),
+                'name'     => S::optional(S::nullable(S::type('text'))),
                 'type'     => S::enum(['text', 'money', 'integer', 'number']),
                 'required' => S::optional(S::type('boolean'), false),
             ]), 1, 30),
@@ -357,6 +362,25 @@ final class ProfileShapes
     public static function codes(int $min): array
     {
         return S::listOf(S::type('code'), $min, 50);
+    }
+
+    /**
+     * A line name: a text, a text column of the row, or both, shown as "text: value".
+     *
+     * @return array<string, mixed>|null
+     */
+    public function lineName(mixed $raw, string $path): ?array
+    {
+        $choices = ['text' => S::type('text'), 'column' => S::type('key')];
+        if (is_array($raw) && array_intersect_key($raw, $choices) === []) {
+            $this->schema->add(Problem::atPath($path, 'needs-one-of', ['fields' => 'text, column']));
+
+            return null;
+        }
+        $optional = array_map(static fn (array $spec): array => S::optional($spec), $choices);
+        $value    = $this->schema->fields($raw, $optional, $path);
+
+        return $value === null ? null : array_filter($value, static fn (mixed $item): bool => $item !== null);
     }
 
     /**
