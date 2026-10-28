@@ -42,16 +42,18 @@ final class PricingStore
 
     /**
      * Saves a new version. It is refused when it was built on an older version, changes a unit that
-     * stored values depend on, or leaves stored entries that no longer fit, unless $acceptStale.
+     * stored values depend on, or leaves stored entries that no longer fit, unless $acceptStale:
+     * true accepts any, and a list of uuids accepts only stale entries that are all in it.
      *
-     * @param array<string, mixed> $definition the new version, as saved
+     * @param bool|list<string>    $acceptStale
+     * @param array<string, mixed> $definition  the new version, as saved
      */
     public function addVersion(
         Profile $profile,
         array $definition,
         ?string $userUuid = null,
         ?int $builtOn = null,
-        bool $acceptStale = false,
+        bool|array $acceptStale = false,
     ): ProfileVersion {
         return (new VersionStore($this->context))->add($profile, $definition, $userUuid, $builtOn, $acceptStale);
     }

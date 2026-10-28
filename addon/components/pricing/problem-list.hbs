@@ -1,0 +1,15 @@
+{{#if @problems.length}}
+    <ul class="space-y-1 text-sm text-red-700 dark:text-red-300" data-test-problems ...attributes>
+        {{#each @problems as |problem|}}
+            <li data-test-problem={{problem.path}}>
+                {{#if @onSelect}}
+                    <button type="button" class="text-left underline" {{on "click" (fn @onSelect problem.path)}}>
+                        {{#if problem.path}}<span class="font-mono">{{problem.path}}</span>: {{/if}}{{pricing-message problem}}
+                    </button>
+                {{else}}
+                    {{#if (and problem.path (not @hidePath))}}<span class="font-mono">{{problem.path}}</span>: {{/if}}{{pricing-message problem}}
+                {{/if}}
+            </li>
+        {{/each}}
+    </ul>
+{{/if}}

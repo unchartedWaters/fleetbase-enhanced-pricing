@@ -1,0 +1,29 @@
+<div class="table-wrapper table-fluid">
+    <table class="w-full text-sm">
+        <thead>
+            <tr>
+                <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.version"}}</th>
+                <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.saved-by"}}</th>
+                <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.profile.saved-at"}}</th>
+                <th class="px-3 py-2"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each @profile.versions key="number" as |version|}}
+                <tr data-test-version-row={{version.number}}>
+                    <td class="px-3 py-2">
+                        {{version.number}}
+                        {{#if (eq version.number @profile.current_version)}}
+                            <span class="ml-2 rounded bg-green-100 px-1.5 text-xs text-green-800 dark:bg-green-900 dark:text-green-100">{{t "enhanced-pricing.console.profile.current"}}</span>
+                        {{/if}}
+                    </td>
+                    <td class="px-3 py-2">{{or version.saved_by.name (t "enhanced-pricing.console.unknown-person")}}</td>
+                    <td class="px-3 py-2">{{pricing-time version.saved_at}}</td>
+                    <td class="px-3 py-2 text-right">
+                        <Button @size="xs" @text={{t "enhanced-pricing.console.profile.view-version"}} @onClick={{fn (optional @onView) version.number}} data-test-view />
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

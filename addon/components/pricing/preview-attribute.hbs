@@ -1,0 +1,23 @@
+<div class="flex items-center gap-2 text-sm" data-test-attribute={{@attribute.key}}>
+    {{#if (eq @attribute.type "boolean")}}
+        <label class="flex items-center gap-2">
+            <span class="w-40">{{or @attribute.name @attribute.key}}</span>
+            <input type="checkbox" class="form-checkbox" checked={{@value}} {{on "change" @onChange}} />
+        </label>
+    {{else if (eq @attribute.type "choice")}}
+        <label class="flex items-center gap-2">
+            <span class="w-40">{{or @attribute.name @attribute.key}}</span>
+            <select class="form-select form-input-sm w-48" {{on "change" @onChange}}>
+                <option value="" selected={{not @value}}>{{t "enhanced-pricing.console.input.none"}}</option>
+                {{#each @attribute.choices key="key" as |choice|}}
+                    <option value={{choice.key}} selected={{eq choice.key @value}}>{{or choice.name choice.key}}</option>
+                {{/each}}
+            </select>
+        </label>
+    {{else}}
+        <label class="flex items-center gap-2">
+            <span class="w-40">{{or @attribute.name @attribute.key}}{{#if @attribute.unit}} ({{@attribute.unit}}){{/if}}</span>
+            <input type="text" inputmode="decimal" class="form-input form-input-sm w-32" value={{@value}} {{on "input" @onChange}} />
+        </label>
+    {{/if}}
+</div>

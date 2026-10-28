@@ -22,3 +22,4 @@
 /server
 /server_vendor
 /vendor
+/tests/helpers/console-fixtures.js

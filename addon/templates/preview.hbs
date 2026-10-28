@@ -1,0 +1,28 @@
+<Layout::Section::Header @title={{t "enhanced-pricing.console.preview.title"}} />
+<Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
+    {{#if @model.key}}
+        <label class="mb-4 block max-w-md text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {{t "enhanced-pricing.console.preview.profile"}}
+            <select class="form-select form-input-sm mt-1 block w-full" data-test-profile-select {{on "change" this.chooseProfile}}>
+                {{#each @model.profiles key="key" as |profile|}}
+                    <option value={{profile.key}} selected={{eq profile.key @model.key}}>{{profile.name}}</option>
+                {{/each}}
+            </select>
+        </label>
+        {{#if @model.more}}
+            <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.preview.more-customers"}}</p>
+        {{/if}}
+        {{#each (array (concat @model.key "/" @model.customer))}}
+            <Pricing::QuotePreview
+                @profile={{@model.profile}}
+                @definition={{@model.profile.version.definition}}
+                @customers={{@model.customers}}
+                @initialCustomer={{@model.customer}}
+                @onLoadCustomer={{this.loadCustomer}}
+                @onPrice={{this.price}}
+            />
+        {{/each}}
+    {{else}}
+        <p class="text-sm text-gray-600 dark:text-gray-300">{{t "enhanced-pricing.console.profiles.empty"}}</p>
+    {{/if}}
+</Layout::Section::Body>

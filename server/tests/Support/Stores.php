@@ -36,6 +36,12 @@ final class Stores
         return self::for($company)->createProfile($key, 'Main', $definition ?? Profiles::example());
     }
 
+    public static function profileOf(string $company, string $key = 'main'): Profile
+    {
+        return Profile::firstOf(Profile::ofCompany(Database::company($company))->where('key', $key))
+            ?? throw new \LogicException("no profile $key");
+    }
+
     /**
      * @param array<string, mixed>|null $overrides
      */

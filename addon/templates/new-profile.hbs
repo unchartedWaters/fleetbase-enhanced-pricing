@@ -1,0 +1,4 @@
+<Layout::Section::Header @title={{t "enhanced-pricing.console.editor.new-title"}} />
+<Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
+    <Pricing::ProfileEditor @form={{@model.form}} @definition={{@model.definition}} @isNew={{true}} @onSave={{this.save}} @onDirty={{this.setDirty}} @onCancel={{this.cancel}} />
+</Layout::Section::Body>

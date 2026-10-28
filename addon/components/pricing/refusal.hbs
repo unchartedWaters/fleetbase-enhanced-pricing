@@ -1,0 +1,13 @@
+{{! A refusal that isn't about a field: who may not do this, a record that is gone, or a failure on the way. }}
+{{#if (eq @refusal.refused "forbidden")}}
+    {{t "enhanced-pricing.console.refused.forbidden"}}
+{{else if (eq @refusal.refused "unauthenticated")}}
+    {{t "enhanced-pricing.console.refused.unauthenticated"}}
+{{else if (eq @refusal.refused "not-found")}}
+    {{t "enhanced-pricing.console.refused.not-found"}}
+{{else if @refusal.problems.length}}
+    <Pricing::ProblemList @problems={{@refusal.problems}} />
+{{else}}
+    {{t "enhanced-pricing.console.refused.error"}}
+    {{#if @refusal.message}}<span class="block text-xs">{{@refusal.message}}</span>{{/if}}
+{{/if}}

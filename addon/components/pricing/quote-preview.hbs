@@ -1,0 +1,172 @@
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-2" data-test-quote-preview>
+    <form class="space-y-4" {{on "submit" this.submit}}>
+        <p class="text-sm text-gray-600 dark:text-gray-300">{{t "enhanced-pricing.console.preview.help"}}</p>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {{t "enhanced-pricing.console.preview.customer"}}
+            <select class="form-select form-input-sm mt-1 block w-full" data-test-customer-select {{on "change" this.chooseCustomer}}>
+                <option value="" selected={{eq this.customer ""}}>{{t "enhanced-pricing.console.preview.profile-values"}}</option>
+                {{#each @customers key="uuid" as |customer|}}
+                    <option value={{customer.uuid}} selected={{eq customer.uuid this.customer}}>{{customer.name}}</option>
+                {{/each}}
+            </select>
+        </label>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {{t "enhanced-pricing.console.preview.service-rate"}}
+            <select class="form-select form-input-sm mt-1 block w-full" data-test-service-rate {{on "change" this.chooseServiceRate}}>
+                <option value="" selected={{eq this.serviceRate ""}}>{{t "enhanced-pricing.console.input.none"}}</option>
+                {{#each this.serviceRates key="value" as |rate|}}
+                    <option value={{rate.value}} selected={{eq rate.value this.serviceRate}}>{{rate.label}}</option>
+                {{/each}}
+            </select>
+        </label>
+        {{#if this.showRows}}
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {{t "enhanced-pricing.console.preview.row"}}
+                <select class="form-select form-input-sm mt-1 block w-full" data-test-row-select {{on "change" this.chooseRow}}>
+                    <option value="" selected={{eq this.row ""}}>{{t "enhanced-pricing.console.input.none"}}</option>
+                    {{#each this.rows key="value" as |row|}}
+                        <option value={{row.value}} selected={{eq row.value this.row}}>{{row.label}}{{#if row.problems}} {{t "enhanced-pricing.console.preview.row-stale"}}{{/if}}</option>
+                    {{/each}}
+                </select>
+            </label>
+        {{/if}}
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {{t "enhanced-pricing.console.preview.pickup-date"}}
+                <input type="date" class="form-input form-input-sm mt-1 block w-full" value={{this.date}} data-test-pickup-date {{on "change" (fn this.setText "date")}} />
+            </label>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {{t "enhanced-pricing.console.preview.pickup-time"}}
+                <input type="time" class="form-input form-input-sm mt-1 block w-full" value={{this.time}} data-test-pickup-time {{on "change" (fn this.setText "time")}} />
+            </label>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {{t "enhanced-pricing.console.preview.timezone"}}
+                <input type="text" class="form-input form-input-sm mt-1 block w-full" value={{this.timezone}} data-test-timezone {{on "change" (fn this.setText "timezone")}} />
+                <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.preview.timezone-help" timezone=this.definition.scheduling_timezone}}</span>
+            </label>
+        </div>
+        {{#if this.needsDistance}}
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {{t "enhanced-pricing.console.preview.distance" unit=this.distanceUnit}}
+                <input type="text" inputmode="decimal" class="form-input form-input-sm mt-1 block w-40" value={{this.distance}} data-test-distance {{on "input" (fn this.setText "distance")}} />
+                {{#if this.distanceResult.error}}
+                    <span class="block text-xs font-normal text-red-600 dark:text-red-400">{{t this.distanceResult.error}}</span>
+                {{else if (not-eq this.distanceResult.value null)}}
+                    <span class="block text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.preview.meters" value=this.distanceResult.value}}</span>
+                {{/if}}
+            </label>
+        {{/if}}
+
+        {{#if this.orderAttributes.length}}
+            <fieldset class="space-y-2">
+                <legend class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{t "enhanced-pricing.console.preview.attributes"}}</legend>
+                {{#each this.orderAttributes key="key" as |attribute|}}
+                    <Pricing::PreviewAttribute @attribute={{attribute}} @value={{get this.attributes attribute.key}} @onChange={{fn this.setAttribute attribute}} />
+                {{/each}}
+            </fieldset>
+        {{/if}}
+
+        <fieldset class="space-y-2">
+            <legend class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{t "enhanced-pricing.console.preview.entities"}}</legend>
+            {{#each this.entityRows key="id" as |row|}}
+                <div class="rounded border border-gray-200 p-2 dark:border-gray-700" data-test-entity={{row.index}}>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <label class="text-xs">
+                            {{t "enhanced-pricing.console.preview.entity-type"}}
+                            <select class="form-select form-input-sm block w-48" data-test-entity-type {{on "change" (fn this.setEntity row.index "type")}}>
+                                <option value="" selected={{eq row.entity.type ""}}>{{t "enhanced-pricing.console.preview.default-type" type=this.definition.default_entity_type}}</option>
+                                {{#each this.entityTypes key="value" as |type|}}
+                                    <option value={{type.value}} selected={{eq type.value row.entity.type}}>{{type.label}}</option>
+                                {{/each}}
+                            </select>
+                        </label>
+                        <label class="text-xs">
+                            {{t "enhanced-pricing.console.preview.weight"}}
+                            <input type="text" inputmode="decimal" class="form-input form-input-sm block w-24" value={{row.entity.weight}} data-test-weight {{on "input" (fn this.setEntity row.index "weight")}} />
+                        </label>
+                        <select class="form-select form-input-sm w-20" aria-label={{t "enhanced-pricing.console.preview.weight-unit"}} {{on "change" (fn this.setEntity row.index "weight_unit")}}>
+                            {{#each this.weightUnits as |unit|}}
+                                <option value={{unit}} selected={{eq unit row.entity.weight_unit}}>{{unit}}</option>
+                            {{/each}}
+                        </select>
+                        {{#each (array "length" "width" "height") as |side|}}
+                            <label class="text-xs">
+                                {{t (concat "enhanced-pricing.console.preview." side)}}
+                                <input type="text" inputmode="decimal" class="form-input form-input-sm block w-20" value={{get row.entity side}} {{on "input" (fn this.setEntity row.index side)}} />
+                            </label>
+                        {{/each}}
+                        <select class="form-select form-input-sm w-20" aria-label={{t "enhanced-pricing.console.preview.dimensions-unit"}} {{on "change" (fn this.setEntity row.index "dimensions_unit")}}>
+                            {{#each this.lengthUnits as |unit|}}
+                                <option value={{unit}} selected={{eq unit row.entity.dimensions_unit}}>{{unit}}</option>
+                            {{/each}}
+                        </select>
+                        <Button @size="xs" @type="danger" @icon="trash" @onClick={{fn this.removeEntity row.index}} data-test-remove-entity />
+                    </div>
+                    {{#each this.entityAttributes key="key" as |attribute|}}
+                        <Pricing::PreviewAttribute @attribute={{attribute}} @value={{get row.entity.attributes attribute.key}} @onChange={{fn this.setEntityAttribute row.index attribute}} />
+                    {{/each}}
+                </div>
+            {{/each}}
+            <Button @size="xs" @icon="plus" @text={{t "enhanced-pricing.console.preview.add-entity"}} @onClick={{this.addEntity}} data-test-add-entity />
+        </fieldset>
+
+        {{#if this.offeredCharges.length}}
+            <fieldset class="space-y-2">
+                <legend class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{t "enhanced-pricing.console.preview.manual-charges"}}</legend>
+                {{#each this.chargeRows key="id" as |row|}}
+                    <div class="flex flex-wrap items-center gap-2" data-test-charge={{row.index}}>
+                        <span class="text-sm">{{or row.spec.name row.charge.key}}</span>
+                        {{#if row.spec.entered}}
+                            <Pricing::MoneyInput @value={{row.charge.amount}} @currency={{this.currency}} @onChange={{fn this.setChargeAmount row.index}} @onError={{fn this.chargeError row.charge.id}} />
+                        {{else if row.spec.quantity}}
+                            <input type="text" inputmode="decimal" class="form-input form-input-sm w-24" value={{row.charge.quantity}} aria-label={{t "enhanced-pricing.console.preview.quantity"}} {{on "input" (fn this.setChargeQuantity row.index)}} />
+                            <span class="text-xs">{{row.spec.quantity.unit}}</span>
+                        {{/if}}
+                        <Button @size="xs" @type="danger" @icon="trash" @onClick={{fn this.removeCharge row.index}} data-test-remove-charge />
+                    </div>
+                {{/each}}
+                <select class="form-select form-input-sm w-60" data-test-add-charge {{on "change" this.addCharge}}>
+                    <option value="" selected>{{t "enhanced-pricing.console.preview.add-charge"}}</option>
+                    {{#each this.offeredCharges key="key" as |charge|}}
+                        <option value={{charge.key}}>{{charge.name}}</option>
+                    {{/each}}
+                </select>
+            </fieldset>
+        {{/if}}
+
+        <Button @type="primary" @buttonType="submit" @icon="calculator" @text={{t "enhanced-pricing.console.preview.price"}} @isLoading={{this.pricing}} @disabled={{this.cannotPrice}} data-test-price />
+    </form>
+
+    <div class="space-y-4" aria-live="polite">
+        {{#if this.refusal}}
+            <div class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200" role="alert">
+                <Pricing::Refusal @refusal={{this.refusal}} />
+            </div>
+        {{/if}}
+        {{#if this.result.failed}}
+            <div class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200" role="alert">
+                <p class="mb-1 font-semibold">{{t "enhanced-pricing.console.preview.failed"}}</p>
+                <p data-test-failed>{{pricing-message this.result.failed}}</p>
+            </div>
+        {{/if}}
+        {{#if this.result.stale}}
+            <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm dark:border-yellow-700 dark:bg-yellow-950" data-test-stale>
+                <p class="mb-1 font-semibold">{{t "enhanced-pricing.console.preview.stale"}}</p>
+                <Pricing::ProblemList @problems={{this.result.stale}} @hidePath={{true}} />
+            </div>
+        {{/if}}
+        {{#if this.result.skipped_changes.length}}
+            <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm dark:border-yellow-700 dark:bg-yellow-950" data-test-skipped>
+                <p class="mb-1 font-semibold">{{t "enhanced-pricing.console.preview.skipped"}}</p>
+                <ul>
+                    {{#each this.result.skipped_changes as |change|}}
+                        <li><span class="font-mono">{{change.path}}</span> {{t "enhanced-pricing.console.preview.from-date" date=change.effective_from}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+        {{/if}}
+        {{#if this.result.quote}}
+            <Pricing::QuoteLines @quote={{this.result.quote}} />
+        {{/if}}
+    </div>
+</div>

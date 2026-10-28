@@ -1,0 +1,50 @@
+{{#if this.isMoney}}
+    <Pricing::MoneyInput @value={{@value}} @kind={{if (eq this.type "percent") "percent" "money"}} @currency={{@currency}} @disabled={{@disabled}} @onChange={{@onChange}} @onError={{@onError}} />
+{{else if this.isText}}
+    <input type="text" class="form-input form-input-sm w-full max-w-md" value={{this.textValue}} disabled={{@disabled}} data-test-choice-value={{@choiceValue}} {{on "input" this.text}} />
+{{else if (eq this.type "integer")}}
+    <input type="text" inputmode="numeric" class="form-input form-input-sm w-40" value={{this.integerValue}} disabled={{@disabled}} data-test-choice-value={{@choiceValue}} {{on "input" this.integer}} />
+    {{#if this.integerError}}
+        <p class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-input-error>{{t "enhanced-pricing.console.input.integer-invalid"}}</p>
+    {{/if}}
+{{else if (eq this.type "date")}}
+    <input type="date" class="form-input form-input-sm w-48" value={{this.textValue}} disabled={{@disabled}} {{on "change" this.blankToNull}} />
+{{else if (eq this.type "time")}}
+    <input type="time" class="form-input form-input-sm w-36" value={{this.textValue}} disabled={{@disabled}} {{on "change" this.blankToNull}} />
+{{else if (eq this.type "boolean")}}
+    <input type="checkbox" class="form-checkbox" checked={{@value}} disabled={{@disabled}} {{on "change" this.check}} />
+{{else if (or (eq this.type "enum") (eq this.type "ref"))}}
+    <select class="form-select form-input-sm w-full max-w-md" disabled={{@disabled}} data-test-choice-value={{@choiceValue}} {{on "change" this.choose}}>
+        <option value="" selected={{this.isBlank}}>{{t "enhanced-pricing.console.input.none"}}</option>
+        {{#each this.selectOptions as |choice|}}
+            <option value={{choice.value}} selected={{eq choice.value @value}}>
+                {{choice.label}}{{#if choice.missing}} {{t "enhanced-pricing.console.input.not-in-profile"}}{{/if}}
+            </option>
+        {{/each}}
+    </select>
+{{else if (eq this.type "refs")}}
+    <div class="flex flex-wrap gap-x-4 gap-y-1">
+        {{#each this.refsOptions as |choice|}}
+            <label class="inline-flex items-center text-sm">
+                <input type="checkbox" class="form-checkbox mr-1" checked={{choice.checked}} disabled={{@disabled}} value={{choice.value}} {{on "change" (fn this.toggle choice.value)}} />
+                {{choice.label}}{{#if choice.missing}} {{t "enhanced-pricing.console.input.not-in-profile"}}{{/if}}
+            </label>
+        {{else}}
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.input.nothing-to-choose"}}</span>
+        {{/each}}
+    </div>
+{{else if (eq this.type "weekdays")}}
+    <div class="flex flex-wrap gap-x-4">
+        {{#each this.weekdays as |weekday|}}
+            <label class="inline-flex items-center text-sm">
+                <input type="checkbox" class="form-checkbox mr-1" checked={{weekday.checked}} disabled={{@disabled}} {{on "change" (fn this.toggleDay weekday.day)}} />
+                {{t (concat "enhanced-pricing.console.weekday." weekday.day)}}
+            </label>
+        {{/each}}
+    </div>
+{{else if (eq this.type "dates")}}
+    <textarea class="form-input form-input-sm w-full max-w-md font-mono" rows="4" disabled={{@disabled}} placeholder="2026-12-25" value={{this.datesText}} {{on "change" this.dates}}></textarea>
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.input.dates-help"}}</p>
+{{else}}
+    <code class="text-xs">{{pricing-json @value}}</code>
+{{/if}}

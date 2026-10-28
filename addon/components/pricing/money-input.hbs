@@ -1,0 +1,21 @@
+<div class="pricing-money-input" ...attributes>
+    <div class="flex items-center">
+        <span class="mr-2 text-sm text-gray-500 dark:text-gray-400">{{if this.isPercent "%" @currency}}</span>
+        <input
+            type="text"
+            inputmode="decimal"
+            class="form-input form-input-sm w-40"
+            value={{this.text}}
+            disabled={{@disabled}}
+            aria-invalid={{if this.error "true"}}
+            {{on "input" this.input}}
+        />
+    </div>
+    {{#if this.error}}
+        <p class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-input-error>{{t this.error}}</p>
+    {{else if (not-eq this.stored null)}}
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" data-test-stored>
+            {{t (if this.isPercent "enhanced-pricing.console.input.stored-basis-points" "enhanced-pricing.console.input.stored-cents") value=this.stored}}
+        </p>
+    {{/if}}
+</div>
