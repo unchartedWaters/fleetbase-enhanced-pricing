@@ -97,6 +97,18 @@ test('a change the store refuses comes back with its problems', function () {
         ->and($body['problems'][0]['key'])->toBe('enhanced-pricing.store.change-too-soon');
 });
 
+test('a change about ten times the value it replaces is refused until the person accepts it', function () {
+    Stores::profile('a');
+    $add = fn (bool $accept) => adminChanges()
+        ->add('main', 'subtotal_fees.percent.percentage', 11000, '2026-12-01', null, $accept);
+
+    $body = changeRefusal(fn () => $add(false));
+
+    expect($body)->toMatchArray(['status' => 422, 'refused' => 'large-change'])
+        ->and($body['problems'][0]['key'])->toBe('enhanced-pricing.store.large-change')
+        ->and($add(true))->toMatchArray(['value' => 11000, 'state' => 'upcoming']);
+});
+
 test('cancelling an upcoming change marks it cancelled', function () {
     $profile = Stores::profile('a');
     $change  = Stores::for('a')->addDatedChange($profile, 'subtotal_fees.percent.percentage', 1300, '2026-12-01');

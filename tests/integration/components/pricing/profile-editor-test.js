@@ -172,7 +172,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-save]');
 
         assert.dom('[data-test-stale]').includesText('Customer a 1');
-        assert.dom('[data-test-stale]').includesText("fees.heavy.minimum isn't a value that can be overridden.");
+        assert.dom('[data-test-stale]').includesText('There is no fee named heavy.');
         await click('[data-test-save-stale]');
 
         assert.deepEqual(this.saved[1].accept_stale, [stale.stale[0].uuid]);
