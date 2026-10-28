@@ -48,24 +48,25 @@ enhanced-pricing:
     window-empty: The start and end times are the same.
     wrong-type: "The value must be {expected}."
   pricing:
-    amount-too-large: "A line or the total is above the largest amount, {max} cents."
+    amount-too-large: "A line or the total is above the largest amount, {max} {currency}."
     attribute-invalid: "The value of {attribute} isn't valid."
     attribute-required: "{attribute} is required."
     changes-invalid: "The profile's dated change to {path} isn't valid."
     changes-invalid-all: The profile's dated changes aren't valid.
-    distance-required: This service rate needs the order's distance.
-    distance-too-long: "The distance {distance} is above the maximum of {maximum}."
+    distance-required: "{service_rate} needs the order's distance."
+    distance-too-long: "The distance {distance} {unit} is above the maximum of {maximum} {unit}."
     entity-invalid: "Entity {entity} has a weight or size that isn't valid."
-    entity-not-measured: "Entity {entity} has no weight or size, so {rule} wasn't charged for it."
-    manual-charge-amount-not-entered: "{charge} needs an amount."
+    entities-not-measured: "{rule} wasn't charged for entities with no weight or size: {entities}."
+    manual-charge-amount-not-entered: "{charge} has a set amount, so an amount can't be entered."
+    manual-charge-amount-required: "{charge} needs an amount."
     manual-charge-amount-invalid: "The amount for {charge} isn't valid."
-    manual-charge-amount-out-of-range: "The amount for {charge} must be from {minimum} to {maximum} cents."
+    manual-charge-amount-out-of-range: "The amount for {charge} must be from {minimum} to {maximum} {currency}."
     manual-charge-not-in-effect: "{charge} isn't in effect on {date}."
     manual-charge-not-offered: "{charge} isn't offered to this customer."
     manual-charge-product-unknown: "{charge} is billed as {product}, which isn't one of the profile's products."
     manual-charge-quantity-invalid: "The quantity for {charge} must be in steps of {step}, up to {maximum}."
     manual-charge-takes-no-quantity: "{charge} doesn't take a quantity."
-    missing-amount: "{rule} has no amount set for {customer}."
+    missing-amount: "{customer} has no amount set for {rule}."
     missing-row-amount: "{rule} has no amount in {column}, row {row} of {customer}'s card {card}."
     missing-tier-limit: "{rule} has no tier limit in {column}, row {row} of {customer}'s card {card}."
     missing-value: "{rule} has no line name in {column}, row {row} of {customer}'s card {card}."
@@ -77,7 +78,7 @@ enhanced-pricing:
     row-invalid: "Row {row} of {customer}'s card {card} has a value for {column} that isn't valid."
     row-required: "{service_rate} needs a rate card row."
     service-rate-disabled: "{service_rate} is turned off."
-    service-rate-not-allowed: "{service_rate} isn't allowed for {customer}."
+    service-rate-not-allowed: "{customer} can't use {service_rate}."
     tiers-invalid: "The tiers of {rule} don't increase."
     timezone-invalid: "{timezone} isn't a known timezone."
     too-many-entities: "An order can have at most {max} entities."
@@ -97,6 +98,7 @@ enhanced-pricing:
     duplicate-row: This row's key is sent more than once.
     fixed-unit-changed: "A profile's {field} can't change; it is {value}."
     immutable: This record can't be changed once saved.
+    large-change: "{path} goes from {from} to {to}, a change of ten times or more. Money is in cents and percentages in basis points. Save it anyway if that's right."
     meta-too-large: "Metadata can be at most {max} bytes."
     not-a-customer: This contact isn't one of the company's customers.
     not-found: The record wasn't found.
@@ -136,6 +138,9 @@ enhanced-pricing:
     choice: choice
     column: column
     entity_type: entity type
+    fee: fee
     holiday_list: holiday list
+    manual_charge: manual charge
     rate_table: rate table
     service_rate: service rate
+    subtotal_fee: subtotal fee

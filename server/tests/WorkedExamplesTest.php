@@ -30,7 +30,7 @@ test('a tiered order with every fee and subtotal fee', function () {
         ['ADDITIONAL', 'Additional fee', 1, 1600, 1600],
         ['PARCEL', 'Parcel fee (6 kg)', 1, 240, 240],
         ['PEAK', 'Peak hours fee', 1, 2200, 2200],
-        ['PERCENT', 'Percentage subtotal fee', 1, 1863, 1863],
+        ['PERCENT', 'Percentage subtotal fee (11% of 169.40)', 1, 1863, 1863],
         ['FLAT_A', 'Flat subtotal fee A', 1, 400, 400],
         ['FLAT_B', 'Flat subtotal fee B', 1, 600, 600],
     ])->and($quote->total())->toBe(19803);
@@ -47,7 +47,7 @@ test('a distance order raised to the minimum distance', function () {
     expect(Orders::lines($quote))->toBe([
         ['DISTANCE', 'Distance (10 km)', 1, 3500, 3500],
         ['PARCEL', 'Parcel fee (12 kg)', 1, 480, 480],
-        ['PERCENT', 'Percentage subtotal fee', 1, 53, 53],
+        ['PERCENT', 'Percentage subtotal fee (11% of 4.80)', 1, 53, 53],
     ])->and($quote->total())->toBe(4033);
 });
 
@@ -56,7 +56,7 @@ test('a percentage is rounded half up to the cent', function () {
 
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2705, 2705],
-        ['PERCENT', 'Percentage subtotal fee', 1, 298, 298],
+        ['PERCENT', 'Percentage subtotal fee (11% of 27.05)', 1, 298, 298],
     ])->and($quote->total())->toBe(3003);
 });
 
@@ -79,7 +79,7 @@ test('an hourly manual charge', function () {
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
         ['HOURLY', 'Hourly charge (1.75 h)', 1, 7350, 7350],
-        ['PERCENT', 'Percentage subtotal fee', 1, 297, 297],
+        ['PERCENT', 'Percentage subtotal fee (11% of 27.00)', 1, 297, 297],
     ])->and($quote->total())->toBe(10347);
 });
 
@@ -89,7 +89,7 @@ test('an entered manual charge within its limits', function () {
     expect(Orders::lines($quote))->toBe([
         ['TIERED', 'Tiered delivery', 1, 2700, 2700],
         ['ENTERED', 'Entered charge', 1, 6400, 6400],
-        ['PERCENT', 'Percentage subtotal fee', 1, 297, 297],
+        ['PERCENT', 'Percentage subtotal fee (11% of 27.00)', 1, 297, 297],
     ])->and($quote->total())->toBe(9397);
 });
 

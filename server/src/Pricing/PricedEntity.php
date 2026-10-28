@@ -6,7 +6,8 @@ use Brick\Math\BigRational;
 
 /**
  * An entity once its inputs are checked: its entity type, its weight in kilograms and volume in
- * cubic centimetres when known, its attributes, and the product it is billed under.
+ * cubic centimetres when known, its attributes, the product it is billed under, and the label
+ * messages name it by.
  */
 final class PricedEntity
 {
@@ -17,11 +18,11 @@ final class PricedEntity
      * @param array<string, mixed> $attributes
      */
     public function __construct(
-        public readonly int $number,
         public readonly array $type,
         public readonly ?BigRational $kilograms,
         public readonly ?BigRational $cubicCentimetres,
         public readonly array $attributes,
+        public readonly string $label,
     ) {
     }
 }

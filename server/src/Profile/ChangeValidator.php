@@ -103,7 +103,7 @@ final class ChangeValidator
         }
         $found = OverridePaths::find($normalized, $change['path']);
         if ($found === null) {
-            $schema->add(Problem::atPath("$index.path", 'unknown-override', ['path' => $change['path']]));
+            $schema->add(OverridePaths::unknown($normalized, $change['path'], "$index.path"));
 
             return null;
         }

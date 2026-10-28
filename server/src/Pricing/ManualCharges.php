@@ -116,15 +116,17 @@ final class ManualCharges
         if ($charge->quantity !== null) {
             throw $this->order->fail('manual-charge-takes-no-quantity', ['charge' => $name]);
         }
-        if (
-            $charge->amount === null
-            || $charge->amount < $entered['minimum']
-            || $charge->amount > $entered['maximum']
-        ) {
+        if ($charge->amount === null) {
+            throw $this->order->fail('manual-charge-amount-required', ['charge' => $name]);
+        }
+        $minimum = is_int($entered['minimum']) ? $entered['minimum'] : 0;
+        $maximum = is_int($entered['maximum']) ? $entered['maximum'] : 0;
+        if ($charge->amount < $minimum || $charge->amount > $maximum) {
             $outOfRange = $this->order->fail('manual-charge-amount-out-of-range', [
-                'charge'  => $name,
-                'minimum' => R::text($entered['minimum']),
-                'maximum' => R::text($entered['maximum']),
+                'charge'   => $name,
+                'minimum'  => Exact::money($minimum),
+                'maximum'  => Exact::money($maximum),
+                'currency' => R::text($this->order->profile['currency']),
             ]);
             throw $outOfRange;
         }

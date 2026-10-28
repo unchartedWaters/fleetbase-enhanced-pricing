@@ -147,7 +147,7 @@ test('a version accepted with stale entries records them', function () {
     Stores::for()->addVersion($profile, Stores::withoutFee('extra_handling'), acceptStale: true);
 
     expect($customer->refresh()->checked_version)->toBe(2)
-        ->and($customer->problems[0]['key'] ?? null)->toBe('enhanced-pricing.profile.unknown-override')
+        ->and($customer->problems[0]['key'] ?? null)->toBe('enhanced-pricing.profile.unknown-reference')
         ->and($change->refresh()->checked_version)->toBe(2)
         ->and($change->problems)->not->toBeNull()
         ->and($change->live)->toBe(1)

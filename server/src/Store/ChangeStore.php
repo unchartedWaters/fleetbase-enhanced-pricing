@@ -28,9 +28,10 @@ final class ChangeStore
         mixed $value,
         string $effectiveFrom,
         ?string $userUuid,
+        bool $acceptLargeChange = false,
     ): DatedChange {
         $this->context->own($profile);
-        $add = function () use ($profile, $path, $value, $effectiveFrom, $userUuid): DatedChange {
+        $add = function () use ($profile, $path, $value, $effectiveFrom, $userUuid, $acceptLargeChange): DatedChange {
             $current = $this->context->current($this->context->lock($profile));
             $today   = $this->context->today($current['normalized']);
             $live    = $this->stored($profile, $path, $effectiveFrom);
@@ -43,6 +44,10 @@ final class ChangeStore
 
             $this->check($profile, $current['definition'], $live, $path, $value, $effectiveFrom);
             $this->checkDate($effectiveFrom, $today);
+            if ($acceptLargeChange === false) {
+                $before = $this->before($profile, $path, $effectiveFrom);
+                SlipCheck::run($current['normalized'], [$path => $value], $before);
+            }
             if ($live !== null) {
                 $this->markCancelled($live, $userUuid);
             }
@@ -61,6 +66,24 @@ final class ChangeStore
         };
 
         return $this->context->transaction($add);
+    }
+
+    /**
+     * The value of the live change in effect before a date, if any, as path => value.
+     *
+     * @return array<string, mixed>
+     */
+    private function before(Profile $profile, string $path, string $effectiveFrom): array
+    {
+        $query = DatedChange::ofCompany($this->context->company)
+            ->where('profile_uuid', $profile->uuid)
+            ->where('path', $path)
+            ->where('live', 1)
+            ->where('effective_from', '<', $effectiveFrom);
+        $query->getQuery()->orderBy('effective_from', 'desc');
+        $change = DatedChange::firstOf($query);
+
+        return $change === null ? [] : [$path => $change->value];
     }
 
     /**

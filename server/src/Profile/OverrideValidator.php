@@ -35,7 +35,7 @@ final class OverrideValidator
             $path  = (string) $path;
             $found = OverridePaths::find($normalized, $path);
             if ($found === null) {
-                $schema->add(Problem::atPath($path, 'unknown-override', ['path' => $path]));
+                $schema->add(OverridePaths::unknown($normalized, $path, $path));
                 continue;
             }
             $before = count($schema->problems());

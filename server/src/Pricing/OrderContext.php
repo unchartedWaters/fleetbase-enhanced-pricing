@@ -43,7 +43,7 @@ final class OrderContext
         public readonly array $labels,
         public readonly ?array $row,
     ) {
-        $this->book = new LineBook();
+        $this->book = new LineBook(R::text($profile['currency']));
         foreach (R::items($profile['attributes']) as $attribute) {
             $this->attributeDefinitions[R::text($attribute['key'])] = $attribute;
         }
@@ -113,17 +113,17 @@ final class OrderContext
             $types[R::text($type['key'])] = $type;
         }
         foreach ($entities as $index => $input) {
-            $number = $index + 1;
+            $label  = trim($input->label ?? '') === '' ? (string) ($index + 1) : (string) $input->label;
             $key    = $input->type ?? R::text($this->profile['default_entity_type']);
             if (isset($types[$key]) === false) {
-                throw $this->fail('unknown-entity-type', ['entity' => $number, 'type' => $key]);
+                throw $this->fail('unknown-entity-type', ['entity' => $label, 'type' => $key]);
             }
             $this->entities[] = new PricedEntity(
-                $number,
                 $types[$key],
-                $this->kilograms($input, $number),
-                $this->volume($input, $number),
-                $this->readAttributes($input->attributes, 'entity', $number),
+                $this->kilograms($input, $label),
+                $this->volume($input, $label),
+                $this->readAttributes($input->attributes, 'entity', $label),
+                $label,
             );
         }
     }
@@ -133,7 +133,7 @@ final class OrderContext
      *
      * @return array<string, mixed>
      */
-    private function readAttributes(array $values, string $scope, int $entity): array
+    private function readAttributes(array $values, string $scope, int|string $entity): array
     {
         $read = [];
         foreach ($values as $key => $value) {
@@ -159,7 +159,7 @@ final class OrderContext
     /**
      * @param array<string, mixed> $definition
      */
-    private function attributeValue(array $definition, mixed $value, int $entity): bool|string|BigRational
+    private function attributeValue(array $definition, mixed $value, int|string $entity): bool|string|BigRational
     {
         $invalid = $this->fail('attribute-invalid', ['attribute' => R::text($definition['name']), 'entity' => $entity]);
         switch ($definition['type']) {
@@ -195,20 +195,20 @@ final class OrderContext
             || in_array($this->serviceRate['key'], R::strings($definition['required_for']), true);
     }
 
-    private function kilograms(EntityInput $input, int $number): ?BigRational
+    private function kilograms(EntityInput $input, string $label): ?BigRational
     {
         if ($input->weight === null) {
             return null;
         }
-        $weight = $this->measure($input->weight, $number);
+        $weight = $this->measure($input->weight, $label);
         if ($input->weightUnit === null || isset(Units::WEIGHT[$input->weightUnit]) === false) {
-            throw $this->fail('entity-invalid', ['entity' => $number]);
+            throw $this->fail('entity-invalid', ['entity' => $label]);
         }
 
         return Units::toKilograms($weight, $input->weightUnit);
     }
 
-    private function volume(EntityInput $input, int $number): ?BigRational
+    private function volume(EntityInput $input, string $label): ?BigRational
     {
         $sides = [$input->length, $input->width, $input->height];
         if (count(array_filter($sides, static fn (mixed $side): bool => $side !== null)) === 0) {
@@ -219,19 +219,19 @@ final class OrderContext
             || $input->dimensionsUnit === null
             || isset(Units::LENGTH[$input->dimensionsUnit]) === false
         ) {
-            throw $this->fail('entity-invalid', ['entity' => $number]);
+            throw $this->fail('entity-invalid', ['entity' => $label]);
         }
         $volume = BigRational::one();
         foreach ($sides as $side) {
             $volume = $volume->multipliedBy(
-                Units::toCentimetres($this->measure($side, $number), $input->dimensionsUnit),
+                Units::toCentimetres($this->measure($side, $label), $input->dimensionsUnit),
             );
         }
 
         return $volume;
     }
 
-    private function measure(int|float|string|null $value, int $number): BigRational
+    private function measure(int|float|string|null $value, string $label): BigRational
     {
         $canonical = Exact::canonical($value);
         if (
@@ -239,7 +239,7 @@ final class OrderContext
             || str_starts_with($canonical, '-')
             || Exact::rational($canonical)->isGreaterThan(self::MAX_MEASURE)
         ) {
-            throw $this->fail('entity-invalid', ['entity' => $number]);
+            throw $this->fail('entity-invalid', ['entity' => $label]);
         }
 
         return Exact::rational($canonical);

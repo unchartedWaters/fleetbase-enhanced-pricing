@@ -101,7 +101,7 @@ test('a pricing message fills every placeholder', function (array $price, string
     ],
     'an entered amount out of range'         => [
         [fn () => Orders::price(['manual' => [ManualChargeInput::new('entered', amount: 1)]])],
-        'The amount for Entered charge must be from 800 to 15000 cents.',
+        'The amount for Entered charge must be from 8.00 to 150.00 USD.',
     ],
     'a quantity on a charge that has none'   => [
         [fn () => Orders::price([
@@ -145,7 +145,7 @@ test('a pricing message fills every placeholder', function (array $price, string
     ],
     'a service rate the customer may not use' => [
         [fn () => Orders::price(['overrides' => ['allowed_service_rates' => ['distance']]])],
-        "Tiered delivery isn't allowed for Example customer.",
+        "Example customer can't use Tiered delivery.",
     ],
     'an unknown entity type'                 => [
         [fn () => Orders::price(['entities' => [Orders::entity(5, 'nope')]])],
