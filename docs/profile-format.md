@@ -673,10 +673,10 @@ value of it that can be overridden, its value must have the right type, and
 the profile with every override applied must still pass every check in this
 document.
 
-Money is in cents and percentages in basis points, so `31` meant as 31% is
-0.31%. When an override or a dated change is saved, a money or percent value
+Money is in minor units and percentages in basis points, so `31` meant as
+31% is 0.31%. When an override or a dated change is saved, a money or percent value
 (an `amount`, `percentage`, `minimum`, `maximum`, `rate` or `base_fee`, or
-the cents of a `{ "value": cents }` or an entered charge's limits) ten or more
+the amount of a `{ "value": amount }` or an entered charge's limits) ten or more
 times above or below the value it replaces is refused as a likely unit slip,
 with the key `enhanced-pricing.store.large-change`, until it is sent again
 marked as intended. An override replaces the customer's own earlier override
@@ -766,6 +766,6 @@ Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
 rules, charges and service rates by their names, columns by their `name` (with
 the key as `column_key`), entities by the label the caller gives or else their
 position, and the customer, card and row by the labels the caller gives. Money
-is given as an amount such as `150.00` with a `currency` parameter, not in
-cents. A path in a pricing error uses rule keys, as overrides do (for example
+is given as an amount in the currency's own decimals, such as `150.00` in USD
+or `15000` in JPY, with a `currency` parameter, not in minor units. A path in a pricing error uses rule keys, as overrides do (for example
 `fees.heavy.minimum`).

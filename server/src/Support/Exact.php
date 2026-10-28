@@ -71,15 +71,6 @@ final class Exact
         return (string) $value->toScale(3, RoundingMode::HALF_UP)->stripTrailingZeros();
     }
 
-    /**
-     * An amount in cents as a decimal for messages and line names, such as "1234.50". It has no
-     * currency symbol or digit grouping, so the reader's locale can format it.
-     */
-    public static function money(int $cents): string
-    {
-        return (string) BigDecimal::ofUnscaledValue($cents, 2);
-    }
-
     public static function isWhole(BigRational $value): bool
     {
         return $value->simplified()->getDenominator()->isEqualTo(1);

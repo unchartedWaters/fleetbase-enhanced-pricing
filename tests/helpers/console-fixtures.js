@@ -1527,7 +1527,7 @@ export default {
                 },
                 {
                     "product": "PERCENT",
-                    "name": "Percentage subtotal fee",
+                    "name": "Percentage subtotal fee (9% of 106.00)",
                     "quantity": 1,
                     "unit_amount": 954,
                     "amount": 954,
@@ -1645,9 +1645,10 @@ export default {
                     "problems": [
                         {
                             "path": "fees.heavy.minimum",
-                            "key": "enhanced-pricing.profile.unknown-override",
+                            "key": "enhanced-pricing.profile.unknown-reference",
                             "params": {
-                                "path": "fees.heavy.minimum"
+                                "kind": "fee",
+                                "key": "heavy"
                             }
                         }
                     ]

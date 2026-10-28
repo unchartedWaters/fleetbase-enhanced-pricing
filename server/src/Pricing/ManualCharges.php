@@ -4,6 +4,7 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Support\Exact;
+use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * Manual charges on the order, after the service fee. A new charge is priced from the profile and
@@ -122,11 +123,12 @@ final class ManualCharges
         $minimum = is_int($entered['minimum']) ? $entered['minimum'] : 0;
         $maximum = is_int($entered['maximum']) ? $entered['maximum'] : 0;
         if ($charge->amount < $minimum || $charge->amount > $maximum) {
+            $currency   = R::text($this->order->profile['currency']);
             $outOfRange = $this->order->fail('manual-charge-amount-out-of-range', [
                 'charge'   => $name,
-                'minimum'  => Exact::money($minimum),
-                'maximum'  => Exact::money($maximum),
-                'currency' => R::text($this->order->profile['currency']),
+                'minimum'  => MinorUnits::decimal($minimum, $currency),
+                'maximum'  => MinorUnits::decimal($maximum, $currency),
+                'currency' => $currency,
             ]);
             throw $outOfRange;
         }

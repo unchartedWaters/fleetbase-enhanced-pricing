@@ -98,7 +98,7 @@ enhanced-pricing:
     duplicate-row: This row's key is sent more than once.
     fixed-unit-changed: "A profile's {field} can't change; it is {value}."
     immutable: This record can't be changed once saved.
-    large-change: "{path} goes from {from} to {to}, a change of ten times or more. Money is in cents and percentages in basis points. Save it anyway if that's right."
+    large-change: "{path} goes from {from} to {to}, a change of ten times or more. Money is in the currency's minor unit, such as cents, and percentages in basis points. Save it anyway if that's right."
     meta-too-large: "Metadata can be at most {max} bytes."
     not-a-customer: This contact isn't one of the company's customers.
     not-found: The record wasn't found.
@@ -347,7 +347,7 @@ enhanced-pricing:
     key: a key (lowercase letters, digits, _ and -)
     list: a list
     map: an object of named entries
-    money: a whole number of cents
+    money: a whole number in the currency's minor unit, such as cents
     number: a number
     object: an object with named fields
     percent: a whole number of basis points (100 is 1%)

@@ -84,7 +84,7 @@ test('profile problems fill every placeholder, with types and kinds in plain wor
     'money as text'                => [
         'service_rates.1.per_meter.rate',
         'x',
-        'The value must be a whole number of cents.',
+        'The value must be a whole number in the currency\'s minor unit, such as cents.',
     ],
     'a divisor of zero'            => ['fees.1.divisor', 0, 'The value must be more than 0.'],
     'a number above its maximum'   => [
@@ -92,7 +92,11 @@ test('profile problems fill every placeholder, with types and kinds in plain wor
         20001,
         'The value must be at most 20000.',
     ],
-    'money as a decimal'          => ['fees.0.amount', 27.5, 'The value must be a whole number of cents.'],
+    'money as a decimal'          => [
+        'fees.0.amount',
+        27.5,
+        'The value must be a whole number in the currency\'s minor unit, such as cents.',
+    ],
     'a value left empty'          => ['service_rates.0.line_name', null, 'A value is required here.'],
     'an unknown service rate'     => [
         'attributes.0.required_for',
