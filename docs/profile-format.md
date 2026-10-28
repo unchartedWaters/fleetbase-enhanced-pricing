@@ -35,7 +35,7 @@ as one of the profile's products.
 
 | Kind of value | Written as | Example |
 | --- | --- | --- |
-| Money | integer cents | `2700` is $27.00 |
+| Money | integer minor units of the profile's currency | `2700` is $27.00, ¥2,700 or 2.700 KWD |
 | Percent | integer basis points | `1250` is 12.5% |
 | Number | JSON number or decimal string | `0.25`, `"0.25"` |
 | Integer | JSON integer | `5` |
@@ -45,6 +45,17 @@ as one of the profile's products.
 | Product code | letters, digits, `_`, `-` and `.` | `"PARCEL"` |
 
 - Money and percents are never negative.
+- A currency's minor unit is its ISO 4217 one: cents for USD and CAD, whole
+  yen for JPY (no decimals), and thousandths for KWD, BHD and the other
+  three-decimal currencies. Fleetbase's server (moneyphp) reads amounts the
+  same way. Fleetbase's own `format-currency` console helper doesn't for some
+  codes: it divides BHD, IQD, JOD, KWD, LYD, OMR and TND by 100, not 1,000;
+  shows CDF, HUF, LAK, LBP, MNT and MUR undivided, not divided by 100; and
+  divides DJF, KMF, PYG, RWF, UGX and XOF by 100 although they have no
+  decimals. Check how Fleetbase shows those before billing in them.
+- The money limits below are in minor units, so they are much lower in some
+  currencies: 100,000,000 is $1,000,000 or ¥100,000,000, but only about
+  Rp 1,000,000 in IDR or ₫100,000,000 in VND.
 - A number has up to 7 digits before the point and 6 after it, with no
   exponent: `1e3` is refused.
 - Keys and product codes are 1 to 64 characters and start with a letter or
@@ -58,7 +69,7 @@ as one of the profile's products.
 
 Arithmetic is exact. Unit conversions, distances, percentages and fractional
 quantities are worked out as exact fractions, and compared exactly with
-thresholds. Each line's amount is then rounded half up to the cent. Units in a
+thresholds. Each line's amount is then rounded half up to the minor unit. Units in a
 line name are shown with up to 3 decimals, for example `Parcel fee (1.751 kg)`.
 
 ## Top level
@@ -258,7 +269,7 @@ per entity:
   price entities 1 to 2, 3 to 5, and 6 onward. Each `up_to` must be at least
   1 and more than the one before. Only the last tier may be `null`. Limits from
   columns are checked when the order is priced.
-- `price`: `{ "value": cents }` or a money column.
+- `price`: `{ "value": amount }` or a money column.
 
 Entities whose type has no `own_price` are counted. When the last tier has a
 limit and the order has more entities, pricing stops. A tiered service rate
@@ -316,7 +327,7 @@ distance, for example `Distance (10 km)`.
 { "method": "fixed_rate", "fixed_rate": { "amount": { "value": 4500 } } }
 ```
 
-`amount` is `{ "value": cents }` or a money column. The line has quantity 1.
+`amount` is `{ "value": amount }` or a money column. The line has quantity 1.
 
 ### Minimum
 
@@ -635,7 +646,7 @@ as a whole. `null` is allowed wherever the profile allows it.
 | `service_rates.K.per_meter.base_fee` | money |
 | `service_rates.K.per_meter.minimum_distance` | number |
 | `service_rates.K.per_meter.rounding` | `up`, `nearest` or `none` |
-| `service_rates.K.fixed_rate.amount` | `{ "value": cents }` or a column |
+| `service_rates.K.fixed_rate.amount` | `{ "value": amount }` or a column |
 | `fees.K.F` | any field in the fee lists below |
 | `subtotal_fees.K.F` | any field in the subtotal fee list below |
 | `manual_charges.K.F` | `amount`, `entered`, `quantity`, `offered` |
@@ -662,10 +673,10 @@ value of it that can be overridden, its value must have the right type, and
 the profile with every override applied must still pass every check in this
 document.
 
-Money is in cents and percentages in basis points, so `31` meant as 31% is
-0.31%. When an override or a dated change is saved, a money or percent value
+Money is in minor units and percentages in basis points, so `31` meant as
+31% is 0.31%. When an override or a dated change is saved, a money or percent value
 (an `amount`, `percentage`, `minimum`, `maximum`, `rate` or `base_fee`, or
-the cents of a `{ "value": cents }` or an entered charge's limits) ten or more
+the amount of a `{ "value": amount }` or an entered charge's limits) ten or more
 times above or below the value it replaces is refused as a likely unit slip,
 with the key `enhanced-pricing.store.large-change`, until it is sent again
 marked as intended. An override replaces the customer's own earlier override
@@ -735,9 +746,9 @@ tables; the engine already applies them.
 | A per-meter rate's maximum distance | 20,000 in the distance unit |
 | Text | 255 characters |
 | Profile | 64 KB as saved, in UTF-8 JSON |
-| Money in the profile | up to 100,000,000 cents |
+| Money in the profile | up to 100,000,000 minor units |
 | Percent | up to 100,000 basis points (1,000%) |
-| A line or an order total | up to 100,000,000 cents |
+| A line or an order total | up to 100,000,000 minor units |
 | Lines in one quote | 10,000 |
 | A line name | 191 characters |
 
@@ -755,6 +766,6 @@ Pricing errors and notes use keys under `enhanced-pricing.pricing`. They name
 rules, charges and service rates by their names, columns by their `name` (with
 the key as `column_key`), entities by the label the caller gives or else their
 position, and the customer, card and row by the labels the caller gives. Money
-is given as an amount such as `150.00` with a `currency` parameter, not in
-cents. A path in a pricing error uses rule keys, as overrides do (for example
+is given as an amount in the currency's own decimals, such as `150.00` in USD
+or `15000` in JPY, with a `currency` parameter, not in minor units. A path in a pricing error uses rule keys, as overrides do (for example
 `fees.heavy.minimum`).

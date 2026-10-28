@@ -2,7 +2,7 @@
 
 namespace Fleetbase\EnhancedPricing\Pricing;
 
-use Fleetbase\EnhancedPricing\Support\Exact;
+use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * The lines made so far. Lines with the same product, name and unit amount are kept as one line
@@ -45,8 +45,8 @@ final class LineBook
             }
             $amount = $draft['quantity'] * $draft['unit'];
             if ($amount > self::MAX_AMOUNT || $this->total + $amount > self::MAX_AMOUNT) {
-                $params = ['max' => Exact::money(self::MAX_AMOUNT), 'currency' => $this->currency];
-                throw PricingFailed::because('amount-too-large', $params);
+                $max = MinorUnits::decimal(self::MAX_AMOUNT, $this->currency);
+                throw PricingFailed::because('amount-too-large', ['max' => $max, 'currency' => $this->currency]);
             }
             $this->total += $amount;
             $this->merge($draft, $amount);

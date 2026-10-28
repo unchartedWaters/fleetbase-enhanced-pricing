@@ -98,7 +98,7 @@ enhanced-pricing:
     duplicate-row: This row's key is sent more than once.
     fixed-unit-changed: "A profile's {field} can't change; it is {value}."
     immutable: This record can't be changed once saved.
-    large-change: "{path} goes from {from} to {to}, a change of ten times or more. Money is in cents and percentages in basis points. Save it anyway if that's right."
+    large-change: "{path} goes from {from} to {to}, a change of ten times or more. Money is in the currency's minor unit, such as cents, and percentages in basis points. Save it anyway if that's right."
     meta-too-large: "Metadata can be at most {max} bytes."
     not-a-customer: This contact isn't one of the company's customers.
     not-found: The record wasn't found.
@@ -238,11 +238,11 @@ enhanced-pricing:
       not-in-profile: "(not in this profile)"
       nothing-to-choose: "Nothing to choose from yet."
       dates-help: "One date per line, written YYYY-MM-DD."
-      money-invalid: "Type an amount such as 45 or 45.50, with no sign or symbol."
+      money-invalid: "{places, plural, =0 {Type a whole amount such as 45, with no decimals, sign or symbol.} =2 {Type an amount such as 45 or 45.50, with no sign or symbol.} other {Type an amount such as 45 or 45.5, with up to # decimals and no sign or symbol.}}"
       percent-invalid: "Type a percent such as 12 or 12.5, with no % sign."
       integer-invalid: "Type a whole number."
       distance-invalid: "Type a distance such as 12 or 12.5."
-      stored-cents: "Saved as {value} cents"
+      stored-minor-units: "{places, plural, =0 {Saved as {value} in {currency}, which has no minor unit} =2 {Saved as {value} cents} =3 {Saved as {value} thousandths of a {currency}} other {Saved as {value} ten-thousandths of a {currency}}}"
       stored-basis-points: "Saved as {value} basis points"
     customers:
       title: "Customers"
@@ -276,7 +276,7 @@ enhanced-pricing:
       new-amount: "New amount"
       effective-from: "From"
       schedule: "Schedule change"
-      large-change: "This is a large change from today's value. Check the unit: percents are typed in percent and amounts in {currency}, not cents."
+      large-change: "This is a large change from today's value. Check the unit: percents are typed in percent and amounts in {currency}, not in its smallest unit such as cents."
       confirm-large-change: "Yes, schedule it"
       all-changes: "Every dated change"
       no-changes: "No dated changes."
@@ -347,7 +347,7 @@ enhanced-pricing:
     key: a key (lowercase letters, digits, _ and -)
     list: a list
     map: an object of named entries
-    money: a whole number of cents
+    money: a whole number in the currency's minor unit, such as cents
     number: a number
     object: an object with named fields
     percent: a whole number of basis points (100 is 1%)

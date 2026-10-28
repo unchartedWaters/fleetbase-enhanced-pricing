@@ -1,36 +1,82 @@
-// Profiles store money as integer cents and percents as integer basis points (docs/profile-format.md,
-// Conventions). Staff type dollars and percents. Every conversion here is string arithmetic, so a
+// Profiles store money as an integer count of the currency's minor unit (cents for USD, whole yen
+// for JPY, fils for KWD) and percents as integer basis points (docs/profile-format.md,
+// Conventions). Staff type amounts and percents. Every conversion here is string arithmetic, so a
 // value is never rounded by floating point: 0.29 is 29 cents, not 28.999….
 
-const DECIMAL = /^(\d*)(?:\.(\d{1,2}))?$/;
+// ISO 4217 minor units that aren't 2, as moneyphp (which Fleetbase's server formats money with)
+// uses them. Intl's own defaults come from CLDR and differ for some codes (it shows IQD and
+// RSD with no decimals), so they aren't used to read or write a stored amount.
+const MINOR_UNITS = {
+    BIF: 0,
+    CLP: 0,
+    DJF: 0,
+    GNF: 0,
+    ISK: 0,
+    JPY: 0,
+    KMF: 0,
+    KRW: 0,
+    PYG: 0,
+    RWF: 0,
+    UGX: 0,
+    UYI: 0,
+    VND: 0,
+    VUV: 0,
+    XAF: 0,
+    XOF: 0,
+    XPF: 0,
+    BHD: 3,
+    IQD: 3,
+    JOD: 3,
+    KWD: 3,
+    LYD: 3,
+    OMR: 3,
+    TND: 3,
+    CLF: 4,
+    UYW: 4,
+};
 
-function digitsToInteger(whole, fraction) {
-    const cents = `${whole || '0'}${(fraction ?? '').padEnd(2, '0')}`.replace(/^0+(?=\d)/, '');
+// The number of decimals in a currency's minor unit: 0 for JPY, 2 for USD, 3 for KWD. An unknown
+// or missing code has 2.
+export function minorUnits(currency) {
+    const code = String(currency ?? '').toUpperCase();
 
-    return Number(cents);
+    return Object.prototype.hasOwnProperty.call(MINOR_UNITS, code) ? MINOR_UNITS[code] : 2;
 }
 
-function parseHundredths(input, error) {
+function decimalPattern(places) {
+    return places === 0 ? /^(\d+)()$/ : new RegExp(`^(\\d*)(?:\\.(\\d{1,${places}}))?$`);
+}
+
+function digitsToInteger(whole, fraction, places) {
+    const digits = `${whole || '0'}${(fraction ?? '').padEnd(places, '0')}`.replace(/^0+(?=\d)/, '');
+
+    return Number(digits);
+}
+
+function parseScaled(input, places, error) {
     const text = String(input ?? '').trim();
     if (text === '') {
         return { value: null };
     }
-    const match = DECIMAL.exec(text);
+    const match = decimalPattern(places).exec(text);
     if (match === null || (match[1] === '' && match[2] === undefined)) {
         return { error };
     }
-    const value = digitsToInteger(match[1], match[2]);
+    const value = digitsToInteger(match[1], match[2], places);
 
     return Number.isSafeInteger(value) ? { value } : { error };
 }
 
-function hundredthsToText(value, keepPlaces) {
+function scaledToText(value, places, keepPlaces) {
     if (value === null || value === undefined || value === '') {
         return '';
     }
-    const digits = String(Math.trunc(Number(value))).padStart(3, '0');
-    const whole = digits.slice(0, -2).replace(/^0+(?=\d)/, '');
-    const fraction = digits.slice(-2);
+    const digits = String(Math.trunc(Number(value))).padStart(places + 1, '0');
+    if (places === 0) {
+        return digits;
+    }
+    const whole = digits.slice(0, -places).replace(/^0+(?=\d)/, '');
+    const fraction = digits.slice(-places);
     if (keepPlaces) {
         return `${whole}.${fraction}`;
     }
@@ -39,29 +85,30 @@ function hundredthsToText(value, keepPlaces) {
     return trimmed === '' ? whole : `${whole}.${trimmed}`;
 }
 
-export function centsToDecimal(cents) {
-    return hundredthsToText(cents, true);
+export function minorToDecimal(amount, currency) {
+    return scaledToText(amount, minorUnits(currency), true);
 }
 
-export function decimalToCents(input) {
-    return parseHundredths(input, 'enhanced-pricing.console.input.money-invalid');
+export function decimalToMinor(input, currency) {
+    return parseScaled(input, minorUnits(currency), 'enhanced-pricing.console.input.money-invalid');
 }
 
 export function basisPointsToPercent(points) {
-    return hundredthsToText(points, false);
+    return scaledToText(points, 2, false);
 }
 
 export function percentToBasisPoints(input) {
-    return parseHundredths(input, 'enhanced-pricing.console.input.percent-invalid');
+    return parseScaled(input, 2, 'enhanced-pricing.console.input.percent-invalid');
 }
 
-export function formatMoney(cents, currency) {
-    if (cents === null || cents === undefined || cents === '') {
+export function formatMoney(amount, currency) {
+    if (amount === null || amount === undefined || amount === '') {
         return '';
     }
-    const decimal = centsToDecimal(cents);
+    const places = minorUnits(currency);
+    const decimal = scaledToText(amount, places, true);
     try {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2 }).format(decimal);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: places, maximumFractionDigits: places }).format(decimal);
     } catch {
         return `${decimal} ${currency ?? ''}`.trim();
     }
@@ -74,7 +121,7 @@ export function formatPercent(points) {
 }
 
 // What an override or dated change path holds, by its last field: subtotal_fees.K.percentage is
-// basis points; an amount, minimum, maximum, rate or base fee is cents. Anything else (a list,
+// basis points; an amount, minimum, maximum, rate or base fee is money in minor units. Anything else (a list,
 // an object, a number or a flag) is shown as it is stored.
 const MONEY_FIELDS = new Set(['amount', 'minimum', 'maximum', 'rate', 'base_fee', 'price']);
 
@@ -90,7 +137,7 @@ export function valueKind(path) {
 }
 
 // An override's value in its unit. A list or object, such as a parcel fee's thresholds or a
-// tier's price ({value: cents}), shows each amount in its unit too, so no cents are shown bare.
+// tier's price ({value: amount}), shows each amount in its unit too, so no amount is shown bare.
 export function formatValue(path, value, currency) {
     if (value === null || value === undefined) {
         return '';

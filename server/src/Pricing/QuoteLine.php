@@ -3,7 +3,7 @@
 namespace Fleetbase\EnhancedPricing\Pricing;
 
 /**
- * One invoice line: its product code, name, quantity and unit amount in cents. The amount is
+ * One invoice line: its product code, name, quantity and unit amount in minor units. The amount is
  * always quantity × unit amount. Sources name the rules that made it, such as "fee:heavy".
  */
 final class QuoteLine

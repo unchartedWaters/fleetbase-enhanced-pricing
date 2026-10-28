@@ -5,10 +5,10 @@ namespace Fleetbase\EnhancedPricing\Store;
 use Fleetbase\EnhancedPricing\Profile\OverridePaths;
 
 /**
- * Catches unit slips in overrides and dated changes: money is in cents and percentages in basis
- * points, so 31 meant as 31% is 0.31%. A new money or percent value ten or more times above or
+ * Catches unit slips in overrides and dated changes: money is in minor units and percentages in
+ * basis points, so 31 meant as 31% is 0.31%. A new money or percent value ten or more times above or
  * below the value it replaces is refused until the caller accepts it. Money inside a value, such
- * as a fixed rate's { "value": cents } or an entered charge's limits, is compared field by field.
+ * as a fixed rate's { "value": amount } or an entered charge's limits, is compared field by field.
  * A value of 0 or null, a list (tiers, thresholds), and a value already stored are not checked.
  */
 final class SlipCheck
@@ -46,7 +46,7 @@ final class SlipCheck
 
     /**
      * The money or percent values that moved ten times or more, as [from, to] pairs: the value
-     * itself, or the fields of a map such as { "value": cents } or { "minimum", "maximum" }.
+     * itself, or the fields of a map such as { "value": amount } or { "minimum", "maximum" }.
      *
      * @return list<array{int, int}>
      */

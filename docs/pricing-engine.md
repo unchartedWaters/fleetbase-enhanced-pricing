@@ -122,8 +122,8 @@ also one tenth, and a float that needs more than 6 decimals, such as
 A `ManualChargeInput` comes in two shapes:
 
 - `ManualChargeInput::new($key, quantity: ..., amount: ...)` is a charge being
-  added: a `quantity` for a charge with quantity limits, an `amount` in cents
-  for an entered charge. It is priced and checked against the profile's limits.
+  added: a `quantity` for a charge with quantity limits, an `amount` in minor
+  units for an entered charge. It is priced and checked against the profile's limits.
 - `ManualChargeInput::added($key, $product, $name, $amount)` is a charge
   already on the order, with the product, line name and amount stored when it
   was added. It bills exactly those, so a later profile change does not
@@ -163,7 +163,7 @@ value by rule key, for example `fees.heavy.minimum`.
 them, `notes`, and `meta`. `total()` is the sum of the line amounts.
 
 Each `QuoteLine` has a `product` code, a `name`, a `quantity`, a
-`unitAmount` in cents, and `sources`: the rules that made it, such as
+`unitAmount` in minor units, and `sources`: the rules that made it, such as
 `fee:heavy`. Its `amount()` is always quantity × unit amount, so an invoice
 can show the line as it is.
 
@@ -207,7 +207,9 @@ code.
 
 ## Money
 
-Amounts are integer cents and percentages are integer basis points. The
-engine works in exact fractions and rounds each line half up to the cent,
-once, when the line is made. Lines are never rounded again, and the total is
-their sum, so the invoice adds up.
+Amounts are integers in the minor unit of the profile's currency (cents for
+USD, whole yen for JPY, thousandths for KWD; see the profile format's
+Conventions) and percentages are integer basis points. The engine never
+assumes two decimals: it works in exact fractions and rounds each line half
+up to one minor unit, once, when the line is made. Lines are never rounded
+again, and the total is their sum, so the invoice adds up.

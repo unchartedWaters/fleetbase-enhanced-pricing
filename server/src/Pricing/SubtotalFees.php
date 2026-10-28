@@ -4,6 +4,7 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Support\Exact;
+use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * Subtotal fees, last, in the profile's order: a percentage of the lines for their chosen
@@ -58,7 +59,7 @@ final class SubtotalFees
                 '%s (%s%% of %s)',
                 R::text($fee['name']),
                 Exact::display(Exact::rational($percentage)->dividedBy(100)),
-                Exact::money($base),
+                MinorUnits::decimal($base, R::text($this->order->profile['currency'])),
             );
 
             return [$this->support->draft($fee, 1, $amount, $name)];
