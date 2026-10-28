@@ -208,7 +208,7 @@ final class ServiceFee
     }
 
     /**
-     * An amount from { "value": cents } or a money column of the row.
+     * An amount from { "value": minor units } or a money column of the row.
      */
     private function amount(mixed $reference, string $rule): int
     {

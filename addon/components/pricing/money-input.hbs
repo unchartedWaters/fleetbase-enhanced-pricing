@@ -12,10 +12,10 @@
         />
     </div>
     {{#if this.error}}
-        <p class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-input-error>{{t this.error}}</p>
+        <p class="mt-1 text-xs text-red-600 dark:text-red-400" data-test-input-error>{{t this.error places=this.places}}</p>
     {{else if (not-eq this.stored null)}}
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" data-test-stored>
-            {{t (if this.isPercent "enhanced-pricing.console.input.stored-basis-points" "enhanced-pricing.console.input.stored-cents") value=this.stored}}
+            {{t (if this.isPercent "enhanced-pricing.console.input.stored-basis-points" "enhanced-pricing.console.input.stored-minor-units") value=this.stored places=this.places currency=@currency}}
         </p>
     {{/if}}
 </div>

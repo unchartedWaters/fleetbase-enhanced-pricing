@@ -8,7 +8,7 @@ use Brick\Math\RoundingMode;
 
 /**
  * Exact numbers. Profile numbers, measurements and quantities are parsed strictly, worked out as
- * fractions, and only a line's amount is rounded, half up to the cent.
+ * fractions, and only a line's amount is rounded, half up to the minor unit.
  */
 final class Exact
 {
@@ -51,7 +51,7 @@ final class Exact
     }
 
     /**
-     * Rounds half up to an integer, for a line amount in cents or a whole unit.
+     * Rounds half up to an integer, for a line amount in minor units or a whole unit.
      */
     public static function round(BigRational $value): int
     {
