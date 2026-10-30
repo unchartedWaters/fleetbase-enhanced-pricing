@@ -55,10 +55,7 @@ final class Schema
             if (($spec['nullable'] ?? false) === true) {
                 return null;
             }
-            $type = self::string($spec['type'] ?? '');
-            $this->add($type === 'raw'
-                ? Problem::atPath($path, 'value-required')
-                : Problem::atPath($path, 'wrong-type', ['expected' => $type]));
+            $this->add(Problem::atPath($path, 'value-required'));
 
             return null;
         }

@@ -4,8 +4,8 @@ import { action } from '@ember/object';
 import { formatMoney, formatPercent } from '../../utils/money';
 
 // One subtotal fee: its value today and upcoming changes, and a form to schedule a change to its
-// global percentage or amount. A change much larger or smaller than today's value (UX 14) is
-// refused until the person confirms it.
+// global percentage or amount. A change much larger or smaller than the value it replaces (UX 14)
+// is refused until the person confirms it.
 export default class PricingSubtotalFeeComponent extends Component {
     @tracked value = null;
     @tracked date = '';
@@ -30,6 +30,16 @@ export default class PricingSubtotalFeeComponent extends Component {
 
     get current() {
         return this.show(this.args.fee.current?.value);
+    }
+
+    // The server compares a new value with the one it replaces, which may be an upcoming change
+    // rather than today's value, and names it by path in stored units. Here it is said once, by
+    // the fee's name and in its own unit.
+    get largeChanges() {
+        return (this.large ?? []).map((problem) => ({
+            from: this.show(Number(problem.params?.from)),
+            to: this.show(Number(problem.params?.to)),
+        }));
     }
 
     get upcoming() {

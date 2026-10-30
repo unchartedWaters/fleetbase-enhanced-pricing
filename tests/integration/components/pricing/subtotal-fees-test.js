@@ -78,15 +78,23 @@ module('Integration | Component | pricing/subtotal-fees', (hooks) => {
                 ? Promise.resolve({})
                 : Promise.reject({
                       refused: 'large-change',
-                      problems: [{ path: 'value', key: 'enhanced-pricing.store.large-change', params: { path: 'subtotal_fees.percent.percentage', from: '11', to: '31' } }],
+                      problems: [{ path: 'value', key: 'enhanced-pricing.store.large-change', params: { path: 'subtotal_fees.percent.percentage', from: 1300, to: 31 } }],
                   });
         await render(hbs`<Pricing::SubtotalFees @schedule={{this.schedule}} @currency="USD" @onSchedule={{this.add}} />`);
 
-        await fillIn('[data-test-fee="percent"] [data-test-new-value] input', '31');
+        await fillIn('[data-test-fee="percent"] [data-test-new-value] input', '0.31');
         await fillIn('[data-test-fee="percent"] [data-test-new-date]', '2027-01-01');
         await click('[data-test-fee="percent"] [data-test-schedule]');
 
-        assert.dom('[data-test-fee="percent"] [data-test-large-change]').exists();
+        // The server compares with the value the change replaces (here the upcoming 13%), so the
+        // message says so, once, in the fee's own unit and name.
+        assert.dom('[data-test-fee="percent"] [data-test-large-change] [data-test-large-change-message]').exists({ count: 1 });
+        assert
+            .dom('[data-test-fee="percent"] [data-test-large-change]')
+            .includesText('Percentage subtotal fee would go from 13% to 0.31%, a change of ten times or more, compared with the value it replaces.');
+        assert.dom('[data-test-fee="percent"] [data-test-large-change]').doesNotIncludeText('basis points');
+        assert.dom('[data-test-fee="percent"] [data-test-large-change]').doesNotIncludeText('subtotal_fees.percent.percentage');
+        assert.dom('[data-test-fee="percent"] [data-test-large-change]').doesNotIncludeText("today's value");
         await click('[data-test-fee="percent"] [data-test-confirm-large-change]');
 
         assert.deepEqual(
@@ -130,5 +138,22 @@ module('Integration | Component | pricing/subtotal-fees', (hooks) => {
         assert.dom('[data-test-change="x"]').includesText('fees.heavy.minimum');
         assert.dom('[data-test-change="x"]').includesText('$1.00');
         assert.dom('[data-test-change="x"]').includesText('Stale');
+    });
+
+    test("a fee with no value today says it isn't set", async function (assert) {
+        this.schedule.subtotal_fees[1].current = { value: null, effective_from: null };
+        await render(hbs`<Pricing::SubtotalFees @schedule={{this.schedule}} @currency="USD" />`);
+
+        assert.dom('[data-test-fee="flat_a"] [data-test-current]').hasText('Not set');
+    });
+
+    test('the list of dated changes names each fee and its new value', async function (assert) {
+        await render(hbs`<Pricing::SubtotalFees @schedule={{this.schedule}} @currency="USD" />`);
+
+        assert.dom('[data-test-changes] thead').includesText('New value');
+        assert.dom('[data-test-changes] thead').doesNotIncludeText("Customer's value");
+        const uuid = this.schedule.changes[0].uuid;
+        assert.dom(`[data-test-change="${uuid}"] [data-test-change-name]`).hasText('Percentage subtotal fee');
+        assert.dom(`[data-test-change="${uuid}"]`).includesText('13%');
     });
 });

@@ -2,6 +2,7 @@
 
 use Fleetbase\EnhancedPricing\Admin\AdminRefused;
 use Fleetbase\EnhancedPricing\Admin\Preview;
+use Fleetbase\EnhancedPricing\Admin\PreviewInput;
 use Fleetbase\EnhancedPricing\Pricing\PricingEngine;
 use Fleetbase\EnhancedPricing\Tests\Support\Database;
 use Fleetbase\EnhancedPricing\Tests\Support\Orders;
@@ -174,10 +175,58 @@ test('a malformed preview request is refused', function (array $change) {
     expect(previewRefusal(fn () => adminPreview()->price(previewInput(['profile' => 'main'] + $change))))
         ->toMatchArray(['status' => 422, 'refused' => 'invalid']);
 })->with([
-    'no service rate'     => [['service_rate' => null]],
-    'a bad pickup time'   => [['pickup_at' => 'tomorrow-ish']],
-    'a bad timezone'      => [['timezone' => 'Mars/Base']],
-    'entities not a list' => [['entities' => 'many']],
-    'too many entities'   => [['entities' => array_fill(0, 1001, ['weight' => 1])]],
-    'a negative distance' => [['distance_meters' => -5]],
+    'no service rate'                  => [['service_rate' => null]],
+    'a bad pickup time'                => [['pickup_at' => 'tomorrow-ish']],
+    'a pickup day that doesn\'t exist' => [['pickup_at' => '2027-02-30T11:00']],
+    'hour 24'                          => [['pickup_at' => '2027-03-06T24:00']],
+    'a bad timezone'                   => [['timezone' => 'Mars/Base']],
+    'entities not a list'              => [['entities' => 'many']],
+    'too many entities'                => [['entities' => array_fill(0, 1001, ['weight' => 1])]],
+    'a negative distance'              => [['distance_meters' => -5]],
 ]);
+
+// The console sends the pickup as typed, on the order's own clock, because a browser's Intl may not
+// know timezones (the host console's FormatJS polyfill formats every zone as UTC). The server reads
+// it in the request's timezone, else the profile's scheduling timezone. Alberta's rules changed in
+// 2026, so Edmonton is used only before that change; clock changes use Los Angeles.
+test('a pickup without an offset is read on the timezone\'s clock', function (array $input, string $utc) {
+    $zone = (new PreviewInput($input))->timezone('America/Edmonton');
+
+    expect((new PreviewInput($input))->pickupAt($zone)->format('Y-m-d\\TH:i:s\\Z'))->toBe($utc);
+})->with([
+    'the request\'s timezone, daylight time' => [
+        ['pickup_at' => '2026-10-29T10:00', 'timezone' => 'America/Edmonton'], '2026-10-29T16:00:00Z',
+    ],
+    'the profile\'s timezone when none is sent' => [['pickup_at' => '2026-10-29T22:30'], '2026-10-30T04:30:00Z'],
+    'standard time, with seconds'               => [
+        ['pickup_at' => '2027-01-15T09:00:00', 'timezone' => 'America/Los_Angeles'], '2027-01-15T17:00:00Z',
+    ],
+    'east of UTC, the day before in UTC'    => [
+        ['pickup_at' => '2027-03-06T00:30', 'timezone' => 'Asia/Tokyo'], '2027-03-05T15:30:00Z',
+    ],
+    'a time the clock change skips, as the console read it before' => [
+        ['pickup_at' => '2027-03-14T02:30', 'timezone' => 'America/Los_Angeles'], '2027-03-14T09:30:00Z',
+    ],
+    'a time that happens twice is the first'      => [
+        ['pickup_at' => '2027-11-07T01:30', 'timezone' => 'America/Los_Angeles'], '2027-11-07T08:30:00Z',
+    ],
+    'an offset is kept as sent'             => [
+        ['pickup_at' => '2026-10-29T10:00:00Z', 'timezone' => 'America/Edmonton'], '2026-10-29T10:00:00Z',
+    ],
+]);
+
+test('a preview reads the pickup on the order\'s clock, as the engine does', function () {
+    Stores::profile('a');
+    $order  = [
+        'profile'         => 'main',
+        'service_rate'    => 'distance',
+        'distance_meters' => 5000,
+        'timezone'        => 'Asia/Tokyo',
+    ];
+    $local  = adminPreview()->price(previewInput(['pickup_at' => '2027-03-06T01:00'] + $order));
+    $offset = adminPreview()->price(previewInput(['pickup_at' => '2027-03-05T16:00:00Z'] + $order));
+
+    // 01:00 on Saturday in Tokyo is Friday in UTC; the weekend peak fee follows Tokyo's clock.
+    expect($local)->toBe($offset)
+        ->and(array_column($local['quote']['lines'], 'product'))->toContain('PEAK');
+});

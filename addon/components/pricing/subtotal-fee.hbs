@@ -5,7 +5,7 @@
     </header>
     <p class="text-sm">
         {{t "enhanced-pricing.console.fees.today"}}
-        <span class="font-semibold" data-test-current>{{this.current}}</span>
+        <span class="font-semibold" data-test-current>{{if this.current this.current (t "enhanced-pricing.console.fees.not-set")}}</span>
         {{#if @fee.current.effective_from}}
             <span class="text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.fees.since" date=@fee.current.effective_from}}</span>
         {{/if}}
@@ -55,8 +55,9 @@
 
     {{#if this.large}}
         <div class="mt-3 rounded border border-yellow-300 bg-yellow-50 p-3 text-sm dark:border-yellow-700 dark:bg-yellow-950" role="alert" data-test-large-change>
-            <Pricing::ProblemList @problems={{this.large}} @hidePath={{true}} />
-            <p class="my-2">{{t "enhanced-pricing.console.fees.large-change" currency=@currency}}</p>
+            {{#each this.largeChanges as |change|}}
+                <p class="mb-2" data-test-large-change-message>{{t "enhanced-pricing.console.fees.large-change" name=@fee.name from=change.from to=change.to currency=@currency}}</p>
+            {{/each}}
             <Button @type="warning" @text={{t "enhanced-pricing.console.fees.confirm-large-change"}} @isLoading={{this.sending}} @onClick={{this.confirmLarge}} data-test-confirm-large-change />
         </div>
     {{/if}}

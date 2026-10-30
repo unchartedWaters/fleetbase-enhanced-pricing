@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
-import { zonedToUtc, distanceToMeters } from '../../utils/preview';
+import { localPickup, distanceToMeters } from '../../utils/preview';
 
 // The quote preview: a sample order priced by the real engine (POST admin/preview), for a
 // customer with its overrides, rate card row and dated changes, or for the profile's own values.
@@ -234,7 +234,7 @@ export default class PricingQuotePreviewComponent extends Component {
             input.row = this.row;
         }
         input.service_rate = this.serviceRate;
-        input.pickup_at = zonedToUtc(this.date, this.time, this.timezone);
+        input.pickup_at = localPickup(this.date, this.time);
         input.timezone = this.timezone;
         if (this.needsDistance && this.distanceResult.value !== null) {
             input.distance_meters = this.distanceResult.value;

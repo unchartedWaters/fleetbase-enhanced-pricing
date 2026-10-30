@@ -10,11 +10,11 @@
         <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-white">{{t "enhanced-pricing.console.fees.all-changes"}}</h3>
         {{#if this.changes.length}}
             <div class="table-wrapper table-fluid">
-                <table class="w-full text-sm">
+                <table class="w-full text-sm" data-test-changes>
                     <thead>
                         <tr>
-                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.path"}}</th>
-                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.customers.value"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.fee"}}</th>
+                            <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.new-value"}}</th>
                             <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.effective-from"}}</th>
                             <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.state"}}</th>
                             <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.fees.added-by"}}</th>
@@ -23,7 +23,11 @@
                     <tbody>
                         {{#each this.changes key="uuid" as |change|}}
                             <tr data-test-change={{change.uuid}}>
-                                <td class="px-3 py-2 font-mono">{{change.path}}</td>
+                                {{#if change.name}}
+                                    <td class="px-3 py-2" data-test-change-name>{{change.name}}</td>
+                                {{else}}
+                                    <td class="px-3 py-2 font-mono" data-test-change-name>{{change.path}}</td>
+                                {{/if}}
                                 <td class="px-3 py-2">{{change.shown}}</td>
                                 <td class="px-3 py-2">{{change.effective_from}}</td>
                                 <td class="px-3 py-2">
