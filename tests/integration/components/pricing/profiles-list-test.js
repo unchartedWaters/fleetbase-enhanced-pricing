@@ -32,15 +32,18 @@ module('Integration | Component | pricing/profiles-list', (hooks) => {
         assert.dom('[data-test-empty]').hasText('No pricing profiles yet. Create one to start pricing orders.');
     });
 
-    test('the page warns that prices are before GST, which only QuickBooks adds', async function (assert) {
+    test('the page says prices are before GST, which a QuickBooks sync adds to Ledger invoices', async function (assert) {
         for (const profiles of [fixture('profiles').profiles, []]) {
             this.profiles = profiles;
 
             await render(hbs`<Pricing::ProfilesList @profiles={{this.profiles}} />`);
 
-            assert.dom('[data-test-gst-notice]').includesText('QuickBooks');
-            assert.dom('[data-test-gst-notice]').includesText("Don't send customers Ledger's public invoice link");
+            assert.dom('[data-test-gst-notice]').includesText('Prices here are before GST');
+            assert.dom('[data-test-gst-notice]').includesText('invoices sync both ways, QuickBooks is Primary and works out the tax');
+            assert.dom('[data-test-gst-notice]').includesText('the next QuickBooks sync copies the GST QuickBooks charges');
+            assert.dom('[data-test-gst-notice]').includesText('Check that a Ledger invoice shows GST before sending a customer its public link');
             assert.dom('[data-test-gst-notice]').includesText('payment gateway');
+            assert.dom('[data-test-gst-notice]').doesNotIncludeText('show totals without GST');
         }
     });
 });
