@@ -12,7 +12,7 @@
     {{#if this.isScalar}}
         <Pricing::Input
             @type={{this.field.type}}
-            @value={{@value}}
+            @value={{this.scalarValue}}
             @options={{this.options}}
             @nullable={{this.field.nullable}}
             @optional={{this.field.optional}}

@@ -31,19 +31,40 @@ final class PreviewInput
             : throw AdminRefused::invalid('field-required', [], 'service_rate');
     }
 
-    public function pickupAt(): \DateTimeImmutable
+    /**
+     * The pickup time. The console sends it as typed, with no offset, on the clock of the order's
+     * timezone ($zone), because a browser may not know timezones; a time with an offset or Z is
+     * taken as sent. The offset is looked up twice, so a time near a clock change uses the offset
+     * in force then. A time that happens twice is the first; a time the change skips is read with
+     * the offset after it, an hour early on the clock, as the console read it before.
+     */
+    public function pickupAt(string $zone): \DateTimeImmutable
     {
         $text   = $this->input['pickup_at'] ?? null;
-        $format = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})$/';
-        if (is_string($text) && preg_match($format, $text) === 1) {
+        $format = '/^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/';
+        $valid  = is_string($text) && preg_match($format, $text, $parts) === 1
+            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
+        if ($valid) {
             try {
-                return new \DateTimeImmutable($text);
+                return ($parts[7] ?? '') === ''
+                    ? self::onClock($text, new \DateTimeZone($zone))
+                    : new \DateTimeImmutable($text);
             } catch (\Exception) {
                 // refused below
             }
         }
 
         throw AdminRefused::invalid('field-invalid', [], 'pickup_at');
+    }
+
+    private static function onClock(string $wall, \DateTimeZone $zone): \DateTimeImmutable
+    {
+        $utc    = new \DateTimeZone('UTC');
+        $asUtc  = (new \DateTimeImmutable($wall, $utc))->getTimestamp();
+        $offset = static fn (int $time): int => $zone->getOffset(new \DateTimeImmutable("@$time"));
+        $guess  = $asUtc - $offset($asUtc);
+
+        return new \DateTimeImmutable('@' . ($asUtc - $offset($guess)));
     }
 
     public function timezone(string $default): string

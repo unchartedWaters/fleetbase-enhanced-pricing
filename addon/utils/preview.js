@@ -1,53 +1,24 @@
 // The quote preview takes a pickup in the order's own timezone and a distance in the profile's
-// unit. The server takes an ISO time with an offset and whole meters (Admin/PreviewInput).
+// unit. The server takes the pickup as typed, with no offset, and reads it in the order's timezone
+// (Admin/PreviewInput), and the distance in whole meters. The browser doesn't convert the time:
+// the host console's Intl polyfill formats every timezone as UTC.
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
-const TIME = /^(\d{2}):(\d{2})$/;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function offsetAt(time, zone) {
-    const parts = {};
-    const format = new Intl.DateTimeFormat('en-US', {
-        timeZone: zone,
-        hourCycle: 'h23',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    });
-    for (const part of format.formatToParts(new Date(time))) {
-        parts[part.type] = Number(part.value);
-    }
-    const local = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
-
-    return local - Math.floor(time / 1000) * 1000;
-}
-
-// A wall-clock time in a timezone as UTC. The offset is looked up twice so a time near a
-// daylight saving change uses the offset in force at that time.
-export function zonedToUtc(date, time, zone) {
+// A date and time as typed, or null when either is blank or the date doesn't exist.
+export function localPickup(date, time) {
     const day = DATE.exec(date ?? '');
-    const clock = TIME.exec(time ?? '');
-    if (!day || !clock) {
+    if (!day || !TIME.test(time ?? '')) {
         return null;
     }
     const [year, month, dayOfMonth] = day.slice(1).map(Number);
-    const [hour, minute] = clock.slice(1).map(Number);
-    const guess = Date.UTC(year, month - 1, dayOfMonth, hour, minute);
-    const check = new Date(guess);
-    if (check.getUTCMonth() !== month - 1 || check.getUTCDate() !== dayOfMonth || hour > 23 || minute > 59) {
+    const check = new Date(Date.UTC(year, month - 1, dayOfMonth));
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== dayOfMonth) {
         return null;
     }
-    try {
-        let utc = guess - offsetAt(guess, zone);
-        const second = offsetAt(utc, zone);
-        utc = guess - second;
 
-        return new Date(utc).toISOString().replace('.000Z', 'Z');
-    } catch {
-        return null;
-    }
+    return `${date}T${time}`;
 }
 
 const METERS_PER_MILE = 1609.344;

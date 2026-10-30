@@ -71,11 +71,12 @@ final class Preview
         }
         $serviceRate    = $order->serviceRate();
         [$row, $labels] = $this->row($order->row(), $customer, $state, $serviceRate);
+        $timezone       = $order->timezone(R::text($state->normalized['scheduling_timezone']));
         $request        = new PricingRequest(
             profile: $state->definition,
             serviceRate: $serviceRate,
-            pickupAt: $order->pickupAt(),
-            timezone: $order->timezone(R::text($state->normalized['scheduling_timezone'])),
+            pickupAt: $order->pickupAt($timezone),
+            timezone: $timezone,
             entities: $order->entities(),
             attributes: $order->attributes(),
             row: $row,

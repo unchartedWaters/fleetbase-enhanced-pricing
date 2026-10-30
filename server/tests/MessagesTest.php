@@ -98,6 +98,11 @@ test('profile problems fill every placeholder, with types and kinds in plain wor
         'The value must be a whole number in the currency\'s minor unit, such as cents.',
     ],
     'a value left empty'          => ['service_rates.0.line_name', null, 'A value is required here.'],
+    'money left empty'            => ['service_rates.1.per_meter.rate', null, 'A value is required here.'],
+    'a tier price left empty'     => ['service_rates.0.tiers.0.price', ['value' => null], 'A value is required here.'],
+    'a reference left empty'      => ['default_entity_type', null, 'A value is required here.'],
+    'a list left empty'           => ['products', [], 'The number of entries must be at least 1.'],
+    'text left empty'             => ['service_rates.0.name', '', 'The text can\'t be empty.'],
     'an unknown service rate'     => [
         'attributes.0.required_for',
         ['nope'],

@@ -74,6 +74,23 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.dom('[data-test-save]').isDisabled();
     });
 
+    // A profile may leave out an optional flag; its default then applies, so the box shows it.
+    test('a flag the profile leaves out shows its default, and is saved only when changed', async function (assert) {
+        this.definition = JSON.parse(JSON.stringify(this.definition));
+        delete this.definition.fees[2].enabled;
+        await render(editor);
+        await click('[data-test-section="fees"]');
+
+        assert.dom('[data-test-field="fees.2.enabled"] input[type="checkbox"]').isChecked('enabled by default');
+        await click('[data-test-save]');
+        assert.false('enabled' in this.saved[0].definition.fees[2], 'nothing is written for an untouched flag');
+
+        await click('[data-test-field="fees.2.enabled"] input[type="checkbox"]');
+        assert.dom('[data-test-field="fees.2.enabled"] input[type="checkbox"]').isNotChecked();
+        await click('[data-test-save]');
+        assert.false(this.saved[1].definition.fees[2].enabled);
+    });
+
     test('elements are added, moved and removed, and the order is saved', async function (assert) {
         await render(editor);
         await click('[data-test-section="fees"]');
