@@ -52,7 +52,7 @@
     "@fortawesome/free-solid-svg-icons": "6.4.0",
     "@glimmer/component": "^1.1.2",
     "@glimmer/tracking": "^1.1.2",
-    "broccoli-funnel": "^3.0.8",
+    "broccoli-funnel": "^4.0.0",
     "ember-auto-import": "^2.7.4",
     "ember-cli": "~5.4.1",
     "ember-cli-babel": "^8.3.2",
