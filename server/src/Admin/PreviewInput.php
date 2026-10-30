@@ -42,8 +42,9 @@ final class PreviewInput
     {
         $text   = $this->input['pickup_at'] ?? null;
         $format = '/^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/';
-        if (is_string($text) && preg_match($format, $text, $parts) === 1
-            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
+        $valid  = is_string($text) && preg_match($format, $text, $parts) === 1
+            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
+        if ($valid) {
             try {
                 return ($parts[7] ?? '') === ''
                     ? self::onClock($text, new \DateTimeZone($zone))

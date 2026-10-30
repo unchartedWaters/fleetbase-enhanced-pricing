@@ -61,8 +61,10 @@ module('Integration | Component | pricing/quote-preview', (hooks) => {
     // reach the server on the order's own clock, with its timezone.
     test("a pickup is sent on the order's clock, whatever the browser's Intl does with timezones", async function (assert) {
         const native = Intl.DateTimeFormat;
-        Intl.DateTimeFormat = function (locale, options = {}) {
-            return new native(locale, { ...options, timeZone: 'UTC' });
+        Intl.DateTimeFormat = class extends native {
+            constructor(locale, options = {}) {
+                super(locale, { ...options, timeZone: 'UTC' });
+            }
         };
         try {
             await render(
