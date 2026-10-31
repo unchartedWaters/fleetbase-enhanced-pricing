@@ -1,0 +1,25 @@
+# Used with the released docker-compose.yml from fleetbase/fleetbase, as the second -f file:
+#   docker compose -f <fleetbase>/docker-compose.yml -f compose.yml up -d database cache application
+# The API containers run the image built from Dockerfile (Fleetbase plus this extension), and the
+# API is published on :8000 directly instead of through the httpd container. Values in the
+# environment come from the workflow (FLEETBASE_COMPAT_IMAGE, FLEETBASE_COMPAT_APP_KEY).
+services:
+  application:
+    image: ${FLEETBASE_COMPAT_IMAGE:?}
+    pull_policy: never
+    ports:
+      - "8000:8000"
+    environment:
+      APP_KEY: ${FLEETBASE_COMPAT_APP_KEY:?}
+      APP_URL: http://localhost:8000
+      CONSOLE_HOST: http://localhost:4200
+  queue:
+    image: ${FLEETBASE_COMPAT_IMAGE:?}
+    pull_policy: never
+    environment:
+      APP_KEY: ${FLEETBASE_COMPAT_APP_KEY:?}
+  scheduler:
+    image: ${FLEETBASE_COMPAT_IMAGE:?}
+    pull_policy: never
+    environment:
+      APP_KEY: ${FLEETBASE_COMPAT_APP_KEY:?}
