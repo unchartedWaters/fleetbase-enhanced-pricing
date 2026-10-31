@@ -82,13 +82,27 @@ refused on every Pricing endpoint, whatever they hold.
 ## Invoices and GST
 
 Prices from the engine are before tax, and the engine adds no tax lines.
-GST is added in QuickBooks, so the QuickBooks invoice is the one customers
-receive and pay.
-
 Fleetbase Ledger writes each quote line with a tax rate of 0, so a Ledger
-invoice for a priced order shows a total without GST. Don't send customers
-Ledger's public invoice link, and don't set up a payment gateway in Ledger,
-or a customer could pay the total without GST.
+invoice for a priced order starts with a total without GST.
+
+GST is worked out in QuickBooks. When invoices sync both ways, QuickBooks is
+Primary and QuickBooks works out the tax (the QuickBooks plugin's default
+invoice settings), the QuickBooks sync that sends the invoice copies the GST
+QuickBooks charges, each line's tax, the new total and the QuickBooks invoice
+number onto the Ledger invoice. A draft invoice is sent once it leaves draft.
+Whether QuickBooks charges GST on a line depends on the tax codes of the
+line's QuickBooks product and customer; see the plugin's setup guide. An
+invoice the plugin cannot send, for example outside the US when a line has no
+tax code, keeps the total without GST.
+
+So check that a Ledger invoice shows GST before sending a customer its public
+invoice link, and check again after editing it in Ledger, until the next sync
+has run. Don't set up a payment gateway in Ledger, or a customer could pay the
+total without GST before the sync.
+
+With invoices sent To QuickBooks only, no tax is copied back, and the Ledger
+total stays without GST. If the plugin is set so that Fleetbase works out the
+tax, it sends Ledger's tax of 0, so the invoice gets no GST or fails to sync.
 
 ## Publishing
 
