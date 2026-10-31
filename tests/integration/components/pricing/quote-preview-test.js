@@ -48,13 +48,39 @@ module('Integration | Component | pricing/quote-preview', (hooks) => {
         assert.strictEqual(sent.profile, undefined, "a customer's profile is its own");
         assert.strictEqual(sent.service_rate, 'tiered');
         assert.strictEqual(sent.row, fixture('customer').cards[0].rows[0].uuid);
-        assert.strictEqual(sent.pickup_at, '2027-03-06T11:00:00Z', "the profile's timezone, UTC");
+        assert.strictEqual(sent.pickup_at, '2027-03-06T11:00', 'as typed, read by the server in the timezone');
         assert.strictEqual(sent.timezone, 'UTC');
         assert.deepEqual(sent.attributes, { extra: true });
         assert.deepEqual(sent.entities, [
             { type: null, weight: '36', weight_unit: 'kg', length: null, width: null, height: null, dimensions_unit: 'cm', attributes: {} },
             { type: 'separate', weight: '5', weight_unit: 'kg', length: null, width: null, height: null, dimensions_unit: 'cm', attributes: {} },
         ]);
+    });
+
+    // The host console's FormatJS polyfill formats every timezone as UTC. The pickup must still
+    // reach the server on the order's own clock, with its timezone.
+    test("a pickup is sent on the order's clock, whatever the browser's Intl does with timezones", async function (assert) {
+        const native = Intl.DateTimeFormat;
+        Intl.DateTimeFormat = class extends native {
+            constructor(locale, options = {}) {
+                super(locale, { ...options, timeZone: 'UTC' });
+            }
+        };
+        try {
+            await render(
+                hbs`<Pricing::QuotePreview @profile={{this.profile}} @definition={{this.definition}} @customers={{this.customers}} @onLoadCustomer={{this.loadCustomer}} @onPrice={{this.price}} />`
+            );
+            await fillOrder(this);
+            await fillIn('[data-test-pickup-time]', '22:30');
+            await fillIn('[data-test-timezone]', 'America/Edmonton');
+            await click('[data-test-price]');
+        } finally {
+            Intl.DateTimeFormat = native;
+        }
+
+        const [sent] = this.sent;
+        assert.strictEqual(sent.pickup_at, '2027-03-06T22:30');
+        assert.strictEqual(sent.timezone, 'America/Edmonton');
     });
 
     test('the quote shows each line and the total in the profile currency', async function (assert) {

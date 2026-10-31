@@ -27,6 +27,17 @@ export default class PricingFieldComponent extends Component {
         return !['object', 'list', 'choice'].includes(this.field.type);
     }
 
+    // An optional flag the profile leaves out takes its default, so the box shows that, not "off".
+    // Nothing is written until the person changes it.
+    get scalarValue() {
+        const field = this.field;
+        if (this.args.value === undefined && field.type === 'boolean' && field.optional && 'default' in field) {
+            return field.default;
+        }
+
+        return this.args.value;
+    }
+
     get options() {
         if (this.field.type === 'enum') {
             return this.field.options;

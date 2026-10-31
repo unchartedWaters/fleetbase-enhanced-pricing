@@ -1,5 +1,5 @@
-<div class="grid grid-cols-1 gap-6 xl:grid-cols-2" data-test-quote-preview>
-    <form class="space-y-4" {{on "submit" this.submit}}>
+<div class="grid grid-cols-1 gap-6 2xl:grid-cols-2" data-test-quote-preview>
+    <form class="min-w-0 space-y-4" {{on "submit" this.submit}}>
         <p class="text-sm text-gray-600 dark:text-gray-300">{{t "enhanced-pricing.console.preview.help"}}</p>
         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
             {{t "enhanced-pricing.console.preview.customer"}}
@@ -137,7 +137,7 @@
         <Button @type="primary" @buttonType="submit" @icon="calculator" @text={{t "enhanced-pricing.console.preview.price"}} @isLoading={{this.pricing}} @disabled={{this.cannotPrice}} data-test-price />
     </form>
 
-    <div class="space-y-4" aria-live="polite">
+    <div class="min-w-0 space-y-4" aria-live="polite">
         {{#if this.refusal}}
             <div class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200" role="alert">
                 <Pricing::Refusal @refusal={{this.refusal}} />

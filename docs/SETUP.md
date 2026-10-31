@@ -47,6 +47,12 @@ current one. `flb install` installs `@unchartedwaters/enhanced-pricing-engine`
 and `unchartedwaters/enhanced-pricing-api`. Then rebuild or restart the
 console so it includes the engine.
 
+When the packages are added another way, such as a Composer path repository
+and a linked npm package, the console loads the engine only if its
+`fleetbase.config.json` lists `@unchartedwaters/enhanced-pricing-engine` in
+`EXTENSIONS`, a comma-separated list of package names. Pricing then appears in
+the console header, or under its "⋯" menu when the header is full.
+
 Then, in the Fleetbase API, run the migrations and create the extension's
 permissions:
 
