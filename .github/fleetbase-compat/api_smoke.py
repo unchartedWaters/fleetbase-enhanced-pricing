@@ -50,7 +50,7 @@ def expect(condition, message, detail=None):
 def main():
     """Runs the checks in order; each one needs the ones before it."""
     base, repo, credentials_path = sys.argv[1].rstrip("/"), sys.argv[2], sys.argv[3]
-    with open(repo + "/server/tests/Fixtures/example-profile.json") as handle:
+    with open(repo + "/server/tests/Fixtures/example-profile.json", encoding="utf-8") as handle:
         definition = json.load(handle)
 
     status, body = call(base, "GET", PREFIX + "/profiles")
@@ -69,7 +69,7 @@ def main():
     token = body.get("token") if isinstance(body, dict) else None
     expect(status == 200 and token,
            "the first sign-up returns an administrator's token", [status, body])
-    with open(credentials_path, "w") as handle:
+    with open(credentials_path, "w", encoding="utf-8") as handle:
         json.dump({"email": email, "password": password}, handle)
 
     status, body = call(base, "GET", PREFIX + "/form", token=token)

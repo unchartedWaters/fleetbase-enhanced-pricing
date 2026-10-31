@@ -9,6 +9,7 @@ export COMPOSER_HOME=/tmp/composer
 
 # Drop the Fleetbase registry repository so the build doesn't depend on it and can't install a
 # published copy of the extension instead of this one.
+# shellcheck disable=SC2016 # PHP code: its $ variables are PHP's, not the shell's.
 php -r '
     $file = "composer.json";
     $json = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
@@ -21,6 +22,7 @@ php -r '
 composer config repositories.enhanced-pricing \
     '{"type": "path", "url": "/fleetbase/extensions/enhanced-pricing", "options": {"symlink": false}}'
 
+# shellcheck disable=SC2016 # PHP code, as above.
 version="$(php -r 'echo json_decode(file_get_contents("/fleetbase/extensions/enhanced-pricing/composer.json"), true)["version"];')"
 composer require --update-no-dev --no-interaction --no-scripts --no-progress --no-ansi "unchartedwaters/enhanced-pricing-api:${version}"
 composer dump-autoload --optimize --no-dev --no-ansi
