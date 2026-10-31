@@ -23,7 +23,7 @@ final class Schema
 
     private const KEY = '/^[a-z0-9][a-z0-9_-]{0,63}$/';
 
-    private const CODE = '/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/';
+    public const CODE = '/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/';
 
     private const TIME = '/^([01]\d|2[0-3]):[0-5]\d$/';
 

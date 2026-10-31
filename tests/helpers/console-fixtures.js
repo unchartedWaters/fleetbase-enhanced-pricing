@@ -296,6 +296,14 @@ export default {
                         }
                     },
                     {
+                        "name": "billing_code_column",
+                        "type": "ref",
+                        "ref": "text_columns",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
+                    },
+                    {
                         "name": "minimum",
                         "type": "money",
                         "nullable": true,
@@ -1477,6 +1485,7 @@ export default {
             "lines": [
                 {
                     "product": "TIERED",
+                    "billing_code": "TIERED",
                     "name": "Tiered delivery",
                     "quantity": 2,
                     "unit_amount": 2700,
@@ -1487,6 +1496,7 @@ export default {
                 },
                 {
                     "product": "SEPARATE",
+                    "billing_code": "SEPARATE",
                     "name": "Separate entity type",
                     "quantity": 1,
                     "unit_amount": 900,
@@ -1497,6 +1507,7 @@ export default {
                 },
                 {
                     "product": "ADDITIONAL",
+                    "billing_code": "ADDITIONAL",
                     "name": "Additional fee",
                     "quantity": 1,
                     "unit_amount": 1600,
@@ -1507,6 +1518,7 @@ export default {
                 },
                 {
                     "product": "PARCEL",
+                    "billing_code": "PARCEL",
                     "name": "Parcel fee",
                     "quantity": 1,
                     "unit_amount": 500,
@@ -1517,6 +1529,7 @@ export default {
                 },
                 {
                     "product": "PEAK",
+                    "billing_code": "PEAK",
                     "name": "Peak hours fee",
                     "quantity": 1,
                     "unit_amount": 2200,
@@ -1527,6 +1540,7 @@ export default {
                 },
                 {
                     "product": "PERCENT",
+                    "billing_code": "PERCENT",
                     "name": "Percentage subtotal fee (9% of 106.00)",
                     "quantity": 1,
                     "unit_amount": 954,
@@ -1537,6 +1551,7 @@ export default {
                 },
                 {
                     "product": "FLAT_A",
+                    "billing_code": "FLAT_A",
                     "name": "Flat subtotal fee A",
                     "quantity": 1,
                     "unit_amount": 400,
@@ -1547,6 +1562,7 @@ export default {
                 },
                 {
                     "product": "FLAT_B",
+                    "billing_code": "FLAT_B",
                     "name": "Flat subtotal fee B",
                     "quantity": 1,
                     "unit_amount": 600,

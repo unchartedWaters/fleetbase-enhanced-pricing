@@ -32,7 +32,7 @@ module('Unit | Utility | profile-form', () => {
         const tiered = definition.service_rates[0];
 
         assert.strictEqual(variantOf(serviceRate, tiered), 'tiers');
-        assert.deepEqual(names(fieldsFor(serviceRate, tiered)), ['key', 'name', 'product', 'rate_table', 'line_name', 'minimum', 'enabled', 'tiers']);
+        assert.deepEqual(names(fieldsFor(serviceRate, tiered)), ['key', 'name', 'product', 'rate_table', 'line_name', 'billing_code_column', 'minimum', 'enabled', 'tiers']);
         assert.deepEqual(names(fieldsFor(serviceRate, definition.service_rates[1])).slice(-1), ['per_meter']);
     });
 

@@ -119,7 +119,7 @@ final class StaleCheck
         if ($table === null) {
             return [StoreRefused::problem('row-unknown-table', ['table' => $row->table_key], 'table_key')];
         }
-        $problems = RowCheck::check($table, $row->values ?? [], 'values');
+        $problems = RowCheck::check($table, $row->values ?? [], 'values', $this->normalized);
         if ($problems === [] && RowCheck::hash(RowCheck::keyValues($table, $row->values ?? [])) !== $row->row_key) {
             $problems[] = StoreRefused::problem('row-key-changed', ['table' => $row->table_key], 'row_key');
         }

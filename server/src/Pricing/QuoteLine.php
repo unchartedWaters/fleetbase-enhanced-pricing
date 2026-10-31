@@ -3,8 +3,10 @@
 namespace Fleetbase\EnhancedPricing\Pricing;
 
 /**
- * One invoice line: its product code, name, quantity and unit amount in minor units. The amount is
- * always quantity × unit amount. Sources name the rules that made it, such as "fee:heavy".
+ * One invoice line: its product code, name, billing code, quantity and unit amount in minor units.
+ * The billing code is the code the line is billed under: the product's code, or a route's own code
+ * when its service rate reads one from the rate card row. The amount is always quantity × unit
+ * amount. Sources name the rules that made it, such as "fee:heavy".
  */
 final class QuoteLine
 {
@@ -14,6 +16,7 @@ final class QuoteLine
     public function __construct(
         public readonly string $product,
         public readonly string $name,
+        public readonly string $billingCode,
         public readonly int $quantity,
         public readonly int $unitAmount,
         public readonly array $sources,
@@ -26,17 +29,21 @@ final class QuoteLine
     }
 
     /**
-     * @return array{product: string, name: string, quantity: int, unit_amount: int, amount: int, sources: list<string>}
+     * @return array{
+     *     product: string, billing_code: string, name: string, quantity: int, unit_amount: int, amount: int,
+     *     sources: list<string>
+     * }
      */
     public function toArray(): array
     {
         return [
-            'product'     => $this->product,
-            'name'        => $this->name,
-            'quantity'    => $this->quantity,
-            'unit_amount' => $this->unitAmount,
-            'amount'      => $this->amount(),
-            'sources'     => $this->sources,
+            'product'      => $this->product,
+            'billing_code' => $this->billingCode,
+            'name'         => $this->name,
+            'quantity'     => $this->quantity,
+            'unit_amount'  => $this->unitAmount,
+            'amount'       => $this->amount(),
+            'sources'      => $this->sources,
         ];
     }
 }

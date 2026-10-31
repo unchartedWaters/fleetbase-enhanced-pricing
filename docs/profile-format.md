@@ -119,8 +119,10 @@ to the engine. Peak hours and rule dates follow that timezone too.
 { "code": "PARCEL", "name": "Parcel fee" }
 ```
 
-Every invoice line carries one product, and the line's code is that product's
-code. Codes are unique. Each service rate, each entity type with its own price,
+Every invoice line carries one product, and the line's billing code is that
+product's code, unless a service rate takes it from the rate card row (see
+[Billing codes from the rate card row](#billing-codes-from-the-rate-card-row)).
+Codes are unique. Each service rate, each entity type with its own price,
 each fee, subtotal fee and manual charge names its product. Several rules may
 share a product.
 
@@ -234,6 +236,7 @@ Every order has one service rate. It decides the service fee.
   "product": "ROUTE",
   "rate_table": "routes",
   "line_name": { "column": "code" },
+  "billing_code_column": null,
   "method": "tiers",
   "tiers": [
     { "up_to": { "column": "included" }, "price": { "column": "first" } },
@@ -250,6 +253,7 @@ Every order has one service rate. It decides the service fee.
 | `name` | label in the order form's rate picker and in messages |
 | `rate_table` | optional, default `null`: table whose row the order picks |
 | `line_name` | `{ "text": name }`, `{ "column": key }` of a text column, or both |
+| `billing_code_column` | optional, default `null`: a text column; see below |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
 | `minimum` | optional, default `null`: money, the lowest service fee |
 | `enabled` | optional, default `true`; `false` refuses orders using it |
@@ -258,6 +262,36 @@ A service rate with a `rate_table` needs a row from one of the customer's rate
 cards; one without needs none. A `{ "column": ... }` reference needs a
 `rate_table` that has that column. Only the field for the `method` is allowed:
 `tiers`, `per_meter` or `fixed_rate`.
+
+### Billing codes from the rate card row
+
+Each invoice line has a billing code: the code it is billed under, which
+Ledger and accounting can map. A line's billing code is its product's code,
+except when a service rate names a `billing_code_column`. Then its service
+fee lines, including a service fee raised to its minimum, are billed under the
+code in that column of the order's rate card row. Each route on a customer's
+rate card can then bill under its own code, such as `4010-NORTH`, without a
+new product in the profile for each route. The column may be the row's own
+key column, such as `code`, or a column of its own.
+
+The line keeps the service rate's `product`. Fees and subtotal fees still find
+lines by product (`applies_to`, `requires`, `skipped_for`), so a fuel
+surcharge on `ROUTE` covers every route whatever its billing code. Lines of
+entity types with their own price, fees, subtotal fees and manual charges are
+billed under their product's code.
+
+A billing code is written like a product code (letters, digits, `_`, `-` and
+`.`, 1 to 64 characters, starting with a letter or digit), and can't be
+another product's code in any case: a route billed as `fuel` would land on the
+fuel surcharge's code. It may be the service rate's own product code. A row is
+checked when it is saved, against every enabled service rate that reads a
+billing code from it: without a usable billing code it is refused. A new
+profile version that starts reading billing codes lists the rows without one
+as stale, as for any row that no longer fits. If such a row is still used,
+pricing stops with a message naming the customer, card, row and rule, so no
+line is billed under the wrong code.
+
+Anyone who may manage rate cards can set a row's billing code.
 
 ### Tiers
 
@@ -603,11 +637,11 @@ A name (a key) and up to 400 dates. Peak hours fees name a list.
 
 ## Invoice lines
 
-Lines that share a product, a name and a unit amount are combined into one line
-with a quantity: three entities that each get a $12 fee are one line, 3 × $12,
-not three lines. A line that differs in any of them, such as a second tier's
-price, stays apart. Because a line's amount is always its quantity × its unit
-amount, combining never changes the total.
+Lines that share a product, a billing code, a name and a unit amount are
+combined into one line with a quantity: three entities that each get a $12 fee
+are one line, 3 × $12, not three lines. A line that differs in any of them,
+such as a second tier's price, stays apart. Because a line's amount is always
+its quantity × its unit amount, combining never changes the total.
 
 A line whose amount is $0 is left off. A line or an order total above
 $1,000,000 stops pricing, and so does a quote of more than 10,000 lines.

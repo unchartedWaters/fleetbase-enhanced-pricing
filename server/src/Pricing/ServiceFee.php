@@ -4,6 +4,7 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Profile\Schema;
+use Fleetbase\EnhancedPricing\Support\BillingCode;
 use Fleetbase\EnhancedPricing\Support\Exact;
 
 /**
@@ -17,10 +18,14 @@ final class ServiceFee
 
     private string $source;
 
+    /** The service fee lines' billing code: the row's, when the rate names a column for it. */
+    private string $billingCode;
+
     public function __construct(private readonly OrderContext $order, private readonly ?int $distanceMeters)
     {
-        $this->rate   = $order->serviceRate;
-        $this->source = 'service_rate:' . R::text($this->rate['key']);
+        $this->rate        = $order->serviceRate;
+        $this->source      = 'service_rate:' . R::text($this->rate['key']);
+        $this->billingCode = R::text($this->rate['product']);
     }
 
     /**
@@ -56,7 +61,8 @@ final class ServiceFee
         foreach ($this->order->entities as $entity) {
             $entity->billingProduct = $product;
         }
-        $drafts = match ($this->rate['method']) {
+        $this->billingCode = $this->rowBillingCode() ?? $product;
+        $drafts            = match ($this->rate['method']) {
             'tiers'     => $this->tiers(),
             'per_meter' => $this->perMeter(),
             default     => [
@@ -226,6 +232,30 @@ final class ServiceFee
         return $value;
     }
 
+    /**
+     * The billing code from the row's column, when the rate names one; pricing stops when the
+     * row has none, or one that isn't a code or is another product's code.
+     */
+    private function rowBillingCode(): ?string
+    {
+        $column = $this->rate['billing_code_column'] ?? null;
+        if (is_string($column) === false) {
+            return null;
+        }
+        $value   = $this->cell($column);
+        $problem = BillingCode::problem($value, $this->order->profile, $this->rate);
+        if ($problem !== null) {
+            $name = match ($problem) {
+                'missing' => 'missing-billing-code',
+                'invalid' => 'billing-code-invalid',
+                default   => 'billing-code-is-product',
+            };
+            throw $this->order->fail($name, ['rule' => $this->ruleName(), ...$this->columnParams($column)]);
+        }
+
+        return R::text($value);
+    }
+
     private function lineName(): string
     {
         $lineName = R::map($this->rate['line_name']);
@@ -311,16 +341,17 @@ final class ServiceFee
     }
 
     /**
-     * @return array{product: string, name: string, quantity: int, unit: int, source: string}
+     * @return array{product: string, billing_code: string, name: string, quantity: int, unit: int, source: string}
      */
     private function draft(int $quantity, int $unit, string $name): array
     {
         return [
-            'product'  => R::text($this->rate['product']),
-            'name'     => $name,
-            'quantity' => $quantity,
-            'unit'     => $unit,
-            'source'   => $this->source,
+            'product'      => R::text($this->rate['product']),
+            'billing_code' => $this->billingCode,
+            'name'         => $name,
+            'quantity'     => $quantity,
+            'unit'         => $unit,
+            'source'       => $this->source,
         ];
     }
 }

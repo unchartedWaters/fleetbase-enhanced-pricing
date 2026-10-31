@@ -5,6 +5,7 @@ use Fleetbase\EnhancedPricing\Pricing\ManualChargeInput;
 use Fleetbase\EnhancedPricing\Profile\InvalidProfile;
 use Fleetbase\EnhancedPricing\Profile\Problem;
 use Fleetbase\EnhancedPricing\Profile\ProfileValidator;
+use Fleetbase\EnhancedPricing\Tests\Support\BillingProfiles;
 use Fleetbase\EnhancedPricing\Tests\Support\Messages;
 use Fleetbase\EnhancedPricing\Tests\Support\Orders;
 use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
@@ -159,6 +160,29 @@ test('a pricing message fills every placeholder', function (array $price, string
             ),
         ])],
         'Tiered delivery has no tier limit in included, row R1 of Example customer\'s card Main.',
+    ],
+    'a route with no billing code' => [
+        [fn () => Orders::price([
+            'profile' => BillingProfiles::profile(subtotalFees: true),
+            'row'     => Orders::ROW_1,
+        ])],
+        "Tiered delivery has no billing code in billing_code, row R1 of Example customer's card Main.",
+    ],
+    'a billing code that is not a code' => [
+        [fn () => Orders::price([
+            'profile' => BillingProfiles::profile(subtotalFees: true),
+            'row'     => Orders::ROW_1 + ['billing_code' => 'R NORTH'],
+        ])],
+        "Tiered delivery needs a billing code in billing_code, row R1 of Example customer's card Main, "
+            . 'written with letters, digits, _, - and ., up to 64 characters.',
+    ],
+    'a billing code that is a product\'s code' => [
+        [fn () => Orders::price([
+            'profile' => BillingProfiles::profile(subtotalFees: true),
+            'row'     => Orders::ROW_1 + ['billing_code' => 'PEAK'],
+        ])],
+        "The billing code in billing_code, row R1 of Example customer's card Main, is another product's code, "
+            . "so Tiered delivery can't bill under it.",
     ],
     'a service rate turned off'              => [
         [fn () => Orders::price(['overrides' => ['service_rates.tiered.enabled' => false]])],
