@@ -4,7 +4,7 @@
             <thead>
                 <tr>
                     <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.preview.line"}}</th>
-                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.preview.product"}}</th>
+                    <th class="px-3 py-2 text-left">{{t "enhanced-pricing.console.preview.billing-code"}}</th>
                     <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.preview.quantity"}}</th>
                     <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.preview.unit-amount"}}</th>
                     <th class="px-3 py-2 text-right">{{t "enhanced-pricing.console.preview.amount"}}</th>
@@ -14,7 +14,12 @@
                 {{#each @quote.lines as |line index|}}
                     <tr data-test-line={{index}}>
                         <td class="px-3 py-2">{{line.name}}</td>
-                        <td class="px-3 py-2 font-mono text-xs">{{line.product}}</td>
+                        <td class="px-3 py-2 font-mono text-xs" data-test-billing-code>
+                            {{line.billing_code}}
+                            {{#unless (eq line.billing_code line.product)}}
+                                <span class="block text-gray-500 dark:text-gray-400" data-test-product>{{t "enhanced-pricing.console.preview.product"}} {{line.product}}</span>
+                            {{/unless}}
+                        </td>
                         <td class="px-3 py-2 text-right">{{line.quantity}}</td>
                         <td class="px-3 py-2 text-right">{{pricing-money line.unit_amount @quote.currency}}</td>
                         <td class="px-3 py-2 text-right" data-test-amount>{{pricing-money line.amount @quote.currency}}</td>

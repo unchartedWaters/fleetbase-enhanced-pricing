@@ -46,6 +46,7 @@ try {
   "lines": [
     {
       "product": "DISTANCE",
+      "billing_code": "DISTANCE",
       "name": "Distance (10 km)",
       "quantity": 1,
       "unit_amount": 3500,
@@ -54,6 +55,7 @@ try {
     },
     {
       "product": "PARCEL",
+      "billing_code": "PARCEL",
       "name": "Parcel fee (12 kg)",
       "quantity": 1,
       "unit_amount": 480,
@@ -62,6 +64,7 @@ try {
     },
     {
       "product": "PERCENT",
+      "billing_code": "PERCENT",
       "name": "Percentage subtotal fee (11% of 4.80)",
       "quantity": 1,
       "unit_amount": 53,
@@ -162,10 +165,16 @@ value by rule key, for example `fees.heavy.minimum`.
 `Quote` has the profile's `currency`, the `lines` in the order the rules made
 them, `notes`, and `meta`. `total()` is the sum of the line amounts.
 
-Each `QuoteLine` has a `product` code, a `name`, a `quantity`, a
-`unitAmount` in minor units, and `sources`: the rules that made it, such as
-`fee:heavy`. Its `amount()` is always quantity × unit amount, so an invoice
-can show the line as it is.
+Each `QuoteLine` has a `product` code, a `name`, a `billingCode`, a
+`quantity`, a `unitAmount` in minor units, and `sources`: the rules that made
+it, such as `fee:heavy`. A line's `amount()` is always quantity × unit amount,
+so an invoice can show the line as it is.
+
+The billing code is the code the line is billed under. It is the product's
+code, except on the service fee lines of a service rate with a
+`billing_code_column`, which take the route's own code from the rate card row
+(see [Profile format](profile-format.md#billing-codes-from-the-rate-card-row)).
+Fees match lines by product, never by billing code.
 
 `notes` lists what the engine could not check without stopping, such as
 entities with no weight for a weight fee: one note per fee, listing the

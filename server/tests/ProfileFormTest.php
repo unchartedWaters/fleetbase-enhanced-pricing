@@ -33,7 +33,7 @@ function formSamples(): array
     ];
     $attribute = ['key' => 'new_attr', 'name' => 'New', 'scope' => 'order', 'required' => false, 'required_for' => []];
     $rate      = ['key' => 'new_rate'] + $rule
-        + ['line_name' => ['text' => 'New'], 'minimum' => null, 'enabled' => true];
+        + ['line_name' => ['text' => 'New'], 'billing_code_column' => null, 'minimum' => null, 'enabled' => true];
     $fee       = ['key' => 'new_fee'] + $rule + ['applies_to' => ['TIERED']] + $limits;
     $subtotal  = ['key' => 'new_sub'] + $rule + ['applies_to' => ['TIERED'], 'requires' => [], 'skipped_for' => []]
         + $limits;

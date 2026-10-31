@@ -51,6 +51,8 @@ enhanced-pricing:
     amount-too-large: "A line or the total is above the largest amount, {max} {currency}."
     attribute-invalid: "The value of {attribute} isn't valid."
     attribute-required: "{attribute} is required."
+    billing-code-invalid: "{rule} needs a billing code in {column}, row {row} of {customer}'s card {card}, written with letters, digits, _, - and ., up to 64 characters."
+    billing-code-is-product: "The billing code in {column}, row {row} of {customer}'s card {card}, is another product's code, so {rule} can't bill under it."
     changes-invalid: "The profile's dated change to {path} isn't valid."
     changes-invalid-all: The profile's dated changes aren't valid.
     distance-required: "{service_rate} needs the order's distance."
@@ -67,6 +69,7 @@ enhanced-pricing:
     manual-charge-quantity-invalid: "The quantity for {charge} must be in steps of {step}, up to {maximum}."
     manual-charge-takes-no-quantity: "{charge} doesn't take a quantity."
     missing-amount: "{customer} has no amount set for {rule}."
+    missing-billing-code: "{rule} has no billing code in {column}, row {row} of {customer}'s card {card}."
     missing-row-amount: "{rule} has no amount in {column}, row {row} of {customer}'s card {card}."
     missing-tier-limit: "{rule} has no tier limit in {column}, row {row} of {customer}'s card {card}."
     missing-value: "{rule} has no line name in {column}, row {row} of {customer}'s card {card}."
@@ -104,6 +107,8 @@ enhanced-pricing:
     not-found: The record wasn't found.
     order-not-found: The order wasn't found.
     profile-exists: "A profile with the key {key} already exists."
+    row-billing-code-invalid: "The billing code in {column} must be written with letters, digits, _, - and ., up to 64 characters, starting with a letter or digit."
+    row-billing-code-is-product: "The billing code in {column} is one of the profile's product codes. Use a code of its own."
     row-key-changed: "The rate table {table} has new key columns, so this row's key no longer matches."
     row-missing-value: "The row needs a value for {column}."
     row-unknown-column: "The rate table has no column {column}."
@@ -330,6 +335,7 @@ enhanced-pricing:
       skipped: "These dated changes no longer fit the profile and are left out, as pricing leaves them out:"
       from-date: "from {date}"
       line: "Line"
+      billing-code: "Billing code"
       product: "Product"
       quantity: "Quantity"
       unit-amount: "Unit amount"

@@ -5,7 +5,7 @@ namespace Fleetbase\EnhancedPricing\Pricing;
 use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
- * The lines made so far. Lines with the same product, name and unit amount are kept as one line
+ * The lines made so far. Lines with the same product, billing code, name and unit amount are kept as one line
  * with a quantity, a $0 line is left off, a name too long for an invoice line is shortened, and
  * no line, total or number of lines may pass its cap. Rules ask it about the lines before them;
  * each question is answered from an index, so an order with many lines still prices quickly.
@@ -19,12 +19,12 @@ final class LineBook
     /** The longest line name, in characters: Ledger's invoice item description holds 191. */
     public const MAX_NAME = 191;
 
-    /** @var list<array{product: string, name: string, quantity: int, unit: int, sources: list<string>}> */
+    /** @var list<array{product: string, billing_code: string, name: string, quantity: int, unit: int, sources: list<string>}> */
     private array $lines = [];
 
     private int $total = 0;
 
-    /** @var array<string, int> line position by product, name and unit amount */
+    /** @var array<string, int> line position by product, billing code, name and unit amount */
     private array $positions = [];
 
     /** @var array<string, array{sum: int, lines: int}> by product */
@@ -35,7 +35,9 @@ final class LineBook
     }
 
     /**
-     * @param list<array{product: string, name: string, quantity: int, unit: int, source: string}> $drafts
+     * A draft without a billing code bills under its product's code.
+     *
+     * @param list<array{product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string}> $drafts
      */
     public function add(array $drafts): void
     {
@@ -110,6 +112,7 @@ final class LineBook
             static fn (array $line): QuoteLine => new QuoteLine(
                 $line['product'],
                 $line['name'],
+                $line['billing_code'],
                 $line['quantity'],
                 $line['unit'],
                 $line['sources'],
@@ -119,15 +122,16 @@ final class LineBook
     }
 
     /**
-     * @param array{product: string, name: string, quantity: int, unit: int, source: string} $draft
+     * @param array{product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string} $draft
      */
     private function merge(array $draft, int $amount): void
     {
         $product = $draft['product'];
+        $code    = $draft['billing_code'] ?? $product;
         $name    = mb_strlen($draft['name']) > self::MAX_NAME
             ? mb_substr($draft['name'], 0, self::MAX_NAME - 1) . '…'
             : $draft['name'];
-        $key     = $product . "\0" . $name . "\0" . $draft['unit'];
+        $key     = $product . "\0" . $code . "\0" . $name . "\0" . $draft['unit'];
         $index   = $this->positions[$key] ?? null;
         if ($index === null && count($this->lines) >= self::MAX_LINES) {
             throw PricingFailed::because('too-many-lines', ['max' => self::MAX_LINES]);
@@ -147,11 +151,12 @@ final class LineBook
         $this->positions[$key] = count($this->lines);
         $this->products[$product]['lines']++;
         $this->lines[] = [
-            'product'  => $product,
-            'name'     => $name,
-            'quantity' => $draft['quantity'],
-            'unit'     => $draft['unit'],
-            'sources'  => [$draft['source']],
+            'product'      => $product,
+            'billing_code' => $code,
+            'name'         => $name,
+            'quantity'     => $draft['quantity'],
+            'unit'         => $draft['unit'],
+            'sources'      => [$draft['source']],
         ];
     }
 }

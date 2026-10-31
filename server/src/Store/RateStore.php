@@ -151,7 +151,7 @@ final class RateStore
             if ($table === null) {
                 throw StoreRefused::refuse('row-unknown-table', ['table' => $tableKey], 'table_key');
             }
-            $checked  = $this->check($table, $rows);
+            $checked  = $this->check($table, $rows, $current['normalized']);
             $existing = $this->existing($card, $tableKey);
             $total    = RateCardRow::ofCompany($this->context->company)->where('rate_card_uuid', $card->uuid)->count()
                 + count(array_diff_key($checked, $existing));
@@ -251,18 +251,19 @@ final class RateStore
     /**
      * @param array<string, mixed>                                        $table
      * @param list<array{values: array<mixed>, meta?: array<mixed>|null}> $rows
+     * @param array<string, mixed>                                        $profile the normalized profile
      *
      * @return array<string, array{key: list<mixed>, values: array<mixed>, meta?: array<mixed>|null}> by row key
      *
      * @throws StoreRefused
      */
-    private function check(array $table, array $rows): array
+    private function check(array $table, array $rows, array $profile): array
     {
         /** @var list<Problem> $problems */
         $problems = [];
         $checked  = [];
         foreach ($rows as $index => $row) {
-            $found = RowCheck::check($table, $row['values'], "$index.values");
+            $found = RowCheck::check($table, $row['values'], "$index.values", $profile);
             if (array_key_exists('meta', $row)) {
                 $found = [...$found, ...$this->metaProblems($row['meta'], "$index.meta")];
             }

@@ -94,6 +94,22 @@ module('Integration | Component | pricing/quote-preview', (hooks) => {
         assert.dom('[data-test-line="0"]').includesText('Tiered delivery');
         assert.dom('[data-test-line="0"] [data-test-amount]').hasText('$54.00');
         assert.dom('[data-test-total]').hasText('$125.54');
+        assert.dom('[data-test-line="0"] [data-test-billing-code]').hasText('TIERED');
+        assert.dom('[data-test-line="0"] [data-test-product]').doesNotExist();
+    });
+
+    test("a line billed under a route's own code shows its product too", async function (assert) {
+        const answer = structuredClone(fixture('preview'));
+        answer.quote.lines[0].billing_code = 'R-NORTH';
+        this.answer = () => Promise.resolve(answer);
+        await render(
+            hbs`<Pricing::QuotePreview @profile={{this.profile}} @definition={{this.definition}} @customers={{this.customers}} @onLoadCustomer={{this.loadCustomer}} @onPrice={{this.price}} />`
+        );
+        await fillOrder(this);
+        await click('[data-test-price]');
+
+        assert.dom('[data-test-line="0"] [data-test-billing-code]').includesText('R-NORTH');
+        assert.dom('[data-test-line="0"] [data-test-product]').includesText('TIERED');
     });
 
     test("without a customer the profile's own values are priced", async function (assert) {

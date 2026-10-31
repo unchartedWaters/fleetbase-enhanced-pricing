@@ -151,6 +151,12 @@ final class ProfileReferences
             $this->schema->add(Problem::atPath("$path.rate_table", 'tiers-need-rate-table'));
         }
         $this->reference($rate['line_name'], is_string($table) ? $table : null, 'text', "$path.line_name");
+        $billing = $rate['billing_code_column'] ?? null;
+        if (is_string($billing) && is_string($table)) {
+            $this->columnOfType($table, $billing, 'text', "$path.billing_code_column");
+        } elseif (is_string($billing)) {
+            $this->schema->add(Problem::atPath("$path.billing_code_column", 'column-needs-rate-table'));
+        }
         match ($rate['method']) {
             'tiers'      => $this->tiers(self::items($rate['tiers']), is_string($table) ? $table : null, "$path.tiers"),
             'per_meter'  => $this->kinds->limits(

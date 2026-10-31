@@ -144,6 +144,7 @@ final class ProfileForm
                     'text'   => ['type' => 'text'],
                     'column' => ['type' => 'ref', 'ref' => 'text_columns'],
                 ]]),
+                self::optional(self::field('billing_code_column', 'ref', ['ref' => 'text_columns', 'nullable' => true]), null),
                 self::optional(self::field('minimum', 'money', ['nullable' => true]), null),
                 self::optional(self::field('enabled', 'boolean'), true),
             ],

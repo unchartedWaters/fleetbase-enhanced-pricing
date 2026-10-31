@@ -5,11 +5,13 @@ namespace Fleetbase\EnhancedPricing\Store;
 use Fleetbase\EnhancedPricing\Profile\Problem;
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
 use Fleetbase\EnhancedPricing\Profile\Schema;
+use Fleetbase\EnhancedPricing\Support\BillingCode;
 use Fleetbase\EnhancedPricing\Support\Exact;
 
 /**
  * Checks a rate card row against its rate table, by the same rules the engine applies when an
- * order uses the row (ServiceFee::checkRow), so a row that saves is a row that prices. Also makes
+ * order uses the row (ServiceFee::checkRow), so a row that saves is a row that prices. A column that
+ * a service rate reads its billing code from must hold a billing code (BillingCode). Also makes
  * the row's key: the key columns' values in the table's row_key order, as a JSON array, hashed.
  */
 final class RowCheck
@@ -34,11 +36,12 @@ final class RowCheck
 
     /**
      * @param array<string, mixed> $table
-     * @param array<mixed>         $values column key => value
+     * @param array<mixed>         $values  column key => value
+     * @param array<string, mixed> $profile the normalized profile, for its billing code columns
      *
      * @return list<Problem>
      */
-    public static function check(array $table, array $values, string $path): array
+    public static function check(array $table, array $values, string $path, array $profile = []): array
     {
         $columns = self::columns($table);
         $keys    = R::strings($table['row_key']);
@@ -62,7 +65,40 @@ final class RowCheck
             }
         }
 
-        return $found;
+        return [...$found, ...self::billingCodes($table, $values, $path, $profile, $found)];
+    }
+
+    /**
+     * @param array<string, mixed> $table
+     * @param array<mixed>         $values
+     * @param array<string, mixed> $profile
+     * @param list<Problem>        $found   problems already found, so a column is named once
+     *
+     * @return list<Problem>
+     */
+    private static function billingCodes(array $table, array $values, string $path, array $profile, array $found): array
+    {
+        $named    = array_map(static fn (Problem $problem): string => $problem->path, $found);
+        $problems = [];
+        foreach (BillingCode::ratesByColumn($profile, R::text($table['key'])) as $column => $rates) {
+            if (in_array("$path.$column", $named, true)) {
+                continue;
+            }
+            foreach ($rates as $rate) {
+                $problem = BillingCode::problem($values[$column] ?? null, $profile, $rate);
+                if ($problem !== null) {
+                    $name       = match ($problem) {
+                        'missing' => 'row-missing-value',
+                        'invalid' => 'row-billing-code-invalid',
+                        default   => 'row-billing-code-is-product',
+                    };
+                    $problems[] = StoreRefused::problem($name, ['column' => $column], "$path.$column");
+                    break;
+                }
+            }
+        }
+
+        return $problems;
     }
 
     /**

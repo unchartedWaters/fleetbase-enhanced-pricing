@@ -108,15 +108,16 @@ final class ProfileShapes
             return null;
         }
         $fields = [
-            'key'        => S::type('key'),
-            'name'       => S::type('text'),
-            'product'    => S::type('code'),
-            'rate_table' => S::optional(S::nullable(S::type('key'))),
-            'line_name'  => S::type('raw'),
-            'method'     => S::type('raw'),
-            'minimum'    => S::optional(S::nullable(S::type('money'))),
-            'enabled'    => S::optional(S::type('boolean'), true),
-            $method      => S::type('raw'),
+            'key'                 => S::type('key'),
+            'name'                => S::type('text'),
+            'product'             => S::type('code'),
+            'rate_table'          => S::optional(S::nullable(S::type('key'))),
+            'line_name'           => S::type('raw'),
+            'billing_code_column' => S::optional(S::nullable(S::type('key'))),
+            'method'              => S::type('raw'),
+            'minimum'             => S::optional(S::nullable(S::type('money'))),
+            'enabled'             => S::optional(S::type('boolean'), true),
+            $method               => S::type('raw'),
         ];
         $rate = $this->schema->fields($raw, $fields, $path);
         if ($rate === null) {
