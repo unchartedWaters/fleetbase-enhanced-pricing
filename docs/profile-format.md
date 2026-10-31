@@ -253,7 +253,7 @@ Every order has one service rate. It decides the service fee.
 | `name` | label in the order form's rate picker and in messages |
 | `rate_table` | optional, default `null`: table whose row the order picks |
 | `line_name` | `{ "text": name }`, `{ "column": key }` of a text column, or both |
-| `billing_code_column` | optional, default `null`: key of a text column of the `rate_table` holding each row's billing code; see below |
+| `billing_code_column` | optional, default `null`: a text column; see below |
 | `method` | `tiers`, `per_meter` or `fixed_rate` |
 | `minimum` | optional, default `null`: money, the lowest service fee |
 | `enabled` | optional, default `true`; `false` refuses orders using it |
@@ -638,10 +638,10 @@ A name (a key) and up to 400 dates. Peak hours fees name a list.
 ## Invoice lines
 
 Lines that share a product, a billing code, a name and a unit amount are
-combined into one line with a quantity: three entities that each get a $12 fee are one line, 3 × $12,
-not three lines. A line that differs in any of them, such as a second tier's
-price, stays apart. Because a line's amount is always its quantity × its unit
-amount, combining never changes the total.
+combined into one line with a quantity: three entities that each get a $12 fee
+are one line, 3 × $12, not three lines. A line that differs in any of them,
+such as a second tier's price, stays apart. Because a line's amount is always
+its quantity × its unit amount, combining never changes the total.
 
 A line whose amount is $0 is left off. A line or an order total above
 $1,000,000 stops pricing, and so does a quote of more than 10,000 lines.
