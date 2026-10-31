@@ -3,6 +3,7 @@
 use Fleetbase\EnhancedPricing\Models\RateCardRow;
 use Fleetbase\EnhancedPricing\Pricing\PricingFailed;
 use Fleetbase\EnhancedPricing\Profile\ProfileValidator;
+use Fleetbase\EnhancedPricing\Tests\Support\BillingProfiles;
 use Fleetbase\EnhancedPricing\Tests\Support\Database;
 use Fleetbase\EnhancedPricing\Tests\Support\Orders;
 use Fleetbase\EnhancedPricing\Tests\Support\Profiles;
@@ -11,40 +12,6 @@ use Fleetbase\EnhancedPricing\Tests\Support\Stores;
 // Billing codes. A service rate can take its line's billing code from a text column of the rate
 // card row (a route), so each route bills under its own code. Every other line, and a service rate
 // without the field, bills under its product's code. Fees still match lines by product.
-
-/**
- * The example profile, with a `billing_code` column on its rate table and the tiered rate reading
- * its billing code from it. Subtotal fees are off unless asked for, so tests see the lines they name.
- *
- * @return array<string, mixed>
- */
-function billingProfile(bool $required = false, bool $subtotalFees = false): array
-{
-    $profile = Profiles::append(Profiles::example(), 'rate_tables.0.columns', [
-        'key'      => 'billing_code',
-        'type'     => 'text',
-        'required' => $required,
-    ]);
-    $profile = Profiles::set($profile, 'service_rates.0.billing_code_column', 'billing_code');
-    if ($subtotalFees === false) {
-        foreach ([0, 1, 2] as $index) {
-            $profile = Profiles::set($profile, "subtotal_fees.$index.enabled", false);
-        }
-    }
-
-    return $profile;
-}
-
-/**
- * @return list<array{0: string, 1: string, 2: string, 3: int}> [product, billing code, name, amount]
- */
-function billedLines(Fleetbase\EnhancedPricing\Pricing\Quote $quote): array
-{
-    return array_map(
-        static fn ($line): array => [$line->product, $line->billingCode, $line->name, $line->amount()],
-        $quote->lines,
-    );
-}
 
 // The engine.
 
@@ -58,26 +25,27 @@ test('a line without a billing code column bills under its product code', functi
 
 test('the service fee bills under the route row\'s billing code', function () {
     $quote = Orders::price([
-        'profile'  => billingProfile(),
+        'profile'  => BillingProfiles::profile(),
         'row'      => Orders::ROW_1 + ['billing_code' => '4010-NORTH'],
         'entities' => [Orders::entity(5), Orders::entity(5), Orders::entity(5, 'separate')],
     ]);
 
-    expect(billedLines($quote))->toBe([
+    expect(BillingProfiles::lines($quote))->toBe([
         ['TIERED', '4010-NORTH', 'Tiered delivery', 5400],
         ['SEPARATE', 'SEPARATE', 'Separate entity type', 900],
     ])->and($quote->lines[0]->toArray())->toMatchArray(['product' => 'TIERED', 'billing_code' => '4010-NORTH']);
 });
 
 test('each route bills under its own code', function () {
-    $north = Orders::price(['profile' => billingProfile(), 'row' => Orders::ROW_1 + ['billing_code' => 'R-NORTH']]);
-    $south = Orders::price(['profile' => billingProfile(), 'row' => Orders::ROW_2 + ['billing_code' => 'R-SOUTH']]);
+    $profile = BillingProfiles::profile();
+    $north   = Orders::price(['profile' => $profile, 'row' => Orders::ROW_1 + ['billing_code' => 'R-NORTH']]);
+    $south   = Orders::price(['profile' => $profile, 'row' => Orders::ROW_2 + ['billing_code' => 'R-SOUTH']]);
 
     expect($north->lines[0]->billingCode)->toBe('R-NORTH')->and($south->lines[0]->billingCode)->toBe('R-SOUTH');
 });
 
 test('the billing code can be the route\'s own code column', function () {
-    $profile = Profiles::set(billingProfile(), 'service_rates.0.billing_code_column', 'code');
+    $profile = Profiles::set(BillingProfiles::profile(), 'service_rates.0.billing_code_column', 'code');
 
     $quote = Orders::price(['profile' => $profile]);
 
@@ -85,16 +53,16 @@ test('the billing code can be the route\'s own code column', function () {
 });
 
 test('a service fee raised to its minimum keeps the route\'s billing code', function () {
-    $profile = Profiles::set(billingProfile(), 'service_rates.0.minimum', 5000);
+    $profile = Profiles::set(BillingProfiles::profile(), 'service_rates.0.minimum', 5000);
 
     $quote = Orders::price(['profile' => $profile, 'row' => Orders::ROW_1 + ['billing_code' => 'R-NORTH']]);
 
-    expect(billedLines($quote))->toBe([['TIERED', 'R-NORTH', 'Tiered delivery', 5000]]);
+    expect(BillingProfiles::lines($quote))->toBe([['TIERED', 'R-NORTH', 'Tiered delivery', 5000]]);
 });
 
 test('fees and subtotal fees still match the service line by product and keep their own codes', function () {
     $quote = Orders::price([
-        'profile' => billingProfile(subtotalFees: true),
+        'profile' => BillingProfiles::profile(subtotalFees: true),
         'row'     => Orders::ROW_1 + ['billing_code' => 'R-NORTH'],
         'pickup'  => Orders::SATURDAY,
     ]);
@@ -113,12 +81,12 @@ test('a route with no billing code stops pricing', function (mixed $blank) {
         $row['billing_code'] = $blank;
     }
 
-    Orders::price(['profile' => billingProfile(), 'row' => $row]);
+    Orders::price(['profile' => BillingProfiles::profile(), 'row' => $row]);
 })->with(['absent' => ['__absent__'], 'null' => [null], 'empty' => ['']])
     ->throws(PricingFailed::class, 'enhanced-pricing.pricing.missing-billing-code');
 
 test('a billing code that is not a code stops pricing', function (string $code) {
-    Orders::price(['profile' => billingProfile(), 'row' => Orders::ROW_1 + ['billing_code' => $code]]);
+    Orders::price(['profile' => BillingProfiles::profile(), 'row' => Orders::ROW_1 + ['billing_code' => $code]]);
 })->with([
     'space'         => ['R NORTH'],
     'leading space' => [' R-NORTH'],
@@ -128,18 +96,20 @@ test('a billing code that is not a code stops pricing', function (string $code) 
 ])->throws(PricingFailed::class, 'enhanced-pricing.pricing.billing-code-invalid');
 
 test('a billing code that is another product\'s code stops pricing, whatever its case', function (string $code) {
-    Orders::price(['profile' => billingProfile(), 'row' => Orders::ROW_1 + ['billing_code' => $code]]);
+    Orders::price(['profile' => BillingProfiles::profile(), 'row' => Orders::ROW_1 + ['billing_code' => $code]]);
 })->with(['same case' => ['PEAK'], 'other case' => ['peak']])
     ->throws(PricingFailed::class, 'enhanced-pricing.pricing.billing-code-is-product');
 
 test('a product whose code differs from the rate\'s own only in case is still another product', function () {
-    $profile = Profiles::append(billingProfile(), 'products', ['code' => 'tiered', 'name' => 'Lowercase twin']);
+    $twin    = ['code' => 'tiered', 'name' => 'Lowercase twin'];
+    $profile = Profiles::append(BillingProfiles::profile(), 'products', $twin);
 
     Orders::price(['profile' => $profile, 'row' => Orders::ROW_1 + ['billing_code' => 'tiered']]);
 })->throws(PricingFailed::class, 'enhanced-pricing.pricing.billing-code-is-product');
 
 test('a billing code may be the service rate\'s own product code', function () {
-    $quote = Orders::price(['profile' => billingProfile(), 'row' => Orders::ROW_1 + ['billing_code' => 'TIERED']]);
+    $row   = Orders::ROW_1 + ['billing_code' => 'TIERED'];
+    $quote = Orders::price(['profile' => BillingProfiles::profile(), 'row' => $row]);
 
     expect($quote->lines[0]->billingCode)->toBe('TIERED');
 });
@@ -164,24 +134,24 @@ test('the billing code column defaults to none', function () {
     $normalized = (new ProfileValidator())->normalize(Profiles::example());
 
     expect($normalized['service_rates'][0]['billing_code_column'])->toBeNull()
-        ->and((new ProfileValidator())->check(billingProfile()))->toBe([]);
+        ->and((new ProfileValidator())->check(BillingProfiles::profile()))->toBe([]);
 });
 
 test('the billing code column must be a text column of the service rate\'s table', function (
-    string $path,
+    int $rate,
     mixed $value,
-    string $at,
     string $key,
 ) {
-    $problems = (new ProfileValidator())->check(Profiles::set(billingProfile(), $path, $value));
+    $path     = "service_rates.$rate.billing_code_column";
+    $problems = (new ProfileValidator())->check(Profiles::set(BillingProfiles::profile(), $path, $value));
 
     expect(array_map(static fn ($problem): array => [$problem->path, $problem->key], $problems))
-        ->toContain([$at, "enhanced-pricing.profile.$key"]);
+        ->toContain([$path, "enhanced-pricing.profile.$key"]);
 })->with([
-    'unknown column'  => ['service_rates.0.billing_code_column', 'nope', 'service_rates.0.billing_code_column', 'unknown-reference'],
-    'money column'    => ['service_rates.0.billing_code_column', 'first', 'service_rates.0.billing_code_column', 'column-wrong-type'],
-    'not a key'       => ['service_rates.0.billing_code_column', 'Billing Code', 'service_rates.0.billing_code_column', 'wrong-type'],
-    'no rate table'   => ['service_rates.1.billing_code_column', 'code', 'service_rates.1.billing_code_column', 'column-needs-rate-table'],
+    'unknown column' => [0, 'nope', 'unknown-reference'],
+    'money column'   => [0, 'first', 'column-wrong-type'],
+    'not a key'      => [0, 'Billing Code', 'wrong-type'],
+    'no rate table'  => [1, 'code', 'column-needs-rate-table'],
 ]);
 
 // Rate card rows.
@@ -189,10 +159,11 @@ test('the billing code column must be a text column of the service rate\'s table
 test('a route row is refused without a usable billing code', function (array $changes, string $key) {
     Database::fresh();
     Database::seed();
-    $card = Stores::card('a', Stores::customer('a', Stores::profile('a', billingProfile())));
+    $card = Stores::card('a', Stores::customer('a', Stores::profile('a', BillingProfiles::profile())));
 
-    expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', $changes)]])))
-        ->toBe([$key]);
+    $rows = [['values' => Stores::row('R1', $changes)]];
+
+    expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', $rows)))->toBe([$key]);
 })->with([
     'absent'        => [[], 'row-missing-value'],
     'empty'         => [['billing_code' => ''], 'row-missing-value'],
@@ -203,21 +174,23 @@ test('a route row is refused without a usable billing code', function (array $ch
 test('a code that is one rate\'s own product is refused for another rate on the same column', function () {
     Database::fresh();
     Database::seed();
-    $profile           = billingProfile();
+    $profile           = BillingProfiles::profile();
     $second            = $profile['service_rates'][0];
     $second['key']     = 'tiered_two';
     $second['product'] = 'FLAT_A';
     $profile           = Profiles::append($profile, 'service_rates', $second);
     $card              = Stores::card('a', Stores::customer('a', Stores::profile('a', $profile)));
 
-    expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['billing_code' => 'TIERED'])]])))
+    $rows = [['values' => Stores::row('R1', ['billing_code' => 'TIERED'])]];
+
+    expect(Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', $rows)))
         ->toBe(['row-billing-code-is-product']);
 });
 
 test('a disabled service rate does not make rows need a billing code', function () {
     Database::fresh();
     Database::seed();
-    $profile = Profiles::set(billingProfile(), 'service_rates.0.enabled', false);
+    $profile = Profiles::set(BillingProfiles::profile(), 'service_rates.0.enabled', false);
     $card    = Stores::card('a', Stores::customer('a', Stores::profile('a', $profile)));
 
     $rows = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row()]]);
@@ -228,10 +201,11 @@ test('a disabled service rate does not make rows need a billing code', function 
 test('a version adding a product with a route\'s billing code marks the route stale', function () {
     Database::fresh();
     Database::seed();
-    $profile = Stores::profile('a', billingProfile());
+    $profile = Stores::profile('a', BillingProfiles::profile());
     $card    = Stores::card('a', Stores::customer('a', $profile));
-    $row     = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['billing_code' => 'R-NORTH'])]])[0];
-    $next    = Profiles::append(billingProfile(), 'products', ['code' => 'r-north', 'name' => 'North fee']);
+    $values  = Stores::row('R1', ['billing_code' => 'R-NORTH']);
+    $row     = Stores::for()->saveRows($card, 'rows', [['values' => $values]])[0];
+    $next    = Profiles::append(BillingProfiles::profile(), 'products', ['code' => 'r-north', 'name' => 'North fee']);
 
     Stores::for()->addVersion($profile->refresh(), $next, acceptStale: true);
 
@@ -242,7 +216,7 @@ test('a version adding a product with a route\'s billing code marks the route st
 test('a route row with a billing code saves', function () {
     Database::fresh();
     Database::seed();
-    $card = Stores::card('a', Stores::customer('a', Stores::profile('a', billingProfile())));
+    $card = Stores::card('a', Stores::customer('a', Stores::profile('a', BillingProfiles::profile())));
 
     $rows = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['billing_code' => 'R-NORTH'])]]);
 
@@ -256,9 +230,11 @@ test('a version that starts reading billing codes marks routes without one stale
     $card    = Stores::card('a', Stores::customer('a', $profile));
     $row     = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row()]])[0];
 
-    expect(Stores::refusal(fn () => Stores::for()->addVersion($profile, billingProfile())))->toBe(['stale-entries']);
+    $next = BillingProfiles::profile();
 
-    Stores::for()->addVersion($profile->refresh(), billingProfile(), acceptStale: true);
+    expect(Stores::refusal(fn () => Stores::for()->addVersion($profile, $next)))->toBe(['stale-entries']);
+
+    Stores::for()->addVersion($profile->refresh(), BillingProfiles::profile(), acceptStale: true);
 
     expect(RateCardRow::query()->find($row->uuid)?->problems[0]['key'] ?? null)
         ->toBe('enhanced-pricing.store.row-missing-value');

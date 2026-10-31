@@ -51,7 +51,8 @@ final class BillingCode
         $rates = [];
         foreach (R::items($profile['service_rates'] ?? []) as $rate) {
             $column = $rate['billing_code_column'] ?? null;
-            if (is_string($column) && ($rate['rate_table'] ?? null) === $table && ($rate['enabled'] ?? true) !== false) {
+            $usable = ($rate['rate_table'] ?? null) === $table && ($rate['enabled'] ?? true) !== false;
+            if (is_string($column) && $usable) {
                 $rates[$column][] = $rate;
             }
         }

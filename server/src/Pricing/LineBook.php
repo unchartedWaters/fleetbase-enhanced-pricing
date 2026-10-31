@@ -19,7 +19,11 @@ final class LineBook
     /** The longest line name, in characters: Ledger's invoice item description holds 191. */
     public const MAX_NAME = 191;
 
-    /** @var list<array{product: string, billing_code: string, name: string, quantity: int, unit: int, sources: list<string>}> */
+    /**
+     * @var list<array{
+     *     product: string, billing_code: string, name: string, quantity: int, unit: int, sources: list<string>
+     * }>
+     */
     private array $lines = [];
 
     private int $total = 0;
@@ -37,7 +41,9 @@ final class LineBook
     /**
      * A draft without a billing code bills under its product's code.
      *
-     * @param list<array{product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string}> $drafts
+     * @param list<array{
+     *     product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string
+     * }> $drafts
      */
     public function add(array $drafts): void
     {
@@ -122,7 +128,9 @@ final class LineBook
     }
 
     /**
-     * @param array{product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string} $draft
+     * @param array{
+     *     product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string
+     * } $draft
      */
     private function merge(array $draft, int $amount): void
     {

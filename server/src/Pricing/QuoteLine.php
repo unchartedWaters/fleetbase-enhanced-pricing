@@ -29,7 +29,10 @@ final class QuoteLine
     }
 
     /**
-     * @return array{product: string, billing_code: string, name: string, quantity: int, unit_amount: int, amount: int, sources: list<string>}
+     * @return array{
+     *     product: string, billing_code: string, name: string, quantity: int, unit_amount: int, amount: int,
+     *     sources: list<string>
+     * }
      */
     public function toArray(): array
     {
