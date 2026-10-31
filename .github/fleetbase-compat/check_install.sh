@@ -26,7 +26,7 @@ fi
 echo "ok   every extension migration ran and none are pending"
 
 routes="$(artisan route:list --no-ansi --path=enhanced-pricing)"
-expected="$(grep -cE '\$router->(get|post|put|patch|delete)\(' "$extension/server/src/routes.php")"
+expected="$(grep -cE "\\\$router->(get|post|put|patch|delete)\\(" "$extension/server/src/routes.php")"
 found="$(grep -c 'enhanced-pricing/int/v1/' <<<"$routes" || true)"
 [ "$found" = "$expected" ] || { echo "$routes"; fail "expected $expected enhanced-pricing routes, found $found"; }
 echo "ok   all $expected enhanced-pricing routes are registered"

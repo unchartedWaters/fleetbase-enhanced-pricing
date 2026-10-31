@@ -104,7 +104,7 @@ try {
     problems.push(`${step}: ${error.message.split('\n')[0]}`);
     await shot(`failed-${step.replace(/\W+/g, '-')}`).catch(() => {});
 } finally {
-    writeFileSync(`${out}/browser-console.log`, log.join('\n') + '\n');
+    writeFileSync(`${out}/browser-console.log`, `${log.join('\n')}\n`);
     await browser.close();
 }
 

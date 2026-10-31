@@ -19,6 +19,7 @@ PREFIX = "/enhanced-pricing/int/v1/admin"
 
 
 def call(base, method, path, body=None, token=None):
+    """Sends a JSON request and returns the status and the decoded body."""
     data = None if body is None else json.dumps(body).encode()
     request = urllib.request.Request(base + path, data=data, method=method)
     request.add_header("Accept", "application/json")
@@ -37,6 +38,7 @@ def call(base, method, path, body=None, token=None):
 
 
 def expect(condition, message, detail=None):
+    """Prints ok, or prints the failure and its detail and exits."""
     if not condition:
         print("FAIL: " + message)
         if detail is not None:
@@ -46,6 +48,7 @@ def expect(condition, message, detail=None):
 
 
 def main():
+    """Runs the checks in order; each one needs the ones before it."""
     base, repo, credentials_path = sys.argv[1].rstrip("/"), sys.argv[2], sys.argv[3]
     with open(repo + "/server/tests/Fixtures/example-profile.json") as handle:
         definition = json.load(handle)
@@ -64,12 +67,14 @@ def main():
         "organization_name": "Pricing CI Co",
     })
     token = body.get("token") if isinstance(body, dict) else None
-    expect(status == 200 and token, "the first sign-up returns an administrator's token", [status, body])
+    expect(status == 200 and token,
+           "the first sign-up returns an administrator's token", [status, body])
     with open(credentials_path, "w") as handle:
         json.dump({"email": email, "password": password}, handle)
 
     status, body = call(base, "GET", PREFIX + "/form", token=token)
-    expect(status == 200 and isinstance(body, dict) and body, "the profile form loads", [status, body])
+    expect(status == 200 and isinstance(body, dict) and body,
+           "the profile form loads", [status, body])
 
     status, body = call(base, "POST", PREFIX + "/profiles", {
         "key": "ci-example", "name": "CI example", "definition": {"currency": "USD"},
@@ -84,7 +89,8 @@ def main():
 
     status, body = call(base, "GET", PREFIX + "/profiles", token=token)
     keys = json.dumps(body)
-    expect(status == 200 and '"ci-example"' in keys, "the profile list shows the saved profile", [status, body])
+    expect(status == 200 and '"ci-example"' in keys,
+           "the profile list shows the saved profile", [status, body])
 
     status, body = call(base, "GET", PREFIX + "/profiles/ci-example", token=token)
     expect(status == 200, "the saved profile opens", [status, body])
@@ -104,12 +110,13 @@ def main():
     expect(status == 200 and isinstance(quote, dict), "the preview returns a quote", [status, body])
     lines = [[line["product"], line["name"], line["quantity"], line["unit_amount"], line["amount"]]
              for line in quote["lines"]]
-    expect(lines == [
+    worked_example = [
         ["DISTANCE", "Distance (10 km)", 1, 3500, 3500],
         ["PARCEL", "Parcel fee (12 kg)", 1, 480, 480],
         ["PERCENT", "Percentage subtotal fee (11% of 4.80)", 1, 53, 53],
-    ] and quote["total"] == 4033 and quote["currency"] == "USD",
-        "the quote matches the worked example (USD 40.33)", quote)
+    ]
+    matches = lines == worked_example and quote["total"] == 4033 and quote["currency"] == "USD"
+    expect(matches, "the quote matches the worked example (USD 40.33)", quote)
 
     print("API checks passed.")
 

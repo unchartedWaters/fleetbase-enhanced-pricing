@@ -9,6 +9,8 @@ engines:
       - "tests/**"
       - "config/**"
       - "*.js"
+      # An ES module with top-level await, which JSHint can't parse either.
+      - ".github/fleetbase-compat/**"
   # Lizard's function-length rule (50 lines) flags test setup helpers, which build whole
   # fixtures in one place by design. Production code under server/src is still checked.
   # Ember component tests are the same kind of fixture, so tests/ is excluded too.
