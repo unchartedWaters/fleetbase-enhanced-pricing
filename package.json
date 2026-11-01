@@ -46,7 +46,7 @@
     "@embroider/test-setup": "^3.0.2",
     "@fleetbase/ember-core": "^0.3.18",
     "@fleetbase/ember-ui": "^0.3.25",
-    "@fortawesome/ember-fontawesome": "^2.0.0",
+    "@fortawesome/ember-fontawesome": "^3.1.1",
     "@fortawesome/fontawesome-svg-core": "7.3.1",
     "@fortawesome/free-brands-svg-icons": "6.4.0",
     "@fortawesome/free-solid-svg-icons": "6.4.0",
