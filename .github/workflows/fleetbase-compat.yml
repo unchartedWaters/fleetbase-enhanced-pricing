@@ -18,13 +18,18 @@ name: Fleetbase compatibility
 #   if it is new: published in the last 14 days and not tested by any run yet (no
 #   "fleetbase-<version>-results" artifact), once its API image is on Docker Hub. Otherwise the
 #   run stops after the lookup. A failed build counts as tested, so re-run it from the Actions
-#   tab after a fix. The rules are in decide.sh, tested by test_decide.sh. (GitHub can't start a
-#   workflow from a release in another repository, hence the polling.)
+#   tab after a fix. The rules are in decide.sh, tested by test_decide.sh (run by server.yml).
+#   (GitHub can't start a workflow from a release in another repository, hence the polling.)
+#   The API image is pinned to the digest Docker Hub reports in that lookup, so the run builds
+#   on exactly the image it found.
 # - this extension's releases: a v* tag push, the event create-release.yml publishes the GitHub
 #   release from, builds the latest Fleetbase release. A `release` trigger would not fire,
 #   because create-release.yml publishes with GITHUB_TOKEN, and GitHub starts no workflows from
 #   events that token causes.
 # - workflow_dispatch: always builds; leave the version empty for the latest release.
+# One run at a time (concurrency). GitHub keeps only one waiting run and cancels an older
+# waiting one, so a manual or tag run queued behind a build can be replaced by the schedule; run
+# it again by hand if that happens.
 # The schedule and the manual run only work from the default branch. GitHub turns off scheduled
 # workflows after 60 days without commits; turn it back on from the Actions tab.
 
@@ -44,14 +49,20 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: fleetbase-compat
+  cancel-in-progress: false
+
 jobs:
   resolve:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       actions: read
     outputs:
       version: ${{ steps.version.outputs.version }}
+      digest: ${{ steps.version.outputs.digest }}
       build: ${{ steps.decide.outputs.build }}
     steps:
       - name: Checkout the decision script
@@ -60,7 +71,7 @@ jobs:
           sparse-checkout: .github/fleetbase-compat
           persist-credentials: false
 
-      - name: Find the Fleetbase release
+      - name: Find the Fleetbase release and its API image
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
@@ -68,6 +79,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${REQUESTED}" ]; then
+            if ! [[ "${REQUESTED}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::fleetbase_version must look like v0.7.74."
+              exit 1
+            fi
             release="$(gh api "repos/fleetbase/fleetbase/releases/tags/${REQUESTED}")"
           else
             release="$(gh api repos/fleetbase/fleetbase/releases/latest)"
@@ -78,9 +93,22 @@ jobs:
             echo "::error::Unexpected Fleetbase release tag: ${version}"
             exit 1
           fi
-          echo "Fleetbase ${version}, published ${published_at}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "published_at=${published_at}" >> "$GITHUB_OUTPUT"
+          status="$(curl -sS -o "${RUNNER_TEMP}/image.json" -w '%{http_code}' \
+            "https://hub.docker.com/v2/repositories/fleetbase/fleetbase-api/tags/${version}")"
+          digest=""
+          if [ "${status}" = 200 ]; then
+            digest="$(jq -r '.digest // ""' "${RUNNER_TEMP}/image.json")"
+          fi
+          if [ -n "${digest}" ] && ! [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Unexpected image digest: ${digest}"
+            exit 1
+          fi
+          echo "Fleetbase ${version}, published ${published_at}, API image ${digest:-not on Docker Hub}"
+          {
+            echo "version=${version}"
+            echo "published_at=${published_at}"
+            echo "digest=${digest}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Decide whether to build
         id: decide
@@ -88,6 +116,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
           PUBLISHED_AT: ${{ steps.version.outputs.published_at }}
+          DIGEST: ${{ steps.version.outputs.digest }}
           EVENT: ${{ github.event_name }}
         run: bash .github/fleetbase-compat/decide.sh
 
@@ -99,6 +128,7 @@ jobs:
     timeout-minutes: 75
     env:
       FLEETBASE_VERSION: ${{ needs.resolve.outputs.version }}
+      FLEETBASE_IMAGE: fleetbase/fleetbase-api@${{ needs.resolve.outputs.digest }}
       FLEETBASE_COMPAT_IMAGE: enhanced-pricing-compat/fleetbase-api:${{ needs.resolve.outputs.version }}
       COMPAT: ${{ github.workspace }}/extension/.github/fleetbase-compat
       RESULTS: ${{ github.workspace }}/results
@@ -134,9 +164,12 @@ jobs:
           mv api-context/package api-context/extension
           cp "${COMPAT}/Dockerfile" "${COMPAT}/install-extension.sh" api-context/
 
+      # Step time limits sit below the job's, so a hang fails the step and the results are still
+      # uploaded (a job that times out is cancelled, and a cancelled run uploads nothing).
       - name: Build the API image with the extension
+        timeout-minutes: 15
         run: |
-          docker build --pull --build-arg FLEETBASE_VERSION="${FLEETBASE_VERSION}" \
+          docker build --pull --build-arg FLEETBASE_IMAGE="${FLEETBASE_IMAGE}" \
             --tag "${FLEETBASE_COMPAT_IMAGE}" api-context
 
       - name: Prepare Fleetbase's compose files
@@ -150,6 +183,7 @@ jobs:
           echo "COMPOSE=docker compose --project-directory ${GITHUB_WORKSPACE}/fleetbase -f ${GITHUB_WORKSPACE}/fleetbase/docker-compose.yml -f ${COMPAT}/compose.yml" >> "$GITHUB_ENV"
 
       - name: Run Fleetbase's deploy script
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           ${COMPOSE} up -d --wait database cache
@@ -163,13 +197,16 @@ jobs:
           exit 1
 
       - name: Check the installed extension
+        timeout-minutes: 5
         run: bash "${COMPAT}/check_install.sh" "${GITHUB_WORKSPACE}/fleetbase" "${GITHUB_WORKSPACE}/extension"
 
       - name: Check the extension's endpoints
+        timeout-minutes: 5
         run: python3 "${COMPAT}/api_smoke.py" http://localhost:8000 "${GITHUB_WORKSPACE}/extension" "${RUNNER_TEMP}/credentials.json"
 
       - name: Build the console with the engine
         working-directory: fleetbase/console
+        timeout-minutes: 30
         env:
           API_HOST: http://localhost:8000
           API_SECURE: 'false'
@@ -203,6 +240,7 @@ jobs:
           exit 1
 
       - name: Check the Pricing page in the console
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/playwright"

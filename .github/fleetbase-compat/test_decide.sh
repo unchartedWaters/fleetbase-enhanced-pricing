@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Tests decide.sh, which tells the workflow whether a scheduled run builds, with gh and docker
-# stubbed: bash .github/fleetbase-compat/test_decide.sh
+# Tests decide.sh, which tells the workflow whether a scheduled run builds, with gh stubbed:
+# bash .github/fleetbase-compat/test_decide.sh
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 stubs="$(mktemp -d)"
@@ -16,25 +16,24 @@ while [ $# -gt 0 ]; do
 done
 jq -r "$filter" <<<"${ARTIFACTS_JSON}"
 STUB
-# docker manifest inspect IMAGE: succeeds when $IMAGE_PUBLISHED is yes.
-cat > "$stubs/docker" <<'STUB'
-#!/usr/bin/env bash
-[ "${IMAGE_PUBLISHED}" = yes ]
-STUB
-chmod +x "$stubs/gh" "$stubs/docker"
+chmod +x "$stubs/gh"
 
 none='{"artifacts": []}'
 tested='{"artifacts": [{"expired": false, "workflow_run": {"head_branch": "some-branch"}}]}'
 expired='{"artifacts": [{"expired": true, "workflow_run": {"head_branch": "main"}}]}'
 failures=0
 
-check() { # name expected event published_days_ago image artifacts
+digest="sha256:$(printf '0%.0s' $(seq 64))"
+
+check() { # name expected event published_days_ago image(yes/no) artifacts
     local name="$1" expected="$2" event="$3" age="$4" image="$5" artifacts="$6" out status
+    local image_digest=""
+    [ "$image" = yes ] && image_digest="$digest"
     out="$(mktemp)"
     status=0
     PATH="$stubs:$PATH" EVENT="$event" VERSION=v9.9.9 GITHUB_REPOSITORY=o/r \
         PUBLISHED_AT="$(date -u -d "-${age} days" +%Y-%m-%dT%H:%M:%SZ)" \
-        IMAGE_PUBLISHED="$image" ARTIFACTS_JSON="$artifacts" GITHUB_OUTPUT="$out" \
+        DIGEST="$image_digest" ARTIFACTS_JSON="$artifacts" GITHUB_OUTPUT="$out" \
         bash "$here/decide.sh" >/dev/null 2>&1 || status=$?
     local got
     got="$(sed -n 's/^build=//p' "$out")"

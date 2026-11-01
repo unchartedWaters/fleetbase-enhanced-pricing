@@ -160,7 +160,9 @@ stops after the lookup (`decide.sh`, tested by `test_decide.sh`). It also
 builds the latest release when this package is released (a `v*` tag), and by
 hand from the Actions tab (**Run workflow**, with an optional Fleetbase tag
 such as `v0.7.74`). A failed release is not retried by the schedule; run it
-again by hand after a fix.
+again by hand after a fix. The API image is pinned to the digest Docker Hub
+reports for the release when the run looks it up, and only one run goes at a
+time.
 
 It installs the extension from its npm tarball, as the registry would: with
 Composer into the release's API image, and with pnpm into the release's
