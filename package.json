@@ -73,7 +73,7 @@
     "@ember/optional-features": "^2.0.0",
     "@ember/test-helpers": "^3.2.0",
     "broccoli-asset-rev": "^3.0.0",
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.6",
     "ember-cli-clean-css": "^3.0.0",
     "ember-cli-dependency-checker": "^3.3.2",
     "ember-cli-inject-live-reload": "^2.1.0",
