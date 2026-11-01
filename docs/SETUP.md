@@ -153,12 +153,14 @@ pnpm test:ember
 
 `.github/workflows/fleetbase-compat.yml` builds a full Fleetbase release with
 the extension installed and checks that the extension works on it. Every six
-hours it looks up the latest `fleetbase/fleetbase` release and, once that
-release's `fleetbase/fleetbase-api` image is on Docker Hub, tests it once. It
-also runs on this package's `v*` tags, on pull requests that change it, and
-by hand from the Actions tab (**Run workflow**, with an optional Fleetbase
-tag such as `v0.7.74`). A failed release is not retried by the schedule; run
-it again by hand after a fix.
+hours it looks up the latest `fleetbase/fleetbase` release and builds it only
+when it is new: published in the last 14 days and not tested by any run yet,
+once its `fleetbase/fleetbase-api` image is on Docker Hub. Otherwise the run
+stops after the lookup (`decide.sh`, tested by `test_decide.sh`). It also
+builds the latest release when this package is released (a `v*` tag), and by
+hand from the Actions tab (**Run workflow**, with an optional Fleetbase tag
+such as `v0.7.74`). A failed release is not retried by the schedule; run it
+again by hand after a fix.
 
 It installs the extension from its npm tarball, as the registry would: with
 Composer into the release's API image, and with pnpm into the release's
@@ -175,6 +177,6 @@ console source, built for production. It then runs the release's own
 
 The scripts are in `.github/fleetbase-compat/`. Screenshots and logs are
 kept as the run's `fleetbase-<version>-results` artifact for 90 days; a run
-on `main` with that artifact counts as the release having been tested.
+with that artifact counts as the release having been tested.
 GitHub turns scheduled workflows off after 60 days without commits; turn it
 back on from the Actions tab.

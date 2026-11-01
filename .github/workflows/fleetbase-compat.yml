@@ -14,13 +14,17 @@ name: Fleetbase compatibility
 #   through the preview form in Chromium.
 #
 # When it runs:
-# - schedule: every 6 hours it looks up the latest fleetbase/fleetbase release. It builds that
-#   release once its API image is on Docker Hub, unless a run on main has already tested it (a
-#   "fleetbase-<version>-results" artifact exists; they are kept 90 days). A failed run counts as
-#   tested, so re-run it from the Actions tab after a fix.
+# - schedule: every 6 hours it looks up the latest fleetbase/fleetbase release and builds it only
+#   if it is new: published in the last 14 days and not tested by any run yet (no
+#   "fleetbase-<version>-results" artifact), once its API image is on Docker Hub. Otherwise the
+#   run stops after the lookup. A failed build counts as tested, so re-run it from the Actions
+#   tab after a fix. The rules are in decide.sh, tested by test_decide.sh. (GitHub can't start a
+#   workflow from a release in another repository, hence the polling.)
+# - this extension's releases: a v* tag push, the event create-release.yml publishes the GitHub
+#   release from, builds the latest Fleetbase release. A `release` trigger would not fire,
+#   because create-release.yml publishes with GITHUB_TOKEN, and GitHub starts no workflows from
+#   events that token causes.
 # - workflow_dispatch: always builds; leave the version empty for the latest release.
-# - a v* tag (this extension's release) and pull requests that change these files: the latest
-#   release.
 # The schedule and the manual run only work from the default branch. GitHub turns off scheduled
 # workflows after 60 days without commits; turn it back on from the Actions tab.
 
@@ -36,19 +40,9 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '.github/workflows/fleetbase-compat.yml'
-      - '.github/fleetbase-compat/**'
 
 permissions:
   contents: read
-
-# A new push to a pull request replaces its running check; other runs never cancel each other.
-concurrency:
-  group: fleetbase-compat-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
-  cancel-in-progress: true
 
 jobs:
   resolve:
@@ -60,6 +54,12 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       build: ${{ steps.decide.outputs.build }}
     steps:
+      - name: Checkout the decision script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/fleetbase-compat
+          persist-credentials: false
+
       - name: Find the Fleetbase release
         id: version
         env:
@@ -68,46 +68,28 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${REQUESTED}" ]; then
-            version="${REQUESTED}"
-            gh api "repos/fleetbase/fleetbase/releases/tags/${version}" --jq .tag_name >/dev/null
+            release="$(gh api "repos/fleetbase/fleetbase/releases/tags/${REQUESTED}")"
           else
-            version="$(gh api repos/fleetbase/fleetbase/releases/latest --jq .tag_name)"
+            release="$(gh api repos/fleetbase/fleetbase/releases/latest)"
           fi
+          version="$(jq -r .tag_name <<<"${release}")"
+          published_at="$(jq -r .published_at <<<"${release}")"
           if ! [[ "${version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Unexpected Fleetbase release tag: ${version}"
             exit 1
           fi
-          echo "Fleetbase ${version}"
+          echo "Fleetbase ${version}, published ${published_at}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "published_at=${published_at}" >> "$GITHUB_OUTPUT"
 
       - name: Decide whether to build
         id: decide
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          PUBLISHED_AT: ${{ steps.version.outputs.published_at }}
           EVENT: ${{ github.event_name }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          set -euo pipefail
-          if ! docker manifest inspect "fleetbase/fleetbase-api:${VERSION}" >/dev/null 2>&1; then
-            if [ "${EVENT}" = schedule ]; then
-              echo "fleetbase/fleetbase-api:${VERSION} isn't on Docker Hub yet; the next scheduled run tries again."
-              echo "build=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "::error::fleetbase/fleetbase-api:${VERSION} isn't on Docker Hub."
-            exit 1
-          fi
-          if [ "${EVENT}" = schedule ]; then
-            tested="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=fleetbase-${VERSION}-results&per_page=100" \
-              --jq "[.artifacts[] | select(.expired == false and .workflow_run.head_branch == \"${DEFAULT_BRANCH}\")] | length")"
-            if [ "${tested}" != 0 ]; then
-              echo "Fleetbase ${VERSION} was already tested on ${DEFAULT_BRANCH}."
-              echo "build=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          fi
-          echo "build=true" >> "$GITHUB_OUTPUT"
+        run: bash .github/fleetbase-compat/decide.sh
 
   build:
     needs: resolve
