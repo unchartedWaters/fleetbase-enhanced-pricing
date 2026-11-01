@@ -27,6 +27,9 @@ jobs:
     - name: Check package versions match
       run: python3 .github/workflows/check_versions.py
 
+    - name: Test the Fleetbase compatibility decision script
+      run: bash .github/fleetbase-compat/test_decide.sh
+
     - name: Setup PHP
       uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
