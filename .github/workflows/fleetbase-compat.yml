@@ -1,0 +1,240 @@
+name: Fleetbase compatibility
+
+# Builds a full Fleetbase release with Enhanced Pricing installed and checks the extension works
+# on it. The files it uses are in .github/fleetbase-compat/.
+#
+# - API: the release's published fleetbase/fleetbase-api image, plus the extension installed with
+#   Composer from its npm tarball (the files the Fleetbase registry serves). It runs with the
+#   release's own docker-compose.yml and api/deploy.sh (migrations, seeders, permissions).
+#   check_install.sh checks the migrations, routes, permissions and policies, and api_smoke.py
+#   signs up an administrator, saves the example profile and prices a quote through the
+#   extension's endpoints.
+# - Console: the release's console source with the engine added from the same tarball, built for
+#   production. console_smoke.mjs signs in, opens the Pricing page and prices the same quote
+#   through the preview form in Chromium.
+#
+# When it runs:
+# - schedule: every 6 hours it looks up the latest fleetbase/fleetbase release and builds it only
+#   if it is new: published in the last 14 days and not tested by any run yet (no
+#   "fleetbase-<version>-results" artifact), once its API image is on Docker Hub. Otherwise the
+#   run stops after the lookup. A failed build counts as tested, so re-run it from the Actions
+#   tab after a fix. The rules are in decide.sh, tested by test_decide.sh. (GitHub can't start a
+#   workflow from a release in another repository, hence the polling.)
+# - this extension's releases: a v* tag push, the event create-release.yml publishes the GitHub
+#   release from, builds the latest Fleetbase release. A `release` trigger would not fire,
+#   because create-release.yml publishes with GITHUB_TOKEN, and GitHub starts no workflows from
+#   events that token causes.
+# - workflow_dispatch: always builds; leave the version empty for the latest release.
+# The schedule and the manual run only work from the default branch. GitHub turns off scheduled
+# workflows after 60 days without commits; turn it back on from the Actions tab.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      fleetbase_version:
+        description: 'Fleetbase release tag, such as v0.7.74 (empty: the latest release)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.decide.outputs.build }}
+    steps:
+      - name: Checkout the decision script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/fleetbase-compat
+          persist-credentials: false
+
+      - name: Find the Fleetbase release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED: ${{ inputs.fleetbase_version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${REQUESTED}" ]; then
+            release="$(gh api "repos/fleetbase/fleetbase/releases/tags/${REQUESTED}")"
+          else
+            release="$(gh api repos/fleetbase/fleetbase/releases/latest)"
+          fi
+          version="$(jq -r .tag_name <<<"${release}")"
+          published_at="$(jq -r .published_at <<<"${release}")"
+          if ! [[ "${version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected Fleetbase release tag: ${version}"
+            exit 1
+          fi
+          echo "Fleetbase ${version}, published ${published_at}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "published_at=${published_at}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to build
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PUBLISHED_AT: ${{ steps.version.outputs.published_at }}
+          EVENT: ${{ github.event_name }}
+        run: bash .github/fleetbase-compat/decide.sh
+
+  build:
+    needs: resolve
+    if: needs.resolve.outputs.build == 'true'
+    name: Fleetbase ${{ needs.resolve.outputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      FLEETBASE_VERSION: ${{ needs.resolve.outputs.version }}
+      FLEETBASE_COMPAT_IMAGE: enhanced-pricing-compat/fleetbase-api:${{ needs.resolve.outputs.version }}
+      COMPAT: ${{ github.workspace }}/extension/.github/fleetbase-compat
+      RESULTS: ${{ github.workspace }}/results
+    steps:
+      - name: Checkout the extension
+        uses: actions/checkout@v7
+        with:
+          path: extension
+          persist-credentials: false
+
+      - name: Checkout Fleetbase ${{ env.FLEETBASE_VERSION }}
+        uses: actions/checkout@v7
+        with:
+          repository: fleetbase/fleetbase
+          ref: ${{ env.FLEETBASE_VERSION }}
+          path: fleetbase
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Pack the extension
+        run: |
+          set -euo pipefail
+          mkdir -p "${RESULTS}" pack
+          (cd extension && npm pack --ignore-scripts --pack-destination ../pack)
+          tarball="$(ls "${GITHUB_WORKSPACE}"/pack/*.tgz)"
+          echo "TARBALL=${tarball}" >> "$GITHUB_ENV"
+          mkdir -p api-context
+          tar -xzf "${tarball}" -C api-context
+          mv api-context/package api-context/extension
+          cp "${COMPAT}/Dockerfile" "${COMPAT}/install-extension.sh" api-context/
+
+      - name: Build the API image with the extension
+        run: |
+          docker build --pull --build-arg FLEETBASE_VERSION="${FLEETBASE_VERSION}" \
+            --tag "${FLEETBASE_COMPAT_IMAGE}" api-context
+
+      - name: Prepare Fleetbase's compose files
+        run: |
+          set -euo pipefail
+          key="base64:$(openssl rand -base64 32)"
+          echo "::add-mask::${key}"
+          echo "FLEETBASE_COMPAT_APP_KEY=${key}" >> "$GITHUB_ENV"
+          printf '# Fleetbase compatibility CI\n' > fleetbase/api/.env
+          mkdir -p fleetbase/api/storage/app
+          echo "COMPOSE=docker compose --project-directory ${GITHUB_WORKSPACE}/fleetbase -f ${GITHUB_WORKSPACE}/fleetbase/docker-compose.yml -f ${COMPAT}/compose.yml" >> "$GITHUB_ENV"
+
+      - name: Run Fleetbase's deploy script
+        run: |
+          set -euo pipefail
+          ${COMPOSE} up -d --wait database cache
+          ${COMPOSE} up -d application queue
+          ${COMPOSE} exec -T application ./deploy.sh
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://localhost:8000/health; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::The API did not answer /health"
+          exit 1
+
+      - name: Check the installed extension
+        run: bash "${COMPAT}/check_install.sh" "${GITHUB_WORKSPACE}/fleetbase" "${GITHUB_WORKSPACE}/extension"
+
+      - name: Check the extension's endpoints
+        run: python3 "${COMPAT}/api_smoke.py" http://localhost:8000 "${GITHUB_WORKSPACE}/extension" "${RUNNER_TEMP}/credentials.json"
+
+      - name: Build the console with the engine
+        working-directory: fleetbase/console
+        env:
+          API_HOST: http://localhost:8000
+          API_SECURE: 'false'
+          SOCKETCLUSTER_HOST: localhost
+          SOCKETCLUSTER_SECURE: 'false'
+          EXTENSIONS: '@unchartedwaters/enhanced-pricing-engine'
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        # pnpm is the version the console pins in package.json (packageManager), through corepack.
+        # Adding the tarball installs the console's locked dependencies and the engine, as
+        # installing the engine from a registry would.
+        run: |
+          set -euo pipefail
+          corepack enable
+          pnpm --version
+          pnpm add "${TARBALL}"
+          pnpm build --environment production 2>&1 | tee "${RESULTS}/console-build.log"
+          compgen -G 'dist/engines-dist/@unchartedwaters/enhanced-pricing-engine/assets/engine-*.js' >/dev/null \
+            || { echo "::error::The console build has no enhanced-pricing engine"; exit 1; }
+
+      - name: Serve the console
+        run: |
+          docker run -d --name console -p 4200:4200 \
+            -v "${GITHUB_WORKSPACE}/fleetbase/console/dist:/usr/share/nginx/html:ro" \
+            -v "${GITHUB_WORKSPACE}/fleetbase/console/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+            nginx:alpine
+          for attempt in $(seq 1 20); do
+            curl -fsS --max-time 5 http://localhost:4200/ >/dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::The console did not answer"
+          exit 1
+
+      - name: Check the Pricing page in the console
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/playwright"
+          cd "${RUNNER_TEMP}/playwright"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+          cp "${COMPAT}/console_smoke.mjs" .
+          node console_smoke.mjs http://localhost:4200 "${RUNNER_TEMP}/credentials.json" "${RESULTS}/console"
+
+      - name: Collect logs
+        if: always()
+        run: |
+          [ -n "${COMPOSE:-}" ] || exit 0
+          ${COMPOSE} ps > "${RESULTS}/compose-ps.txt" 2>&1 || true
+          ${COMPOSE} logs --no-color --tail=500 > "${RESULTS}/compose.log" 2>&1 || true
+          ${COMPOSE} exec -T application sh -c 'tail -n 300 storage/logs/*.log' > "${RESULTS}/laravel.log" 2>&1 || true
+
+      # The scheduled run looks for this artifact to know a release was tested, so it is uploaded
+      # whether the checks passed or failed, but not when the run was cancelled.
+      - name: Upload results
+        if: success() || failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fleetbase-${{ env.FLEETBASE_VERSION }}-results
+          path: results
+          retention-days: 90
+          overwrite: true
+          if-no-files-found: warn
+
+      - name: Stop Fleetbase
+        if: always()
+        run: |
+          docker rm -f console || true
+          [ -z "${COMPOSE:-}" ] || ${COMPOSE} down -v || true
