@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.23.2",
-    "@embroider/test-setup": "^3.0.2",
+    "@embroider/test-setup": "^4.0.0",
     "@fleetbase/ember-core": "^0.3.18",
     "@fleetbase/ember-ui": "^0.3.25",
     "@fortawesome/ember-fontawesome": "^2.0.0",
