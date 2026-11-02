@@ -4,24 +4,20 @@
 
 version: 2
 updates:
-  # composer.json and composer.lock: the PHP package.
-  - package-ecosystem: "composer"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-  # package.json and pnpm-lock.yaml: the Ember engine.
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    ignore:
-      # Stay on the Fleetbase console's ember-resolver (^11). ember-can 6
-      # (from @fleetbase/ember-core and ember-ui) calls Resolver.reopen, which
-      # ember-resolver 13 removed.
-      - dependency-name: "ember-resolver"
-        update-types: ["version-update:semver-major"]
-  # The actions used by .github/workflows.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      monthly-batch:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      monthly-batch:
+        patterns:
+          - "*"
