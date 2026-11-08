@@ -8,7 +8,7 @@ the profile checks and the pricing engine.
 
 - PHP 8.2. This is the supported version, it matches Fleetbase, and CI runs
   it.
-- Node.js 22 or newer (CI runs the current Node.js LTS).
+- Node.js 22 or newer (CI runs Node.js 24).
 - Composer dependencies: `composer install` in this package.
 - Node dependencies: `pnpm install --frozen-lockfile` in this package.
 
