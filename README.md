@@ -18,11 +18,14 @@ rental business.
   a customer's overrides, the dated changes in effect and the chosen rate card
   row, in exact arithmetic, into invoice lines with quantities and unit
   amounts.
+- The tables that store profiles and their versions, customers, rate cards and
+  dated changes, and the console's **Pricing** page: profiles and their
+  versions, the profile editor, subtotal fees and their dated changes, each
+  customer's overrides and rate cards (read-only), and a quote preview.
 - Tests for every rule, and the worked examples priced end to end.
 
-Saving profiles, rate cards and overrides, pricing orders as they are made,
-and the console screens arrive in later releases. Until then the package
-installs, loads and changes nothing in Fleetbase.
+Pricing orders as they are made, and the order form and order details
+screens, arrive in later releases.
 
 ## Documentation
 
