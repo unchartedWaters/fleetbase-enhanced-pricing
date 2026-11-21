@@ -34,7 +34,7 @@ final class VersionStore
         }
 
         try {
-            return $this->context->transaction(function () use ($key, $name, $definition, $normalized, $userUuid): Profile {
+            $create = function () use ($key, $name, $definition, $normalized, $userUuid): Profile {
                 $profile = Profile::createWith([
                     'company_uuid'  => $this->context->company,
                     'key'           => $key,
@@ -45,7 +45,9 @@ final class VersionStore
                 $this->insertVersion($profile, 1, $definition, $userUuid);
 
                 return $profile;
-            });
+            };
+
+            return $this->context->transaction($create);
         } catch (UniqueConstraintViolationException) {
             // A request that created the same key between the check above and the insert wins.
             throw StoreRefused::refuse('profile-exists', ['key' => $key], 'key');

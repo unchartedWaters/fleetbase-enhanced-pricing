@@ -243,7 +243,8 @@ test('a key taken between the check and the insert is refused as profile-exists'
     $taken      = false;
     $connection = (new Profile())->getConnection();
     $connection->listen(static function ($query) use (&$taken, $connection): void {
-        if ($taken === false && str_contains($query->sql, 'exists') && str_contains($query->sql, 'enhanced_pricing_profiles')) {
+        $isCheck = str_contains($query->sql, 'exists') && str_contains($query->sql, 'enhanced_pricing_profiles');
+        if ($taken === false && $isCheck) {
             $taken = true;
             $connection->table('enhanced_pricing_profiles')->insert([
                 'uuid' => 'rival', 'company_uuid' => Database::company('a'), 'key' => 'main',
