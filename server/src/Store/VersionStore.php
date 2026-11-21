@@ -7,7 +7,7 @@ use Fleetbase\EnhancedPricing\Models\DatedChange;
 use Fleetbase\EnhancedPricing\Models\Profile;
 use Fleetbase\EnhancedPricing\Models\ProfileVersion;
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
  * Profiles and their versions, for PricingStore. A new version is checked against every stored
@@ -46,13 +46,9 @@ final class VersionStore
 
                 return $profile;
             });
-        } catch (QueryException $error) {
+        } catch (UniqueConstraintViolationException) {
             // A request that created the same key between the check above and the insert wins.
-            if (Profile::ofCompany($this->context->company)->where('key', $key)->exists()) {
-                throw StoreRefused::refuse('profile-exists', ['key' => $key], 'key');
-            }
-
-            throw $error;
+            throw StoreRefused::refuse('profile-exists', ['key' => $key], 'key');
         }
     }
 
