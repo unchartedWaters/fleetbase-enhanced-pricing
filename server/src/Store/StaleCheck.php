@@ -50,10 +50,6 @@ final class StaleCheck
     public function run(Profile $profile, array $earlier = []): array
     {
         $customers = Customer::listOf(Customer::ofCompany($this->company)->where('profile_uuid', $profile->uuid));
-        $cards     = RateCard::ofCompany($this->company);
-        $cards->getQuery()->whereIn('pricing_customer_uuid', array_map(self::uuid(...), $customers));
-        $rows      = RateCardRow::ofCompany($this->company);
-        $rows->getQuery()->whereIn('rate_card_uuid', array_map(self::uuid(...), RateCard::listOf($cards)));
         $changes   = DatedChange::ofCompany($this->company)->where('profile_uuid', $profile->uuid)->where('live', 1);
         $changes->getQuery()->orderBy('effective_from');
 
@@ -61,13 +57,22 @@ final class StaleCheck
         foreach ($customers as $customer) {
             $entries[$customer->uuid] = $this->reuse($earlier, $customer, 'customer', $this->customer(...));
         }
-        $rows->chunkById(self::CHUNK, function (iterable $chunk) use (&$entries, $earlier): void {
-            foreach ($chunk as $row) {
-                if ($row instanceof RateCardRow) {
-                    $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
-                }
+        // The uuid lists go to the database in chunks: one query cannot bind more than 65,535 values.
+        foreach (array_chunk(array_map(self::uuid(...), $customers), self::CHUNK) as $customerChunk) {
+            $cards = RateCard::ofCompany($this->company);
+            $cards->getQuery()->whereIn('pricing_customer_uuid', $customerChunk);
+            foreach (array_chunk(array_map(self::uuid(...), RateCard::listOf($cards)), self::CHUNK) as $cardChunk) {
+                $rows = RateCardRow::ofCompany($this->company);
+                $rows->getQuery()->whereIn('rate_card_uuid', $cardChunk);
+                $rows->chunkById(self::CHUNK, function (iterable $chunk) use (&$entries, $earlier): void {
+                    foreach ($chunk as $row) {
+                        if ($row instanceof RateCardRow) {
+                            $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
+                        }
+                    }
+                }, 'uuid');
             }
-        }, 'uuid');
+        }
 
         return $entries + $this->changes(DatedChange::listOf($changes), $earlier);
     }

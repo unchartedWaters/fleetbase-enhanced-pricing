@@ -254,3 +254,27 @@ test('a key taken between the check and the insert is refused as profile-exists'
 
     expect(Stores::refusal(fn () => Stores::profile('a')))->toBe(['profile-exists']);
 });
+
+test('a stale row is found when the profile has more customers and cards than one chunk', function () {
+    $profile = Stores::profile();
+    $store   = Stores::for();
+    $last    = null;
+    foreach (range(1, 501) as $number) {
+        $contact = Database::customer('a', $number + 10);
+        Profile::query()->getConnection()->table('contacts')->insert([
+            'uuid' => $contact, 'company_uuid' => Database::company('a'), 'type' => 'customer', 'name' => "C$number",
+        ]);
+        $last = $store->saveCard($store->saveCustomer($contact, $profile), 'Main');
+    }
+    $row      = $store->saveRows($last, 'rows', [['values' => Stores::row()]])[0];
+    $required = Profiles::set(Profiles::example(), 'rate_tables.0.columns.4.required', true);
+
+    try {
+        $store->addVersion($profile, $required);
+        $stale = [];
+    } catch (StoreRefused $refused) {
+        $stale = array_column($refused->stale, 'uuid');
+    }
+
+    expect($stale)->toBe([$row->uuid]);
+});
