@@ -9,7 +9,7 @@ fees and their dated changes, each customer's overrides and rate cards
 panel come in a later release.
 
 The package lives in
-[watersAbove/fleetbase-enhanced-pricing](https://github.com/watersAbove/fleetbase-enhanced-pricing),
+[unchartedWaters/fleetbase-enhanced-pricing](https://github.com/unchartedWaters/fleetbase-enhanced-pricing),
 checked out on its own, not inside the Fleetbase repository.
 
 | | Name |
