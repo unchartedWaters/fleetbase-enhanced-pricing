@@ -7,6 +7,7 @@ use Fleetbase\EnhancedPricing\Models\DatedChange;
 use Fleetbase\EnhancedPricing\Models\Profile;
 use Fleetbase\EnhancedPricing\Models\ProfileVersion;
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
+use Illuminate\Database\QueryException;
 
 /**
  * Profiles and their versions, for PricingStore. A new version is checked against every stored
@@ -32,18 +33,27 @@ final class VersionStore
             throw StoreRefused::refuse('profile-exists', ['key' => $key], 'key');
         }
 
-        return $this->context->transaction(function () use ($key, $name, $definition, $normalized, $userUuid): Profile {
-            $profile = Profile::createWith([
-                'company_uuid'  => $this->context->company,
-                'key'           => $key,
-                'name'          => $name,
-                'currency'      => R::text($normalized['currency']),
-                'distance_unit' => R::text($normalized['distance_unit']),
-            ]);
-            $this->insertVersion($profile, 1, $definition, $userUuid);
+        try {
+            return $this->context->transaction(function () use ($key, $name, $definition, $normalized, $userUuid): Profile {
+                $profile = Profile::createWith([
+                    'company_uuid'  => $this->context->company,
+                    'key'           => $key,
+                    'name'          => $name,
+                    'currency'      => R::text($normalized['currency']),
+                    'distance_unit' => R::text($normalized['distance_unit']),
+                ]);
+                $this->insertVersion($profile, 1, $definition, $userUuid);
 
-            return $profile;
-        });
+                return $profile;
+            });
+        } catch (QueryException $error) {
+            // A request that created the same key between the check above and the insert wins.
+            if (Profile::ofCompany($this->context->company)->where('key', $key)->exists()) {
+                throw StoreRefused::refuse('profile-exists', ['key' => $key], 'key');
+            }
+
+            throw $error;
+        }
     }
 
     /**

@@ -237,3 +237,20 @@ test('a profile keeps its company, key and fixed units', function (string $field
     'currency'      => ['currency', 'EUR'],
     'distance unit' => ['distance_unit', 'mi'],
 ]);
+
+test('a key taken between the check and the insert is refused as profile-exists', function () {
+    // The rival request commits the same key right after this one's check finds it free.
+    $taken      = false;
+    $connection = (new Profile())->getConnection();
+    $connection->listen(static function ($query) use (&$taken, $connection): void {
+        if ($taken === false && str_contains($query->sql, 'exists') && str_contains($query->sql, 'enhanced_pricing_profiles')) {
+            $taken = true;
+            $connection->table('enhanced_pricing_profiles')->insert([
+                'uuid' => 'rival', 'company_uuid' => Database::company('a'), 'key' => 'main',
+                'name' => 'Rival', 'currency' => 'USD', 'distance_unit' => 'km',
+            ]);
+        }
+    });
+
+    expect(Stores::refusal(fn () => Stores::profile('a')))->toBe(['profile-exists']);
+});
