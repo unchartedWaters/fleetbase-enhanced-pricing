@@ -21,7 +21,7 @@ checked out on its own, not inside the Fleetbase repository.
 
 ## Requirements
 
-- PHP `^8.2` with `fleetbase/core-api` `^1.6`.
+- PHP `^8.2` with `fleetbase/core-api` `^1.6` or `^2.0`.
 - `brick/math` `^0.12`, for exact arithmetic.
 - Node `>= 22` for the Ember engine.
 - A current timezone database on production servers, and a current PHP.
