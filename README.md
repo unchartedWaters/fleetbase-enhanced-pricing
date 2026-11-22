@@ -13,7 +13,7 @@ rental business.
 ## Requirements
 
 **Fleetbase 0.8.1 or later.** The extension requires `fleetbase/core-api`
-`^2.0.2`, and its compatibility workflow last passed on Fleetbase v0.8.1.
+`^2.0`, and its compatibility workflow last passed on Fleetbase v0.8.1.
 Fleetbase v0.7 and earlier use core-api 1.x, so Composer refuses to install
 the extension there. PHP `^8.2` and Node `>= 22` are also required; see
 [docs/SETUP.md](docs/SETUP.md#requirements).

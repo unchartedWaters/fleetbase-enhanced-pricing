@@ -21,7 +21,7 @@ checked out on its own, not inside the Fleetbase repository.
 
 ## Requirements
 
-- **Fleetbase 0.8.1 or later.** PHP `^8.2` with `fleetbase/core-api` `^2.0.2`
+- **Fleetbase 0.8.1 or later.** PHP `^8.2` with `fleetbase/core-api` `^2.0`
   (the compatibility workflow last passed on Fleetbase v0.8.1). Fleetbase v0.7
   and earlier are not supported.
 - `brick/math` `^0.12`, for exact arithmetic.
