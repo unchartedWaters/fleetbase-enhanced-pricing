@@ -51,6 +51,8 @@ abstract class PricingModel extends Model
 
     /**
      * Every read of company data starts here.
+     *
+     * @return Builder<static>
      */
     public static function ofCompany(string $company): Builder
     {
@@ -60,28 +62,23 @@ abstract class PricingModel extends Model
     /**
      * The rows a query of this model finds, typed.
      *
+     * @param Builder<static> $query
+     *
      * @return list<static>
      */
     public static function listOf(Builder $query): array
     {
-        $models = [];
-        foreach ($query->get() as $model) {
-            if ($model instanceof static) {
-                $models[] = $model;
-            }
-        }
-
-        return $models;
+        return array_values($query->get()->all());
     }
 
     /**
      * The first row a query of this model finds, typed.
+     *
+     * @param Builder<static> $query
      */
     public static function firstOf(Builder $query): ?static
     {
-        $model = $query->first();
-
-        return $model instanceof static ? $model : null;
+        return $query->first();
     }
 
     /**
@@ -91,12 +88,7 @@ abstract class PricingModel extends Model
      */
     public static function createWith(array $attributes): static
     {
-        $model = static::query()->create($attributes);
-        if ($model instanceof static === false) {
-            throw new \LogicException(static::class);
-        }
-
-        return $model;
+        return static::query()->create($attributes);
     }
 
     protected static function booted(): void

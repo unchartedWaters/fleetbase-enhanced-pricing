@@ -66,9 +66,7 @@ final class StaleCheck
                 $rows->getQuery()->whereIn('rate_card_uuid', $cardChunk);
                 $rows->chunkById(self::CHUNK, function (iterable $chunk) use (&$entries, $earlier): void {
                     foreach ($chunk as $row) {
-                        if ($row instanceof RateCardRow) {
-                            $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
-                        }
+                        $entries[$row->uuid] = $this->reuse($earlier, $row, 'row', $this->row(...));
                     }
                 }, 'uuid');
             }

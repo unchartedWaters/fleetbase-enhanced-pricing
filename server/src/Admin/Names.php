@@ -62,7 +62,7 @@ final class Names
                 $query->where('company_uuid', $this->company);
             }
             foreach ($query->get(['uuid', 'name']) as $row) {
-                if (is_object($row) && is_string($row->uuid ?? null)) {
+                if (is_string($row->uuid ?? null)) {
                     $names[$row->uuid] = is_string($row->name ?? null) ? $row->name : '';
                 }
             }
