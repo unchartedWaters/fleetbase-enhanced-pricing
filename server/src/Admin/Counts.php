@@ -3,6 +3,7 @@
 namespace Fleetbase\EnhancedPricing\Admin;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Row counts grouped by one column, in one query, so a list doesn't count row by row.
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Builder;
 final class Counts
 {
     /**
+     * @param Builder<covariant Model> $query
+     *
      * @return array<string, int>
      */
     public static function by(Builder $query, string $column): array
@@ -17,7 +20,7 @@ final class Counts
         $counts = [];
         $rows   = $query->getQuery()->selectRaw("$column as grouped, count(*) as total")->groupBy($column)->get();
         foreach ($rows as $row) {
-            if (is_object($row) && is_string($row->grouped ?? null) && is_numeric($row->total ?? null)) {
+            if (is_string($row->grouped ?? null) && is_numeric($row->total ?? null)) {
                 $counts[$row->grouped] = (int) $row->total;
             }
         }

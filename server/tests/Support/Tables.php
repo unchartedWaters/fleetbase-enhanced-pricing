@@ -36,7 +36,18 @@ final class Tables
     {
         Database::fresh();
         $config = ['driver' => 'mysql', 'charset' => 'utf8mb4'];
-        $mysql  = new MySqlConnection(static fn () => null, 'fleetbase', '', $config);
+        // Laravel 12's MySQL grammar asks the connection for the server version, so name one.
+        $mysql = new class(static fn () => null, 'fleetbase', '', $config) extends MySqlConnection {
+            public function isMaria(): bool
+            {
+                return false;
+            }
+
+            public function getServerVersion(): string
+            {
+                return '8.0.36';
+            }
+        };
         $app    = Facade::getFacadeApplication();
         $app->bind('db.schema', static fn () => $mysql->getSchemaBuilder());
         Facade::clearResolvedInstances();

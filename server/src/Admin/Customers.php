@@ -45,7 +45,7 @@ final class Customers
         // profile's customers (uuids only), sort, then load one page.
         $uuids   = [];
         foreach ((clone $query)->getQuery()->get(['uuid', 'customer_uuid']) as $row) {
-            if (is_object($row) && is_string($row->uuid ?? null) && is_string($row->customer_uuid ?? null)) {
+            if (is_string($row->uuid ?? null) && is_string($row->customer_uuid ?? null)) {
                 $uuids[$row->uuid] = $row->customer_uuid;
             }
         }
