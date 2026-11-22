@@ -22,4 +22,4 @@ test('composer.json accepts only the core-api 2.x line', function (string $versi
     $composer = json_decode((string) file_get_contents(__DIR__ . '/../../composer.json'), true);
 
     expect(Composer\Semver\Semver::satisfies($version, $composer['require']['fleetbase/core-api']))->toBe($accepted);
-})->with([['1.6.0', false], ['1.6.74', false], ['2.0.1', false], ['2.0.2', true], ['2.5.0', true]]);
+})->with([['1.6.0', false], ['1.6.74', false], ['2.0.0', true], ['2.0.2', true], ['2.5.0', true], ['3.0.0', false]]);
