@@ -10,6 +10,10 @@ namespace Fleetbase\EnhancedPricing\Holidays;
  *
  * A holiday that falls on a weekend can also be observed on a weekday. Both dates come back, the
  * second named "(observed)", because a fee on a holiday list applies to either day.
+ *
+ * @phpstan-type Rule array<string, int|string>
+ * @phpstan-type Holiday array{id: string, name: string, rule: Rule, observed: string, regions: string|list<string>|array{except: list<string>}, since?: int, until?: int}
+ * @phpstan-type Country array{country: string, name: string, regions: array<string, string>, holidays: list<Holiday>}
  */
 final class Calendar
 {
@@ -20,14 +24,14 @@ final class Calendar
     private static ?self $default = null;
 
     /**
-     * @param array<string, array<string, mixed>> $countries country code => the data file's content
+     * @param array<string, Country> $countries country code => the data file's content
      */
     private function __construct(private readonly array $countries)
     {
     }
 
     /**
-     * @param array<string, array<string, mixed>> $countries
+     * @param array<string, Country> $countries
      */
     public static function fromData(array $countries): self
     {
@@ -39,7 +43,9 @@ final class Calendar
         if (self::$default === null) {
             $countries = [];
             foreach (glob(__DIR__ . '/../../data/holidays/*.json') ?: [] as $file) {
-                $countries[basename($file, '.json')] = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+                /** @var Country $data the shape tests/HolidaysTest.php holds every file to */
+                $data                                = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+                $countries[basename($file, '.json')] = $data;
             }
             ksort($countries);
             self::$default = new self($countries);
@@ -105,6 +111,7 @@ final class Calendar
 
         // A holiday observed across New Year belongs to the neighbouring year's date list, so the
         // years on both sides are worked out, and only the requested ones are kept.
+        /** @var list<array{0: \DateTimeImmutable, 1: string, 2: bool}> $found */
         $found = [];
         foreach ($data['holidays'] as $holiday) {
             if ($this->applies($holiday['regions'], $region) === false) {
@@ -126,14 +133,16 @@ final class Calendar
             }
         }
 
+        /** @var array<string, array{names: list<string>, observed: bool}> $byDate */
         $byDate = [];
         foreach ($found as [$date, $name, $observed]) {
             if (in_array((int) $date->format('Y'), $years, true) === false) {
                 continue;
             }
             $key                      = $date->format('Y-m-d');
+            $byDate[$key] ??= ['names' => [], 'observed' => true];
             $byDate[$key]['names'][]  = $name;
-            $byDate[$key]['observed'] = ($byDate[$key]['observed'] ?? true) && $observed;
+            $byDate[$key]['observed'] = $byDate[$key]['observed'] && $observed;
         }
         ksort($byDate);
 
@@ -160,37 +169,50 @@ final class Calendar
         return array_values(array_unique($all));
     }
 
-    private function applies(mixed $regions, ?string $region): bool
+    /**
+     * @param string|list<string>|array{except: list<string>} $regions
+     */
+    private function applies(string|array $regions, ?string $region): bool
     {
         if ($regions === 'all') {
             return true;
         }
-        if ($region === null) {
+        if ($region === null || is_array($regions) === false) {
             return false;
         }
-        if (is_array($regions) && isset($regions['except'])) {
-            return in_array($region, $regions['except'], true) === false;
+        if (array_key_exists('except', $regions)) {
+            return in_array($region, (array) $regions['except'], true) === false;
         }
 
-        return is_array($regions) && in_array($region, $regions, true);
+        return in_array($region, $regions, true);
     }
 
     /**
-     * @param array<string, mixed> $rule
+     * @param Rule $rule
      */
     private function date(array $rule, int $year): ?\DateTimeImmutable
     {
-        $date = match ($rule['type']) {
-            'fixed'             => $this->day($year, $rule['month'], $rule['day']),
-            'nth_weekday'       => $this->nthWeekday($year, $rule['month'], $rule['weekday'], $rule['nth']),
-            'weekday_before'    => $this->shiftToWeekday($this->day($year, $rule['month'], $rule['day']), $rule['weekday'], -1, false),
-            'nth_weekday_after' => $this->shiftToWeekday($this->day($year, $rule['month'], $rule['day']), $rule['weekday'], 1, true),
+        $month   = (int) ($rule['month'] ?? 0);
+        $day     = (int) ($rule['day'] ?? 0);
+        $weekday = (int) ($rule['weekday'] ?? 0);
+        $type    = (string) $rule['type'];
+        $date    = match ($type) {
+            'fixed'             => $this->day($year, $month, $day),
+            'nth_weekday'       => $this->nthWeekday($year, $month, $weekday, (int) ($rule['nth'] ?? 0)),
+            'weekday_before'    => $this->shiftToWeekday($this->day($year, $month, $day), $weekday, -1, false),
+            'nth_weekday_after' => $this->shiftToWeekday($this->day($year, $month, $day), $weekday, 1, true),
             'easter'            => $this->easter($year),
-            default             => throw new \LogicException('Unknown holiday rule ' . $rule['type']),
+            default             => throw new \LogicException('Unknown holiday rule ' . $type),
         };
-        $offset = $rule['offset_days'] ?? 0;
 
-        return $date !== null && $offset !== 0 ? $date->modify(sprintf('%+d days', $offset)) : $date;
+        return $date === null ? null : $this->addDays($date, (int) ($rule['offset_days'] ?? 0));
+    }
+
+    private function addDays(\DateTimeImmutable $date, int $days): \DateTimeImmutable
+    {
+        $interval = new \DateInterval('P' . abs($days) . 'D');
+
+        return $days < 0 ? $date->sub($interval) : $date->add($interval);
     }
 
     private function day(int $year, int $month, int $day): \DateTimeImmutable
@@ -205,10 +227,10 @@ final class Calendar
     private function shiftToWeekday(\DateTimeImmutable $date, int $weekday, int $step, bool $inclusive): \DateTimeImmutable
     {
         if ($inclusive === false) {
-            $date = $date->modify(sprintf('%+d days', $step));
+            $date = $this->addDays($date, $step);
         }
         while ((int) $date->format('N') !== $weekday) {
-            $date = $date->modify(sprintf('%+d days', $step));
+            $date = $this->addDays($date, $step);
         }
 
         return $date;
@@ -217,9 +239,11 @@ final class Calendar
     private function nthWeekday(int $year, int $month, int $weekday, int $nth): ?\DateTimeImmutable
     {
         if ($nth < 0) {
-            return $this->shiftToWeekday($this->day($year, $month, 1)->modify('last day of this month'), $weekday, -1, true);
+            $first = $this->day($year, $month, 1);
+
+            return $this->shiftToWeekday($first->setDate($year, $month, (int) $first->format('t')), $weekday, -1, true);
         }
-        $date = $this->shiftToWeekday($this->day($year, $month, 1), $weekday, 1, true)->modify(sprintf('+%d days', ($nth - 1) * 7));
+        $date = $this->shiftToWeekday($this->day($year, $month, 1), $weekday, 1, true)->add(new \DateInterval('P' . (($nth - 1) * 7) . 'D'));
 
         return (int) $date->format('n') === $month ? $date : null;
     }
@@ -254,9 +278,9 @@ final class Calendar
     {
         $weekday = (int) $date->format('N');
         if ($policy === 'sat-fri-sun-mon' && $weekday === 6) {
-            return $date->modify('-1 day');
+            return $this->addDays($date, -1);
         }
 
-        return $policy !== 'none' && $weekday === 7 ? $date->modify('+1 day') : null;
+        return $policy !== 'none' && $weekday === 7 ? $this->addDays($date, 1) : null;
     }
 }
