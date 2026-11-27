@@ -116,8 +116,11 @@ to the engine. Peak hours and rule dates follow that timezone too.
 ## Products
 
 ```json
-{ "code": "PARCEL", "name": "Parcel fee" }
+{ "code": "PARCEL", "name": "Parcel fee", "description": "Billed for each parcel" }
 ```
+
+`description` is optional, default `null`: a note for the people editing the
+profile. It isn't shown on invoices or used in pricing.
 
 Every invoice line carries one product, and the line's billing code is that
 product's code, unless a service rate takes it from the rate card row (see

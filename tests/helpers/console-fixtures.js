@@ -101,6 +101,13 @@ export default {
                     {
                         "name": "name",
                         "type": "text"
+                    },
+                    {
+                        "name": "description",
+                        "type": "text",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
                     }
                 ]
             },
@@ -939,47 +946,58 @@ export default {
                 "products": [
                     {
                         "code": "TIERED",
-                        "name": "Delivery"
+                        "name": "Delivery",
+                        "description": null
                     },
                     {
                         "code": "SEPARATE",
-                        "name": "Separate entity type"
+                        "name": "Separate entity type",
+                        "description": null
                     },
                     {
                         "code": "DISTANCE",
-                        "name": "Distance delivery"
+                        "name": "Distance delivery",
+                        "description": null
                     },
                     {
                         "code": "ADDITIONAL",
-                        "name": "Additional fee"
+                        "name": "Additional fee",
+                        "description": null
                     },
                     {
                         "code": "PARCEL",
-                        "name": "Parcel fee"
+                        "name": "Parcel fee",
+                        "description": null
                     },
                     {
                         "code": "PEAK",
-                        "name": "Peak hours fee"
+                        "name": "Peak hours fee",
+                        "description": null
                     },
                     {
                         "code": "PERCENT",
-                        "name": "Percentage subtotal fee"
+                        "name": "Percentage subtotal fee",
+                        "description": null
                     },
                     {
                         "code": "FLAT_A",
-                        "name": "Flat subtotal fee A"
+                        "name": "Flat subtotal fee A",
+                        "description": null
                     },
                     {
                         "code": "FLAT_B",
-                        "name": "Flat subtotal fee B"
+                        "name": "Flat subtotal fee B",
+                        "description": null
                     },
                     {
                         "code": "HOURLY",
-                        "name": "Hourly charge"
+                        "name": "Hourly charge",
+                        "description": null
                     },
                     {
                         "code": "ENTERED",
-                        "name": "Entered charge"
+                        "name": "Entered charge",
+                        "description": null
                     }
                 ],
                 "attributes": [

@@ -227,6 +227,101 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.false('built_on' in this.saved[0]);
     });
 
+    test('the new profile inputs sit under the section title, with a code that follows the name', async function (assert) {
+        this.blank = { currency: 'CAD', distance_unit: 'km', products: [], entity_types: [], service_rates: [] };
+        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} />`);
+
+        const title = this.element.querySelector('h2');
+        const key = this.element.querySelector('[data-test-new-key]');
+        assert.ok(title.compareDocumentPosition(key) & Node.DOCUMENT_POSITION_FOLLOWING, 'the title comes first');
+        assert.dom('[data-test-new-key-label]').hasText('Code');
+
+        await fillIn('[data-test-new-name]', 'Starter  Courier (Edmonton)!');
+        assert.dom('[data-test-new-key]').hasValue('starter-courier-edmonton');
+
+        await fillIn('[data-test-new-key]', 'mine');
+        await fillIn('[data-test-new-name]', 'Something else');
+        assert.dom('[data-test-new-key]').hasValue('mine', 'a code typed by hand is kept');
+    });
+
+    test("an item's key is labelled Code", async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+
+        assert.dom('[data-test-field="fees.0.key"]').includesText('Code');
+        assert.dom('[data-test-field="fees.0.key"]').doesNotIncludeText('Key');
+    });
+
+    test('a product card keeps one title, numbered, whatever is typed', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="products"]');
+        await click('[data-test-add]');
+        const index = this.element.querySelectorAll('[data-test-item]').length - 1;
+        const card = `[data-test-item="products.${index}"]`;
+
+        assert.dom(`${card} h3`).includesText(`Product ${index + 1}`);
+        assert.dom(`${card} h3`).doesNotIncludeText('#');
+        await fillIn(`${card} [data-test-field="products.${index}.name"] input`, 'Parcel fee');
+        assert.dom(`${card} h3`).includesText(`Product ${index + 1}`);
+        assert.dom(`${card} h3`).includesText('Parcel fee');
+    });
+
+    test('a product has an optional description', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="products"]');
+
+        assert.dom('[data-test-field="products.0.description"]').exists();
+        await fillIn('[data-test-field="products.0.description"] input', 'Billed for each parcel');
+        await click('[data-test-save]');
+        assert.strictEqual(this.saved[0].definition.products[0].description, 'Billed for each parcel');
+    });
+
+    test('currency and timezone are picked from a searchable list and an unlisted value is flagged', async function (assert) {
+        this.blank = { currency: null, scheduling_timezone: null, distance_unit: 'km', products: [], entity_types: [], service_rates: [] };
+        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} />`);
+        await fillIn('[data-test-new-key]', 'courier');
+        await fillIn('[data-test-new-name]', 'Courier');
+
+        const codes = findAll('[data-test-field="currency"] datalist option').map((option) => option.value);
+        assert.true(codes.includes('CAD') && codes.includes('JPY'), 'currencies are listed');
+        assert.dom('[data-test-field="currency"] datalist option[value="CAD"]').hasAttribute('label', /dollar/i);
+        assert.true(findAll('[data-test-field="scheduling_timezone"] datalist option').some((option) => option.value === 'America/Edmonton'));
+
+        await fillIn('[data-test-field="currency"] input', 'cad');
+        await fillIn('[data-test-field="scheduling_timezone"] input', 'America/Edmonton');
+        await fillIn('[data-test-field="currency"] input', 'ZZZ');
+        assert.dom('[data-test-input-warning]').exists('an unlisted currency is flagged, not blocked');
+        assert.dom('[data-test-save]').isNotDisabled();
+
+        await fillIn('[data-test-field="currency"] input', 'cad');
+        await click('[data-test-save]');
+        assert.strictEqual(this.saved[0].definition.currency, 'CAD');
+        assert.strictEqual(this.saved[0].definition.scheduling_timezone, 'America/Edmonton');
+    });
+
+    test('every field and section explains itself', async function (assert) {
+        await render(editor);
+        const intl = this.owner.lookup('service:intl');
+        const missing = [];
+        for (const [kindName, kind] of Object.entries(this.form.kinds)) {
+            const fields = [...(kind.fields ?? []), ...Object.values(kind.variants ?? {}).flat()].map((field) => field.name);
+            const keys = [...fields, ...(kind.discriminator || kind.variants ? [kind.discriminator ?? 'variant'] : [])];
+            for (const name of keys) {
+                if (!intl.exists(`enhanced-pricing.console.help.${kindName}.${name}`) && !intl.exists(`enhanced-pricing.console.help.field.${name}`)) {
+                    missing.push(`${kindName}.${name}`);
+                }
+            }
+        }
+        for (const section of this.form.sections) {
+            if (!intl.exists(`enhanced-pricing.console.section-help.${section.key}`)) {
+                missing.push(`section ${section.key}`);
+            }
+        }
+        assert.deepEqual(missing, []);
+        assert.dom('[data-test-field="currency"] [data-test-help]').exists('the currency has a help icon');
+        assert.dom('[data-test-section-help]').exists();
+    });
+
     test('a version can be read without editing it', async function (assert) {
         await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @readOnly={{true}} />`);
         await click('[data-test-section="fees"]');
