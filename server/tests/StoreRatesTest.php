@@ -260,3 +260,44 @@ test('rows go only on a card the company has stored, whatever the card object sa
         ->toThrow(Fleetbase\EnhancedPricing\Models\CrossCompanyReference::class)
         ->and(RateCardRow::query()->count())->toBe(0);
 });
+
+test('replacing a table keeps the rows sent and removes the others of that table only', function () {
+    $customer = Stores::customer();
+    $card     = Stores::card('a', $customer);
+    Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1')], ['values' => Stores::row('R2')], ['values' => Stores::row('R3')]]);
+    $other = Stores::card('a', $customer, 'Other');
+    Stores::for()->saveRows($other, 'rows', [['values' => Stores::row('R1')]]);
+
+    $saved = Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['first' => 1100])], ['values' => Stores::row('R4')]], true);
+
+    $codes = array_map(static fn (RateCardRow $row) => $row->values['code'], RateCardRow::query()->where('rate_card_uuid', $card->uuid)->get()->all());
+    sort($codes);
+    expect($saved)->toHaveCount(2)
+        ->and($codes)->toBe(['R1', 'R4'])
+        ->and(RateCardRow::query()->where('rate_card_uuid', $other->uuid)->count())->toBe(1);
+});
+
+test('replacing with a bad row removes nothing', function () {
+    $card = Stores::card();
+    Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1')], ['values' => Stores::row('R2')]]);
+
+    $keys = Stores::refusal(fn () => Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1', ['first' => 'x'])]], true));
+
+    expect($keys)->toBe(['row-wrong-type'])->and(RateCardRow::query()->count())->toBe(2);
+});
+
+test('replacing with no rows empties the table', function () {
+    $card = Stores::card();
+    Stores::for()->saveRows($card, 'rows', [['values' => Stores::row('R1')]]);
+
+    expect(Stores::for()->saveRows($card, 'rows', [], true))->toBe([])->and(RateCardRow::query()->count())->toBe(0);
+});
+
+test('the card cap counts a replace after its removals', function () {
+    $card = Stores::card();
+    Stores::for()->saveRows($card, 'rows', array_map(static fn (int $n) => ['values' => Stores::row("R$n")], range(1, 2000)));
+
+    $new = array_map(static fn (int $n) => ['values' => Stores::row("N$n")], range(1, 2000));
+
+    expect(Stores::for()->saveRows($card, 'rows', $new, true))->toHaveCount(2000)->and(RateCardRow::query()->count())->toBe(2000);
+});

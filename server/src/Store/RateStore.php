@@ -122,7 +122,8 @@ final class RateStore
     /**
      * Upserts rows of one rate table on a card, on their keys. Every row is checked against the
      * current version first; one bad row refuses the whole call and nothing is written. An existing
-     * row keeps its uuid and key.
+     * row keeps its uuid and key. With $replace the table's other rows on the card are deleted in
+     * the same transaction, so the call leaves exactly the rows sent.
      *
      * @param list<array{values: array<mixed>, meta?: array<mixed>|null}> $rows
      *
@@ -130,7 +131,7 @@ final class RateStore
      *
      * @throws StoreRefused
      */
-    public function saveRows(RateCard $card, string $tableKey, array $rows): array
+    public function saveRows(RateCard $card, string $tableKey, array $rows, bool $replace = false): array
     {
         $this->context->own($card);
         if (count($rows) > self::MAX_ROWS_PER_CALL) {
@@ -145,7 +146,7 @@ final class RateStore
             throw new CrossCompanyReference(RateCard::class, 'pricing_customer_uuid');
         }
 
-        return $this->context->transaction(function () use ($card, $tableKey, $rows, $profile): array {
+        return $this->context->transaction(function () use ($card, $tableKey, $rows, $profile, $replace): array {
             $current = $this->context->current($this->context->lock($profile));
             $table   = RowCheck::table($current['normalized'], $tableKey);
             if ($table === null) {
@@ -153,17 +154,32 @@ final class RateStore
             }
             $checked  = $this->check($table, $rows, $current['normalized']);
             $existing = $this->existing($card, $tableKey);
+            $kept     = $replace ? array_intersect_key($existing, $checked) : $existing;
             $total    = RateCardRow::ofCompany($this->context->company)->where('rate_card_uuid', $card->uuid)->count()
-                + count(array_diff_key($checked, $existing));
+                - count($existing) + count($kept) + count(array_diff_key($checked, $existing));
             if ($total > self::MAX_ROWS_PER_CARD) {
                 throw StoreRefused::refuse('too-many-rows-on-card', ['max' => self::MAX_ROWS_PER_CARD]);
             }
 
+            if ($replace) {
+                $this->remove(array_diff_key($existing, $checked));
+            }
             $this->write($card, $tableKey, $checked, $existing, $current['version']);
             $saved = $this->existing($card, $tableKey);
 
             return array_map(static fn (string $key) => $saved[$key], array_keys($checked));
         });
+    }
+
+    /**
+     * @param array<string, RateCardRow> $rows
+     */
+    private function remove(array $rows): void
+    {
+        $uuids = array_map(static fn (RateCardRow $row): string => $row->uuid, array_values($rows));
+        foreach (array_chunk($uuids, self::INSERT_CHUNK) as $chunk) {
+            RateCardRow::ofCompany($this->context->company)->whereIn('uuid', $chunk)->delete();
+        }
     }
 
     /**

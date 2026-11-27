@@ -1,0 +1,83 @@
+<section class="rounded-lg border border-gray-200 dark:border-gray-700" data-test-grid={{this.table.key}}>
+    <button type="button" class="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold" aria-expanded={{if this.open "true" "false"}} data-test-grid-toggle {{on "click" this.toggle}}>
+        <span>{{t "enhanced-pricing.console.grid.title" table=this.table.key}}</span>
+        <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.grid.count" count=this.count}}</span>
+    </button>
+    {{#if this.open}}
+        <div class="space-y-2 border-t border-gray-200 p-3 dark:border-gray-700">
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.grid.help"}}</p>
+            <div class="max-h-96 overflow-auto">
+                <table class="w-full text-sm" data-test-grid-table>
+                    <thead class="sticky top-0 bg-white dark:bg-gray-800">
+                        <tr>
+                            <th class="px-2 py-1 text-right text-xs text-gray-500">#</th>
+                            {{#each this.columns as |column|}}
+                                <th class="px-2 py-1 text-left text-xs">{{this.label column}}{{if column.required " *"}}</th>
+                            {{/each}}
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each this.numbered key="id" as |row|}}
+                            <tr data-test-grid-row={{row.number}}>
+                                <td class="px-2 py-1 text-right text-xs text-gray-500">{{row.number}}</td>
+                                {{#each this.columns as |column ci|}}
+                                    <td class="px-1 py-1">
+                                        {{#let (get row.errors column.key) as |error|}}
+                                            <input
+                                                type="text"
+                                                class="form-input form-input-sm w-full {{if error "border-red-500"}}"
+                                                value={{get row.cells column.key}}
+                                                aria-label={{this.label column}}
+                                                aria-invalid={{if error "true"}}
+                                                data-r={{row.index}}
+                                                data-c={{ci}}
+                                                data-test-cell="{{row.number}}.{{column.key}}"
+                                                disabled={{this.busy}}
+                                                {{on "input" this.edit}}
+                                                {{on "keydown" this.key}}
+                                                {{on "paste" this.paste}}
+                                            />
+                                            {{#if error}}
+                                                <span class="block text-xs text-red-600 dark:text-red-400" data-test-cell-error>{{pricing-message error}}</span>
+                                            {{/if}}
+                                        {{/let}}
+                                    </td>
+                                {{/each}}
+                                <td class="px-1 py-1">
+                                    <Button @size="xs" @type="danger" @icon="trash" @title={{t "enhanced-pricing.console.grid.delete-row"}} @onClick={{fn this.removeRow row.index}} data-test-delete-row />
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            <Pricing::ProblemList @problems={{this.problems}} />
+            <div class="flex flex-wrap items-center gap-2">
+                <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.grid.add-row"}} @disabled={{this.busy}} @onClick={{this.addRow}} data-test-add-row />
+                <Button @size="sm" @type="primary" @icon="save" @text={{t "enhanced-pricing.console.grid.save"}} @disabled={{or this.busy (not this.dirty)}} @onClick={{this.save}} data-test-save-rows />
+                <Button @size="sm" @text={{t "enhanced-pricing.console.grid.discard"}} @disabled={{or this.busy (not this.dirty)}} @onClick={{this.discard}} data-test-discard-rows />
+                {{#if this.dirty}}
+                    <span class="text-xs text-yellow-700 dark:text-yellow-300" data-test-unsaved>{{t "enhanced-pricing.console.grid.unsaved"}}</span>
+                {{else if (not-eq this.notice null)}}
+                    <span class="text-xs text-green-700 dark:text-green-300" data-test-saved>{{t "enhanced-pricing.console.grid.saved" count=this.notice}}</span>
+                {{/if}}
+            </div>
+            <div class="flex flex-wrap items-center gap-2 border-t border-gray-200 pt-2 dark:border-gray-700">
+                <label class="text-sm">
+                    <span class="mr-1">{{t "enhanced-pricing.console.grid.upload"}}</span>
+                    <input type="file" accept=".csv,.xlsx" disabled={{this.busy}} data-test-upload {{on "change" this.upload}} />
+                </label>
+                <label class="text-xs">
+                    <input type="checkbox" checked={{this.replace}} data-test-replace {{on "change" this.toggleReplace}} />
+                    {{t "enhanced-pricing.console.grid.replace"}}
+                </label>
+                {{#if @card.uuid}}
+                    <Button @size="xs" @text="CSV" @icon="download" @disabled={{this.busy}} @onClick={{fn this.download "csv"}} data-test-download-csv />
+                    <Button @size="xs" @text="XLSX" @icon="download" @disabled={{this.busy}} @onClick={{fn this.download "xlsx"}} data-test-download-xlsx />
+                {{/if}}
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.grid.file-help"}}</p>
+        </div>
+    {{/if}}
+</section>
