@@ -387,7 +387,7 @@ calculated:
 | Mileage premium | fee `distance` | an amount per distance unit over |
 | By attribute | fee `additional` | an amount, or per unit of an attribute |
 | Fixed charge | subtotal fee, `flat` | a fixed amount |
-| Percentage | subtotal fee, `percentage` | a percentage of its products' lines |
+| Percentage | subtotal fee, `percentage` | a percent of its products' lines |
 | Manual charge | manual charge | a set or typed amount, on one order |
 
 A percentage with a cap, "10% up to $100", is a percentage fee with a `maximum`
