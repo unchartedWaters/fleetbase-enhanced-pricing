@@ -49,8 +49,9 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
             findAll('[data-test-add-fee-type] option').map((option) => option.value),
             ['fees-peak_hours', 'fees-parcel', 'fees-distance', 'fees-additional', 'subtotal_fees-percentage', 'subtotal_fees-flat', 'manual_charges-amount', 'manual_charges-entered']
         );
-        assert.dom('[data-test-field="fees.0.code"]').exists();
-        assert.dom('[data-test-field="fees.0.description"]').exists();
+        assert.dom('[data-test-field="fees.0.code"]').includesText('Billing code');
+        assert.dom('[data-test-field="fees.0.key"]').includesText('Code');
+        assert.dom('[data-test-field="fees.0.description"]').includesText('Description');
     });
 
     test('adding a percentage fee adds a subtotal fee with a maximum and a minimum to fill in', async function (assert) {
