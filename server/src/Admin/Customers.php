@@ -106,6 +106,7 @@ final class Customers
                 'currency'        => $profile->currency,
                 'current_version' => $profile->current_version,
                 'columns'         => self::columns($state->normalized),
+                'tables'          => self::tables($state->normalized),
             ],
             'checked_version' => $customer->checked_version,
             'problems'        => $customer->problems,
@@ -147,6 +148,37 @@ final class Customers
     }
 
     /**
+     * Each rate table's layout, for the grid: its columns in order and its row key.
+     *
+     * @param array<string, mixed> $normalized
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function tables(array $normalized): array
+    {
+        $tables = [];
+        foreach (is_array($normalized['rate_tables'] ?? null) ? $normalized['rate_tables'] : [] as $table) {
+            if (is_array($table) === false || is_string($table['key'] ?? null) === false) {
+                continue;
+            }
+            $columns = [];
+            foreach (is_array($table['columns'] ?? null) ? $table['columns'] : [] as $column) {
+                if (is_array($column) && is_string($column['key'] ?? null) && is_string($column['type'] ?? null)) {
+                    $columns[] = [
+                        'key'      => $column['key'],
+                        'name'     => is_string($column['name'] ?? null) ? $column['name'] : null,
+                        'type'     => $column['type'],
+                        'required' => ($column['required'] ?? false) === true,
+                    ];
+                }
+            }
+            $tables[] = ['key' => $table['key'], 'columns' => $columns, 'row_key' => array_values(array_filter(is_array($table['row_key'] ?? null) ? $table['row_key'] : [], 'is_string'))];
+        }
+
+        return $tables;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function cards(Customer $customer): array
@@ -163,16 +195,22 @@ final class Customers
         }
 
         return array_map(static function (RateCard $card) use ($rows): array {
-            $own = $rows[$card->uuid] ?? [];
+            $own    = $rows[$card->uuid] ?? [];
+            $tokens = [];
+            foreach ($own as $row) {
+                $tokens[$row->table_key][] = $row;
+            }
             usort($own, static fn (RateCardRow $left, RateCardRow $right): int => [
                 $left->table_key,
                 json_encode($left->key_values),
             ] <=> [$right->table_key, json_encode($right->key_values)]);
 
             return [
-                'uuid'  => $card->uuid,
-                'label' => $card->label,
-                'rows'  => array_map(static fn (RateCardRow $row): array => [
+                'uuid'   => $card->uuid,
+                'label'  => $card->label,
+                // What a grid sends back with a replace, so it can't delete rows it never saw.
+                'tokens' => array_map(RateGrid::token(...), $tokens),
+                'rows'   => array_map(static fn (RateCardRow $row): array => [
                     'uuid'            => $row->uuid,
                     'table_key'       => $row->table_key,
                     'key_values'      => $row->key_values,

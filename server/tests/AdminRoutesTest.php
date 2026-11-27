@@ -55,10 +55,13 @@ test('the console endpoints are the admin page\'s, behind the console session', 
         'GET /enhanced-pricing/int/v1/admin/profiles/{key}',
         'GET /enhanced-pricing/int/v1/admin/rate-cards',
         'GET /enhanced-pricing/int/v1/admin/rate-cards/{uuid}',
+        'GET /enhanced-pricing/int/v1/admin/rate-cards/{uuid}/export',
         'POST /enhanced-pricing/int/v1/admin/dated-changes',
         'POST /enhanced-pricing/int/v1/admin/preview',
         'POST /enhanced-pricing/int/v1/admin/profiles',
+        'POST /enhanced-pricing/int/v1/admin/rate-cards/{uuid}/import',
         'PUT /enhanced-pricing/int/v1/admin/profiles/{key}',
+        'PUT /enhanced-pricing/int/v1/admin/rate-cards/{uuid}/rows',
     ]);
     foreach ($routes as $name => $route) {
         expect($route['middleware'])->toBe(['fleetbase.protected'], $name);

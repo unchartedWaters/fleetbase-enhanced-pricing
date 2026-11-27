@@ -19,6 +19,9 @@ Route::prefix('enhanced-pricing/int/v1')
         $router->put('admin/profiles/{key}', 'ProfileController@update');
         $router->get('admin/rate-cards', 'CustomerController@index');
         $router->get('admin/rate-cards/{uuid}', 'CustomerController@show');
+        $router->put('admin/rate-cards/{uuid}/rows', 'CustomerController@saveRows');
+        $router->post('admin/rate-cards/{uuid}/import', 'CustomerController@importRows');
+        $router->get('admin/rate-cards/{uuid}/export', 'CustomerController@exportRows');
         $router->get('admin/dated-changes', 'DatedChangeController@index');
         $router->post('admin/dated-changes', 'DatedChangeController@store');
         $router->delete('admin/dated-changes/{uuid}', 'DatedChangeController@destroy');

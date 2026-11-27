@@ -3,5 +3,5 @@
     <Button @type="primary" @icon="calculator" @text={{t "enhanced-pricing.console.profile.preview"}} @onClick={{this.preview}} />
 </Layout::Section::Header>
 <Layout::Section::Body @padded={{true}} class="overflow-y-auto h-full">
-    <Pricing::CustomerDetails @customer={{@model}} />
+    <Pricing::CustomerDetails @customer={{@model}} @onChanged={{this.refresh}} />
 </Layout::Section::Body>

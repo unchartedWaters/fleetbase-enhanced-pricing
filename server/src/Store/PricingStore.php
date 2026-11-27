@@ -105,9 +105,9 @@ final class PricingStore
      *
      * @return list<RateCardRow>
      */
-    public function saveRows(RateCard $card, string $tableKey, array $rows): array
+    public function saveRows(RateCard $card, string $tableKey, array $rows, bool $replace = false): array
     {
-        return (new RateStore($this->context))->saveRows($card, $tableKey, $rows);
+        return (new RateStore($this->context))->saveRows($card, $tableKey, $rows, $replace);
     }
 
     /**

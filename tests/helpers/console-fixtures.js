@@ -1419,7 +1419,47 @@ export default {
                     "third": "money",
                     "separate_price": "money"
                 }
-            }
+            },
+            "tables": [
+                {
+                    "key": "rows",
+                    "columns": [
+                        {
+                            "key": "code",
+                            "name": null,
+                            "type": "text",
+                            "required": true
+                        },
+                        {
+                            "key": "first",
+                            "name": null,
+                            "type": "money",
+                            "required": true
+                        },
+                        {
+                            "key": "second",
+                            "name": null,
+                            "type": "money",
+                            "required": true
+                        },
+                        {
+                            "key": "third",
+                            "name": null,
+                            "type": "money",
+                            "required": true
+                        },
+                        {
+                            "key": "separate_price",
+                            "name": null,
+                            "type": "money",
+                            "required": false
+                        }
+                    ],
+                    "row_key": [
+                        "code"
+                    ]
+                }
+            ]
         },
         "checked_version": 2,
         "problems": null,
@@ -1441,6 +1481,9 @@ export default {
             {
                 "uuid": "00000000-0000-4000-8000-000000000007",
                 "label": "Main",
+                "tokens": {
+                    "rows": "0000000000000000000000000000000000000000000000000000000000000001"
+                },
                 "rows": [
                     {
                         "uuid": "00000000-0000-4000-8000-000000000008",
