@@ -335,7 +335,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.strictEqual(find('[data-test-holiday-list="canada"] textarea').value.split('\n').length, 399);
     });
 
-    test("a refused or failed fill says why and leaves the list as it was", async function (assert) {
+    test('a refused or failed fill says why and leaves the list as it was', async function (assert) {
         this.definition.holiday_lists = { canada: ['2026-12-25'] };
         calendars(this, () => Promise.reject({ refused: 'error', message: 'offline' }));
         await render(filling);
@@ -356,7 +356,9 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
 
         assert.dom('[data-test-fill-open]').doesNotExist();
         calendars(this, quebec);
-        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @readOnly={{true}} @calendars={{this.calendars}} />`);
+        await render(
+            hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @readOnly={{true}} @calendars={{this.calendars}} />`
+        );
         await click('[data-test-section="holiday_lists"]');
 
         assert.dom('[data-test-fill-open]').doesNotExist();
