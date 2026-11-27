@@ -11,12 +11,17 @@ Route::prefix('enhanced-pricing/int/v1')
     ->middleware(['fleetbase.protected'])
     ->group(function (Illuminate\Routing\Router $router) {
         $router->get('admin/form', 'ProfileController@form');
+        $router->get('admin/holiday-calendars', 'HolidayCalendarController@index');
+        $router->get('admin/holiday-calendars/{country}', 'HolidayCalendarController@show');
         $router->get('admin/profiles', 'ProfileController@index');
         $router->post('admin/profiles', 'ProfileController@store');
         $router->get('admin/profiles/{key}', 'ProfileController@show');
         $router->put('admin/profiles/{key}', 'ProfileController@update');
         $router->get('admin/rate-cards', 'CustomerController@index');
         $router->get('admin/rate-cards/{uuid}', 'CustomerController@show');
+        $router->put('admin/rate-cards/{uuid}/rows', 'CustomerController@saveRows');
+        $router->post('admin/rate-cards/{uuid}/import', 'CustomerController@importRows');
+        $router->get('admin/rate-cards/{uuid}/export', 'CustomerController@exportRows');
         $router->get('admin/dated-changes', 'DatedChangeController@index');
         $router->post('admin/dated-changes', 'DatedChangeController@store');
         $router->delete('admin/dated-changes/{uuid}', 'DatedChangeController@destroy');

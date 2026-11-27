@@ -56,6 +56,9 @@ function consoleStable(mixed $value, array &$uuids): mixed
 
         return $uuids[$value];
     }
+    if (is_string($value) && preg_match('/^[0-9a-f]{64}$/', $value)) {
+        return str_repeat('0', 63) . '1';
+    }
     if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/', $value)) {
         return '2026-11-02T12:00:00+00:00';
     }

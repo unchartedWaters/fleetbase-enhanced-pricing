@@ -1,0 +1,510 @@
+{
+ "country": "CA",
+ "name": "Canada",
+ "regions": {
+  "AB": "Alberta",
+  "BC": "British Columbia",
+  "MB": "Manitoba",
+  "NB": "New Brunswick",
+  "NL": "Newfoundland and Labrador",
+  "NS": "Nova Scotia",
+  "NT": "Northwest Territories",
+  "NU": "Nunavut",
+  "ON": "Ontario",
+  "PE": "Prince Edward Island",
+  "QC": "Quebec",
+  "SK": "Saskatchewan",
+  "YT": "Yukon"
+ },
+ "holidays": [
+  {
+   "id": "new-years-day",
+   "name": "New Year's Day",
+   "rule": {
+    "type": "fixed",
+    "month": 1,
+    "day": 1
+   },
+   "observed": "none",
+   "regions": "all"
+  },
+  {
+   "id": "family-day-ab",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "AB"
+   ],
+   "since": 1990
+  },
+  {
+   "id": "family-day-sk",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "SK"
+   ],
+   "since": 2007
+  },
+  {
+   "id": "family-day-on",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "ON"
+   ],
+   "since": 2008
+  },
+  {
+   "id": "family-day-nb",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "NB"
+   ],
+   "since": 2018
+  },
+  {
+   "id": "family-day-bc-2nd-monday",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 2
+   },
+   "observed": "none",
+   "regions": [
+    "BC"
+   ],
+   "since": 2013,
+   "until": 2018
+  },
+  {
+   "id": "family-day-bc",
+   "name": "Family Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "BC"
+   ],
+   "since": 2019
+  },
+  {
+   "id": "louis-riel-day",
+   "name": "Louis Riel Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "MB"
+   ],
+   "since": 2008
+  },
+  {
+   "id": "heritage-day-ns",
+   "name": "Nova Scotia Heritage Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "NS"
+   ],
+   "since": 2015
+  },
+  {
+   "id": "islander-day",
+   "name": "Islander Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 2,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "PE"
+   ],
+   "since": 2009
+  },
+  {
+   "id": "good-friday",
+   "name": "Good Friday",
+   "rule": {
+    "type": "easter",
+    "offset_days": -2
+   },
+   "observed": "none",
+   "regions": {
+    "except": [
+     "QC"
+    ]
+   }
+  },
+  {
+   "id": "victoria-day",
+   "name": "Victoria Day",
+   "rule": {
+    "type": "weekday_before",
+    "month": 5,
+    "day": 25,
+    "weekday": 1
+   },
+   "observed": "none",
+   "regions": [
+    "AB",
+    "BC",
+    "MB",
+    "NT",
+    "NU",
+    "ON",
+    "SK",
+    "YT"
+   ]
+  },
+  {
+   "id": "national-patriots-day",
+   "name": "National Patriots' Day",
+   "rule": {
+    "type": "weekday_before",
+    "month": 5,
+    "day": 25,
+    "weekday": 1
+   },
+   "observed": "none",
+   "regions": [
+    "QC"
+   ]
+  },
+  {
+   "id": "fete-nationale",
+   "name": "Fête nationale du Québec",
+   "rule": {
+    "type": "fixed",
+    "month": 6,
+    "day": 24
+   },
+   "observed": "sun-mon",
+   "regions": [
+    "QC"
+   ]
+  },
+  {
+   "id": "national-indigenous-peoples-day",
+   "name": "National Indigenous Peoples Day",
+   "rule": {
+    "type": "fixed",
+    "month": 6,
+    "day": 21
+   },
+   "observed": "none",
+   "regions": [
+    "NT",
+    "YT"
+   ]
+  },
+  {
+   "id": "canada-day",
+   "name": "Canada Day",
+   "rule": {
+    "type": "fixed",
+    "month": 7,
+    "day": 1
+   },
+   "observed": "none",
+   "regions": {
+    "except": [
+     "AB",
+     "QC",
+     "NL"
+    ]
+   }
+  },
+  {
+   "id": "canada-day-sun-mon",
+   "name": "Canada Day",
+   "rule": {
+    "type": "fixed",
+    "month": 7,
+    "day": 1
+   },
+   "observed": "sun-mon",
+   "regions": [
+    "AB",
+    "QC"
+   ]
+  },
+  {
+   "id": "memorial-day-nl",
+   "name": "Memorial Day",
+   "rule": {
+    "type": "fixed",
+    "month": 7,
+    "day": 1
+   },
+   "observed": "none",
+   "regions": [
+    "NL"
+   ]
+  },
+  {
+   "id": "nunavut-day",
+   "name": "Nunavut Day",
+   "rule": {
+    "type": "fixed",
+    "month": 7,
+    "day": 9
+   },
+   "observed": "none",
+   "regions": [
+    "NU"
+   ],
+   "since": 2020
+  },
+  {
+   "id": "bc-day",
+   "name": "British Columbia Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 8,
+    "weekday": 1,
+    "nth": 1
+   },
+   "observed": "none",
+   "regions": [
+    "BC"
+   ]
+  },
+  {
+   "id": "saskatchewan-day",
+   "name": "Saskatchewan Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 8,
+    "weekday": 1,
+    "nth": 1
+   },
+   "observed": "none",
+   "regions": [
+    "SK"
+   ]
+  },
+  {
+   "id": "new-brunswick-day",
+   "name": "New Brunswick Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 8,
+    "weekday": 1,
+    "nth": 1
+   },
+   "observed": "none",
+   "regions": [
+    "NB"
+   ]
+  },
+  {
+   "id": "civic-holiday",
+   "name": "Civic Holiday",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 8,
+    "weekday": 1,
+    "nth": 1
+   },
+   "observed": "none",
+   "regions": [
+    "NT",
+    "NU"
+   ]
+  },
+  {
+   "id": "discovery-day",
+   "name": "Discovery Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 8,
+    "weekday": 1,
+    "nth": 3
+   },
+   "observed": "none",
+   "regions": [
+    "YT"
+   ]
+  },
+  {
+   "id": "labour-day",
+   "name": "Labour Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 9,
+    "weekday": 1,
+    "nth": 1
+   },
+   "observed": "none",
+   "regions": "all"
+  },
+  {
+   "id": "truth-reconciliation-day",
+   "name": "National Day for Truth and Reconciliation",
+   "rule": {
+    "type": "fixed",
+    "month": 9,
+    "day": 30
+   },
+   "observed": "none",
+   "regions": [
+    "NT",
+    "NU",
+    "PE"
+   ],
+   "since": 2022
+  },
+  {
+   "id": "truth-reconciliation-day-bc",
+   "name": "National Day for Truth and Reconciliation",
+   "rule": {
+    "type": "fixed",
+    "month": 9,
+    "day": 30
+   },
+   "observed": "none",
+   "regions": [
+    "BC"
+   ],
+   "since": 2023
+  },
+  {
+   "id": "orange-shirt-day-mb",
+   "name": "Orange Shirt Day (National Day for Truth and Reconciliation)",
+   "rule": {
+    "type": "fixed",
+    "month": 9,
+    "day": 30
+   },
+   "observed": "none",
+   "regions": [
+    "MB"
+   ],
+   "since": 2024
+  },
+  {
+   "id": "thanksgiving",
+   "name": "Thanksgiving Day",
+   "rule": {
+    "type": "nth_weekday",
+    "month": 10,
+    "weekday": 1,
+    "nth": 2
+   },
+   "observed": "none",
+   "regions": [
+    "AB",
+    "BC",
+    "MB",
+    "NT",
+    "NU",
+    "ON",
+    "QC",
+    "SK",
+    "YT"
+   ]
+  },
+  {
+   "id": "remembrance-day",
+   "name": "Remembrance Day",
+   "rule": {
+    "type": "fixed",
+    "month": 11,
+    "day": 11
+   },
+   "observed": "none",
+   "regions": [
+    "AB",
+    "BC",
+    "NB",
+    "NL",
+    "NT",
+    "NU",
+    "PE",
+    "SK",
+    "YT"
+   ]
+  },
+  {
+   "id": "christmas-day",
+   "name": "Christmas Day",
+   "rule": {
+    "type": "fixed",
+    "month": 12,
+    "day": 25
+   },
+   "observed": "none",
+   "regions": "all"
+  },
+  {
+   "id": "boxing-day",
+   "name": "Boxing Day",
+   "rule": {
+    "type": "fixed",
+    "month": 12,
+    "day": 26
+   },
+   "observed": "none",
+   "regions": [
+    "ON"
+   ]
+  },
+  {
+   "id": "truth-reconciliation-day-yt",
+   "name": "National Day for Truth and Reconciliation",
+   "rule": {
+    "type": "fixed",
+    "month": 9,
+    "day": 30
+   },
+   "observed": "none",
+   "regions": [
+    "YT"
+   ],
+   "since": 2023
+  }
+ ]
+}

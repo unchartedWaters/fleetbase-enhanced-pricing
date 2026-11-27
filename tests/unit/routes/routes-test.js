@@ -95,6 +95,7 @@ module('Unit | Route | console routes', (hooks) => {
         assert.deepEqual(definition.fees, []);
         assert.deepEqual(definition.holiday_lists, {});
         assert.strictEqual(definition.currency, null);
+        assert.strictEqual(definition.distance_unit, 'km', 'a new profile measures in km');
         assert.strictEqual(definition.default_entity_type, null);
     });
 });

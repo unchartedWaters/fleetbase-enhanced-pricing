@@ -1,17 +1,56 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
+import { guidFor } from '@ember/object/internals';
 
 // One value of a profile, edited in the control its type calls for (Admin/ProfileForm). Money and
 // percents use Pricing::MoneyInput. An integer that isn't a whole number is kept as typed and
 // reported with @onError, not sent.
-const TEXT = new Set(['key', 'code', 'text', 'timezone', 'currency', 'number']);
+const TEXT = new Set(['key', 'code', 'text', 'number']);
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
+
+// Currency and timezone are typed into a search box over the browser's own lists (Intl), so no
+// list is shipped. The server still checks the value (an ISO code, an IANA name). shortcut: a
+// browser without Intl.supportedValuesOf gets a plain text box, which the server checks.
+function supported(kind) {
+    try {
+        return Intl.supportedValuesOf(kind);
+    } catch {
+        return [];
+    }
+}
+
+const lists = {};
+
+function currencyOptions() {
+    lists.currency ??= (() => {
+        let names = null;
+        try {
+            names = new Intl.DisplayNames(['en'], { type: 'currency' });
+        } catch {
+            // no names: the codes alone are listed
+        }
+
+        return supported('currency')
+            .filter((code) => /^[A-Z]{3}$/.test(code))
+            .map((code) => ({ value: code, label: names?.of(code) ?? code }));
+    })();
+
+    return lists.currency;
+}
+
+function timezoneOptions() {
+    lists.timezone ??= [...new Set([...supported('timeZone'), 'UTC'])].map((value) => ({ value, label: value.replace(/_/g, ' ') }));
+
+    return lists.timezone;
+}
 
 export default class PricingInputComponent extends Component {
     @tracked integerText = null;
     @tracked integerError = false;
+    @tracked listWarning = false;
     sent = undefined;
+    listId = `pricing-list-${guidFor(this)}`;
 
     get type() {
         return this.args.type;
@@ -19,6 +58,14 @@ export default class PricingInputComponent extends Component {
 
     get isText() {
         return TEXT.has(this.type);
+    }
+
+    get isListed() {
+        return this.type === 'currency' || this.type === 'timezone';
+    }
+
+    get listOptions() {
+        return this.type === 'currency' ? currencyOptions() : timezoneOptions();
     }
 
     get isMoney() {
@@ -84,6 +131,18 @@ export default class PricingInputComponent extends Component {
     @action text(event) {
         const text = event.target.value;
         this.args.onChange(text === '' && this.args.nullable ? null : text);
+    }
+
+    // The browser's list can lack a value the server accepts (an alias such as Etc/UTC, or a newer
+    // zone), so an unlisted value is warned about, not blocked; the server has the last word.
+    @action pick(event) {
+        const typed = event.target.value.trim();
+        const text = this.type === 'currency' ? typed.toUpperCase() : typed;
+        const listed = this.listOptions.find((option) => option.value.toLowerCase() === text.toLowerCase());
+        const value = listed?.value ?? text;
+        this.listWarning = text !== '' && listed === undefined && this.listOptions.length > 0;
+        event.target.value = value;
+        this.args.onChange(value === '' && this.args.nullable ? null : value);
     }
 
     @action blankToNull(event) {

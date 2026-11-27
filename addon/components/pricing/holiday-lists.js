@@ -20,6 +20,11 @@ export default class PricingHolidayListsComponent extends Component {
         }));
     }
 
+    // The most dates a list holds (server/src/Admin/ProfileForm.php, the holiday_list kind).
+    get maxDates() {
+        return 400;
+    }
+
     get canAdd() {
         const name = this.newName.trim();
 

@@ -275,3 +275,26 @@ export function entriesToMap(entries) {
 export function pathText(path) {
     return path.join('.');
 }
+
+// A name as a key: lowercase letters and digits joined by "-", at most 64 characters (the key
+// format of server/src/Profile/Schema.php). The person can change what is offered.
+export function slug(name) {
+    return String(name ?? '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .slice(0, 64)
+        .replace(/^-+|-+$/g, '');
+}
+
+// The help text for a field of a kind: `help.<kind>.<field>`, else `help.field.<field>`.
+export function helpFor(intl, kind, name) {
+    for (const key of [`enhanced-pricing.console.help.${kind}.${name}`, `enhanced-pricing.console.help.field.${name}`]) {
+        if (intl.exists(key)) {
+            return intl.t(key);
+        }
+    }
+
+    return null;
+}

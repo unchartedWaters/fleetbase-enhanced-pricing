@@ -17,6 +17,7 @@ import {
     withoutProblemsWithin,
     mapToEntries,
     entriesToMap,
+    slug,
 } from '@unchartedwaters/enhanced-pricing-engine/utils/profile-form';
 
 // The profile editor draws every element of a profile from the server's field spec. These are
@@ -181,5 +182,13 @@ module('Unit | Utility | profile-form', () => {
         assert.deepEqual(mapToEntries({ canada: ['2026-12-25'] }), [{ name: 'canada', dates: ['2026-12-25'] }]);
         assert.deepEqual(mapToEntries([]), [], 'an empty map can come back as an empty list');
         assert.deepEqual(entriesToMap([{ name: 'canada', dates: ['2026-12-25'] }]), { canada: ['2026-12-25'] });
+    });
+
+    test('a name becomes a key the server accepts', function (assert) {
+        assert.strictEqual(slug('Starter  Courier (Edmonton)!'), 'starter-courier-edmonton');
+        assert.strictEqual(slug('Café Été'), 'cafe-ete');
+        assert.strictEqual(slug('---'), '');
+        assert.strictEqual(slug('a'.repeat(80)).length, 64);
+        assert.true(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(slug('9 Lives')));
     });
 });

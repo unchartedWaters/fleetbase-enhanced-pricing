@@ -1,5 +1,5 @@
 import { module, test } from 'qunit';
-import { render, click, fillIn, select, findAll, triggerEvent } from '@ember/test-helpers';
+import { render, click, fillIn, select, find, findAll, triggerEvent } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest, fixture } from 'dummy/tests/helpers/engine';
 
@@ -268,6 +268,91 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.false('built_on' in this.saved[0]);
     });
 
+    test('the new profile inputs sit under the section title, with a code that follows the name', async function (assert) {
+        this.blank = { currency: 'CAD', distance_unit: 'km', products: [], entity_types: [], service_rates: [] };
+        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} />`);
+
+        const title = this.element.querySelector('h2');
+        const key = this.element.querySelector('[data-test-new-key]');
+        assert.ok(title.compareDocumentPosition(key) & Node.DOCUMENT_POSITION_FOLLOWING, 'the title comes first');
+        assert.dom('[data-test-new-key-label]').hasText('Code');
+
+        await fillIn('[data-test-new-name]', 'Starter  Courier (Edmonton)!');
+        assert.dom('[data-test-new-key]').hasValue('starter-courier-edmonton');
+
+        await fillIn('[data-test-new-key]', 'mine');
+        await fillIn('[data-test-new-name]', 'Something else');
+        assert.dom('[data-test-new-key]').hasValue('mine', 'a code typed by hand is kept');
+    });
+
+    test("an item's key is labelled Code", async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+
+        assert.dom('[data-test-field="fees.0.key"]').includesText('Code');
+        assert.dom('[data-test-field="fees.0.key"]').doesNotIncludeText('Key');
+    });
+
+    test('a product card keeps one title, numbered, whatever is typed', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="products"]');
+        await click('[data-test-add]');
+        const index = this.element.querySelectorAll('[data-test-item]').length - 1;
+        const card = `[data-test-item="products.${index}"]`;
+
+        assert.dom(`${card} h3`).includesText(`Product ${index + 1}`);
+        assert.dom(`${card} h3`).doesNotIncludeText('#');
+        await fillIn(`${card} [data-test-field="products.${index}.name"] input`, 'Parcel fee');
+        assert.dom(`${card} h3`).includesText(`Product ${index + 1}`);
+        assert.dom(`${card} h3`).includesText('Parcel fee');
+    });
+
+    test('currency and timezone are picked from a searchable list and an unlisted value is flagged', async function (assert) {
+        this.blank = { currency: null, scheduling_timezone: null, distance_unit: 'km', products: [], entity_types: [], service_rates: [] };
+        await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} />`);
+        await fillIn('[data-test-new-key]', 'courier');
+        await fillIn('[data-test-new-name]', 'Courier');
+
+        const codes = findAll('[data-test-field="currency"] datalist option').map((option) => option.value);
+        assert.true(codes.includes('CAD') && codes.includes('JPY'), 'currencies are listed');
+        assert.dom('[data-test-field="currency"] datalist option[value="CAD"]').hasAttribute('label', /dollar/i);
+        assert.true(findAll('[data-test-field="scheduling_timezone"] datalist option').some((option) => option.value === 'America/Edmonton'));
+
+        await fillIn('[data-test-field="currency"] input', 'cad');
+        await fillIn('[data-test-field="scheduling_timezone"] input', 'America/Edmonton');
+        await fillIn('[data-test-field="currency"] input', 'ZZZ');
+        assert.dom('[data-test-input-warning]').exists('an unlisted currency is flagged, not blocked');
+        assert.dom('[data-test-save]').isNotDisabled();
+
+        await fillIn('[data-test-field="currency"] input', 'cad');
+        await click('[data-test-save]');
+        assert.strictEqual(this.saved[0].definition.currency, 'CAD');
+        assert.strictEqual(this.saved[0].definition.scheduling_timezone, 'America/Edmonton');
+    });
+
+    test('every field and section explains itself', async function (assert) {
+        await render(editor);
+        const intl = this.owner.lookup('service:intl');
+        const missing = [];
+        for (const [kindName, kind] of Object.entries(this.form.kinds)) {
+            const fields = [...(kind.fields ?? []), ...Object.values(kind.variants ?? {}).flat()].map((field) => field.name);
+            const keys = [...fields, ...(kind.discriminator || kind.variants ? [kind.discriminator ?? 'variant'] : [])];
+            for (const name of keys) {
+                if (!intl.exists(`enhanced-pricing.console.help.${kindName}.${name}`) && !intl.exists(`enhanced-pricing.console.help.field.${name}`)) {
+                    missing.push(`${kindName}.${name}`);
+                }
+            }
+        }
+        for (const section of this.form.sections) {
+            if (!intl.exists(`enhanced-pricing.console.section-help.${section.key}`)) {
+                missing.push(`section ${section.key}`);
+            }
+        }
+        assert.deepEqual(missing, []);
+        assert.dom('[data-test-field="currency"] [data-test-help]').exists('the currency has a help icon');
+        assert.dom('[data-test-section-help]').exists();
+    });
+
     test('a version can be read without editing it', async function (assert) {
         await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @readOnly={{true}} />`);
         await click('[data-test-section="fees"]');
@@ -287,6 +372,166 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-save]');
 
         assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-12-25', '2026-12-26'] });
+    });
+
+    // Fill from a calendar: the server works out the dates; the editor only merges them in.
+    function calendars(context, answer) {
+        context.asked = [];
+        context.calendars = {
+            catalog: () =>
+                Promise.resolve({
+                    countries: {
+                        CA: { name: 'Canada', regions: { ON: 'Ontario', QC: 'Quebec' } },
+                        US: { name: 'United States', regions: { CA: 'California', TX: 'Texas' } },
+                    },
+                    limits: { max_years: 5, first_year: 1900, last_year: 2300 },
+                }),
+            holidays: (country, region, years) => {
+                context.asked.push([country, region, years]);
+
+                return answer(country, region, years);
+            },
+        };
+    }
+    const filling = hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @calendars={{this.calendars}} @onSave={{this.save}} @onOpenNewer={{this.openNewer}} />`;
+    const quebec = () =>
+        Promise.resolve({
+            country: 'CA',
+            region: 'QC',
+            holidays: [
+                { date: '2026-06-24', name: 'Saint-Jean-Baptiste Day', observed: false },
+                { date: '2026-12-25', name: 'Christmas Day', observed: false },
+            ],
+        });
+
+    test('a holiday list is filled from a country and region, merged with its dates', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25', '2026-12-31'] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+
+        assert.dom('[data-test-fill-country] option').exists({ count: 3 }, 'a prompt and two countries');
+        assert.dom('[data-test-fill-region]').doesNotExist('a region comes after a country');
+        await select('[data-test-fill-country]', 'CA');
+        assert.dom('[data-test-fill-region] option').exists({ count: 3 }, 'a prompt and two provinces');
+        assert.dom('[data-test-fill-find]').isDisabled('a region is needed');
+        await select('[data-test-fill-region]', 'QC');
+        await fillIn('[data-test-fill-year]', '2026');
+        await select('[data-test-fill-years]', '1');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
+
+        assert.deepEqual(this.asked, [['CA', 'QC', [2026]]]);
+        assert.dom('[data-test-fill-result]').includesText('Added 1');
+        assert.dom('[data-test-fill-result]').includesText('1 was already in the list');
+        assert.dom('[data-test-fill-added]').includesText('Saint-Jean-Baptiste Day');
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24\n2026-12-25\n2026-12-31');
+        await click('[data-test-save]');
+
+        assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-06-24', '2026-12-25', '2026-12-31'] });
+    });
+
+    test('each found holiday can be left out before it is added, and the list stays editable by hand', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25'] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+
+        assert.dom('[data-test-fill-item]').exists({ count: 2 });
+        assert.dom('[data-test-fill-item="2026-12-25"] input').isDisabled('a date already in the list');
+        assert.dom('[data-test-fill-item="2026-06-24"] input').isChecked();
+        await click('[data-test-fill-item="2026-06-24"] input');
+        assert.dom('[data-test-fill-confirm]').isDisabled('nothing is left to add');
+        await click('[data-test-fill-item="2026-06-24"] input');
+        await click('[data-test-fill-confirm]');
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24\n2026-12-25');
+        // By hand: one more date, and a line removed.
+        await fillIn('[data-test-holiday-list="canada"] textarea', '2026-06-24\n2027-01-04');
+        await click('[data-test-save]');
+
+        assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-06-24', '2027-01-04'] });
+    });
+
+    test('a holiday left out is not added', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-item="2026-12-25"] input');
+        await click('[data-test-fill-confirm]');
+
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24');
+        assert.dom('[data-test-fill-result]').includesText('Added 1');
+    });
+
+    test('several years are asked for from the first year', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'US');
+        await select('[data-test-fill-region]', 'TX');
+        await fillIn('[data-test-fill-year]', '2027');
+        await select('[data-test-fill-years]', '3');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
+
+        assert.deepEqual(this.asked, [['US', 'TX', [2027, 2028, 2029]]]);
+    });
+
+    test('a fill that would pass the 400 dates a list can hold changes nothing', async function (assert) {
+        this.definition.holiday_lists = {};
+        this.definition.holiday_lists.canada = Array.from({ length: 399 }, (_, index) => new Date(Date.UTC(2100, 0, 1 + index)).toISOString().slice(0, 10));
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
+
+        assert.dom('[data-test-fill-result]').includesText('400');
+        assert.strictEqual(find('[data-test-holiday-list="canada"] textarea').value.split('\n').length, 399);
+    });
+
+    test('a refused or failed fill says why and leaves the list as it was', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25'] };
+        calendars(this, () => Promise.reject({ refused: 'error', message: 'offline' }));
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+
+        assert.dom('[data-test-fill-refusal]').exists();
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-12-25');
+    });
+
+    test('a holiday list is not filled when the profile is only being read, or there are no calendars', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        await render(editor);
+        await click('[data-test-section="holiday_lists"]');
+
+        assert.dom('[data-test-fill-open]').doesNotExist();
+        calendars(this, quebec);
+        await render(
+            hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @readOnly={{true}} @calendars={{this.calendars}} />`
+        );
+        await click('[data-test-section="holiday_lists"]');
+
+        assert.dom('[data-test-fill-open]').doesNotExist();
     });
 
     test('changes are reported, so leaving can ask first', async function (assert) {

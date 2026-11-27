@@ -19,7 +19,8 @@
     "require": {
         "php": "^8.2",
         "brick/math": "^0.12",
-        "fleetbase/core-api": "^2.0"
+        "fleetbase/core-api": "^2.0",
+        "phpoffice/phpspreadsheet": "^1.30.7"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.34.1",

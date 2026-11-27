@@ -225,6 +225,26 @@ type. A blank value in a column that is not required is a missing amount:
 pricing stops when a rule needs it, with a message naming the customer, card,
 row and rule.
 
+### Editing rows
+
+A customer's rows are edited in the console, on the customer's screen: each rate card has a grid
+for each rate table, with the table's columns in order. Type in a cell or paste a block copied from
+Excel; money is typed in the profile's currency (`12.50`, or `500` in yen), not in minor units.
+Saving replaces the table's rows on that card with the grid's, using the same checks as any other
+save, so one bad row refuses the save and names its row. A save from a grid that another person
+has changed since it was opened is refused rather than deleting their rows.
+
+A grid can also take a CSV (comma-separated, UTF-8) or Excel `.xlsx` file of at most 2 MB and
+2,000 rows. The first row names the columns by key or `name`. A cell that is a formula or a date
+is refused, money must be written without a symbol or grouping and with no more decimals than the
+currency has, and a file with a problem is refused whole. A file adds and updates rows by their
+key, or replaces the table's rows when asked, but never replaces them with nothing. The saved rows
+can be downloaded as CSV or XLSX and uploaded again unchanged; text that a spreadsheet could run as
+a formula is quoted in a CSV and written as plain text in an XLSX.
+
+Saving and uploading need the `manage rate-card` permission; downloading needs it or
+`manage pricing-profile`.
+
 ## Service rates
 
 Every order has one service rate. It decides the service fee.
@@ -694,7 +714,8 @@ until someone removes the charge. An order can have up to 20 manual charges.
 { "main": ["2027-01-01", "2027-07-01", "2027-12-25"] }
 ```
 
-A name (a key) and up to 400 dates. Peak hours fees name a list.
+A name (a key) and up to 400 dates. Peak hours fees name a list. The editor can
+fill a list from a country's holidays: see [Holiday calendars](holidays.md).
 
 ## Invoice lines
 

@@ -37,6 +37,26 @@ export default class PricingApiService extends Service {
         return this.#form;
     }
 
+    #calendars = null;
+
+    // The holiday calendars the editor fills holiday lists from: the catalog of countries and
+    // regions, asked for once like the form, and the dates of one country and region for some
+    // years.
+    holidayCalendars = {
+        catalog: () => {
+            if (this.#calendars === null) {
+                this.#calendars = this.get('admin/holiday-calendars').catch((refusal) => {
+                    this.#calendars = null;
+
+                    return Promise.reject(refusal);
+                });
+            }
+
+            return this.#calendars;
+        },
+        holidays: (country, region, years) => this.get(`admin/holiday-calendars/${this.segment(country)}`, { region, years: years.join(',') }),
+    };
+
     segment(value) {
         return encodeURIComponent(String(value));
     }

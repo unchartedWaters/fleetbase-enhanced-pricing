@@ -1,6 +1,7 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
 import { kindOf, variantNames, newItem, moveItem, removeItem, problemsWithin } from '../../utils/profile-form';
 
 // A list of profile elements of one kind: a section's rules, or a nested list such as a service
@@ -9,6 +10,7 @@ import { kindOf, variantNames, newItem, moveItem, removeItem, problemsWithin } f
 // problems name positions. Elements are drawn by position, so a move or removal draws them again:
 // text typed but not saved stays with no element rather than following another.
 export default class PricingItemListComponent extends Component {
+    @service intl;
     @tracked addVariant = null;
     @tracked drawn = 0;
 
@@ -44,12 +46,21 @@ export default class PricingItemListComponent extends Component {
                 index,
                 number: index + 1,
                 path,
-                title: item?.name || item?.key || item?.code || `#${index + 1}`,
+                title: this.titleOf(item, index),
                 first: index === 0,
                 last: index === last,
                 problems: problemsWithin(this.args.env.problems, path).length,
             };
         });
+    }
+
+    // "Product 1 · Parcel fee": the number never changes as the name is typed.
+    titleOf(item, index) {
+        const key = `enhanced-pricing.console.item.${this.args.kind}`;
+        const label = `${this.intl.exists(key) ? this.intl.t(key) : '#'} ${index + 1}`.replace('# ', '#');
+        const name = item?.name || item?.key || item?.code;
+
+        return name ? `${label} · ${name}` : label;
     }
 
     change(next, clearsProblems) {

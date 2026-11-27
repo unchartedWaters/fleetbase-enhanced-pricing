@@ -6,6 +6,7 @@
             @profile={{@model.profile}}
             @definition={{@model.profile.version.definition}}
             @builtOn={{number}}
+            @calendars={{this.pricingApi.holidayCalendars}}
             @onSave={{this.save}}
             @onOpenNewer={{this.openNewer}}
             @onDirty={{this.setDirty}}

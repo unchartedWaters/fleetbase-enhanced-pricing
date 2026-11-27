@@ -1,5 +1,6 @@
 import { module, test } from 'qunit';
-import { render } from '@ember/test-helpers';
+import { render, click, fillIn } from '@ember/test-helpers';
+import Service from '@ember/service';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest, fixture } from 'dummy/tests/helpers/engine';
 
@@ -48,5 +49,36 @@ module('Integration | Component | pricing/customer-details', (hooks) => {
 
         assert.dom('[data-test-customer-problems]').includesText('fees.heavy.minimum');
         assert.dom('[data-test-row="R2"] [data-test-problems]').includesText('The row needs a value for first.');
+    });
+
+    test('each card has a grid for each rate table, and a card is added by name', async function (assert) {
+        const calls = [];
+        this.owner.register(
+            'service:pricing-api',
+            class extends Service {
+                segment(value) {
+                    return value;
+                }
+                async put(path, data) {
+                    calls.push({ path, data });
+
+                    return { rows: 0, token: 't' };
+                }
+            }
+        );
+        this.customer = fixture('customer');
+        this.customer.profile.tables = [{ key: 'rows', row_key: ['code'], columns: [{ key: 'code', name: null, type: 'text', required: true }] }];
+        this.changed = 0;
+        this.onChanged = () => this.changed++;
+
+        await render(hbs`<Pricing::CustomerDetails @customer={{this.customer}} @onChanged={{this.onChanged}} />`);
+
+        assert.dom('[data-test-card] [data-test-grid="rows"]').exists();
+
+        await fillIn('[data-test-new-card]', ' North ');
+        await click('[data-test-add-card]');
+
+        assert.deepEqual(calls, [{ path: `admin/rate-cards/${this.customer.uuid}/rows`, data: { card: 'North', table: 'rows', rows: [], replace: true } }]);
+        assert.strictEqual(this.changed, 1);
     });
 });

@@ -1,12 +1,15 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
-import { kindOf, variantNames, variantOf, fieldsFor, switchVariant, unknownFields, withoutKey } from '../../utils/profile-form';
+import { inject as service } from '@ember/service';
+import { kindOf, helpFor, variantNames, variantOf, fieldsFor, switchVariant, unknownFields, withoutKey } from '../../utils/profile-form';
 
 // The fields of one profile element (or nested object) of a kind, with its variant chooser and
 // any fields the format doesn't know, kept and removable. @context is the top element, which
 // column and choice references are resolved against. @ignore names fields shown elsewhere (the
 // profile's own sections, beside its general fields).
 export default class PricingFieldsComponent extends Component {
+    @service intl;
+
     get kind() {
         return kindOf(this.args.env.form, this.args.kind);
     }
@@ -21,6 +24,10 @@ export default class PricingFieldsComponent extends Component {
 
     get variants() {
         return variantNames(this.kind);
+    }
+
+    get variantHelp() {
+        return helpFor(this.intl, this.args.kind, this.kind.discriminator ?? 'variant');
     }
 
     get variant() {

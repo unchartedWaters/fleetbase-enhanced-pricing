@@ -10,6 +10,10 @@ export default class CustomersDetailsController extends Controller {
         return this.hostRouter.transitionTo(route('profiles.details.customers'), this.model.profile.key);
     }
 
+    @action refresh() {
+        return this.hostRouter.refresh();
+    }
+
     @action preview() {
         return this.hostRouter.transitionTo(route('preview'), { queryParams: { profile: this.model.profile.key, customer: this.model.uuid } });
     }
