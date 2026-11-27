@@ -119,14 +119,14 @@ test('a holiday has first and last years', function () {
 });
 
 test('a holiday applies to all regions, listed regions, or all but some', function () {
-    $holiday = static fn (string $id, mixed $regions): array => [
-        'id' => $id, 'name' => $id, 'rule' => ['type' => 'fixed', 'month' => 1, 'day' => 2], 'observed' => 'none', 'regions' => $regions,
+    $holiday = static fn (string $id, mixed $regions, int $day): array => [
+        'id' => $id, 'name' => $id, 'rule' => ['type' => 'fixed', 'month' => 1, 'day' => $day], 'observed' => 'none', 'regions' => $regions,
     ];
     $calendar = Calendar::fromData(['XX' => [
         'country'  => 'XX',
         'name'     => 'Test',
         'regions'  => ['AA' => 'A', 'BB' => 'B', 'CC' => 'C'],
-        'holidays' => [$holiday('all', 'all'), $holiday('only-a', ['AA']), $holiday('not-b', ['except' => ['BB']])],
+        'holidays' => [$holiday('all', 'all', 2), $holiday('only-a', ['AA'], 3), $holiday('not-b', ['except' => ['BB']], 4)],
     ]]);
     $names = static fn (?string $region): array => array_column($calendar->expand('XX', $region, [2026]), 'name');
 
