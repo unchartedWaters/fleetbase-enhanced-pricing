@@ -1,0 +1,1140 @@
+{
+  "country": "US",
+  "name": "United States",
+  "regions": {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "DC": "District of Columbia",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming"
+  },
+  "holidays": [
+    {
+      "id": "new-years-day",
+      "name": "New Year's Day",
+      "rule": {
+        "type": "fixed",
+        "month": 1,
+        "day": 1
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "SC",
+        "SD",
+        "TN",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WV"
+      ]
+    },
+    {
+      "id": "new-years-day-sun-mon",
+      "name": "New Year's Day",
+      "rule": {
+        "type": "fixed",
+        "month": 1,
+        "day": 1
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "CA",
+        "MA",
+        "MS",
+        "NY",
+        "RI",
+        "WI",
+        "WY"
+      ]
+    },
+    {
+      "id": "new-years-day-no-shift",
+      "name": "New Year's Day",
+      "rule": {
+        "type": "fixed",
+        "month": 1,
+        "day": 1
+      },
+      "observed": "none",
+      "regions": [
+        "TX"
+      ]
+    },
+    {
+      "id": "mlk-day",
+      "name": "Martin Luther King Jr. Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 1,
+        "weekday": 1,
+        "nth": 3
+      },
+      "observed": "none",
+      "regions": "all"
+    },
+    {
+      "id": "washington-birthday",
+      "name": "Washington's Birthday (Presidents' Day)",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 2,
+        "weekday": 1,
+        "nth": 3
+      },
+      "observed": "none",
+      "regions": [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "HI",
+        "ID",
+        "IL",
+        "MA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MS",
+        "MT",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NV",
+        "NY",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WV",
+        "WY"
+      ]
+    },
+    {
+      "id": "memorial-day",
+      "name": "Memorial Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 5,
+        "weekday": 1,
+        "nth": -1
+      },
+      "observed": "none",
+      "regions": "all"
+    },
+    {
+      "id": "juneteenth",
+      "name": "Juneteenth",
+      "rule": {
+        "type": "fixed",
+        "month": 6,
+        "day": 19
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK",
+        "AL",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "GA",
+        "IL",
+        "KS",
+        "KY",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "NE",
+        "NM",
+        "NV",
+        "OH",
+        "OR",
+        "PA",
+        "SC",
+        "SD",
+        "TN",
+        "UT",
+        "VA",
+        "VT",
+        "WA"
+      ],
+      "since": 2021
+    },
+    {
+      "id": "juneteenth-sun-mon",
+      "name": "Juneteenth",
+      "rule": {
+        "type": "fixed",
+        "month": 6,
+        "day": 19
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "MA",
+        "NY",
+        "RI"
+      ],
+      "since": 2021
+    },
+    {
+      "id": "independence-day",
+      "name": "Independence Day",
+      "rule": {
+        "type": "fixed",
+        "month": 7,
+        "day": 4
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "SC",
+        "SD",
+        "TN",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WV"
+      ]
+    },
+    {
+      "id": "independence-day-sun-mon",
+      "name": "Independence Day",
+      "rule": {
+        "type": "fixed",
+        "month": 7,
+        "day": 4
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "CA",
+        "MA",
+        "MS",
+        "NY",
+        "RI",
+        "WI",
+        "WY"
+      ]
+    },
+    {
+      "id": "independence-day-no-shift",
+      "name": "Independence Day",
+      "rule": {
+        "type": "fixed",
+        "month": 7,
+        "day": 4
+      },
+      "observed": "none",
+      "regions": [
+        "TX"
+      ]
+    },
+    {
+      "id": "labor-day",
+      "name": "Labor Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 9,
+        "weekday": 1,
+        "nth": 1
+      },
+      "observed": "none",
+      "regions": "all"
+    },
+    {
+      "id": "columbus-day",
+      "name": "Columbus Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 10,
+        "weekday": 1,
+        "nth": 2
+      },
+      "observed": "none",
+      "regions": [
+        "AL",
+        "AZ",
+        "CT",
+        "GA",
+        "ID",
+        "IL",
+        "IN",
+        "MA",
+        "MD",
+        "MO",
+        "MT",
+        "NE",
+        "NJ",
+        "NY",
+        "OH",
+        "RI",
+        "SC",
+        "UT",
+        "VA",
+        "WV"
+      ]
+    },
+    {
+      "id": "indigenous-peoples-day",
+      "name": "Indigenous Peoples' Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 10,
+        "weekday": 1,
+        "nth": 2
+      },
+      "observed": "none",
+      "regions": [
+        "DC",
+        "ME",
+        "MN",
+        "NM",
+        "PA",
+        "VT"
+      ]
+    },
+    {
+      "id": "native-americans-day",
+      "name": "Native Americans' Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 10,
+        "weekday": 1,
+        "nth": 2
+      },
+      "observed": "none",
+      "regions": [
+        "SD"
+      ]
+    },
+    {
+      "id": "veterans-day",
+      "name": "Veterans Day",
+      "rule": {
+        "type": "fixed",
+        "month": 11,
+        "day": 11
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "SC",
+        "SD",
+        "TN",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WV"
+      ]
+    },
+    {
+      "id": "veterans-day-sun-mon",
+      "name": "Veterans Day",
+      "rule": {
+        "type": "fixed",
+        "month": 11,
+        "day": 11
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "CA",
+        "MA",
+        "MS",
+        "NY",
+        "RI",
+        "WY"
+      ]
+    },
+    {
+      "id": "veterans-day-no-shift",
+      "name": "Veterans Day",
+      "rule": {
+        "type": "fixed",
+        "month": 11,
+        "day": 11
+      },
+      "observed": "none",
+      "regions": [
+        "TX"
+      ]
+    },
+    {
+      "id": "thanksgiving",
+      "name": "Thanksgiving Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 11,
+        "weekday": 4,
+        "nth": 4
+      },
+      "observed": "none",
+      "regions": "all"
+    },
+    {
+      "id": "christmas-day",
+      "name": "Christmas Day",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 25
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "SC",
+        "SD",
+        "TN",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WV"
+      ]
+    },
+    {
+      "id": "christmas-day-sun-mon",
+      "name": "Christmas Day",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 25
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "CA",
+        "MA",
+        "MS",
+        "NY",
+        "RI",
+        "WI",
+        "WY"
+      ]
+    },
+    {
+      "id": "christmas-day-no-shift",
+      "name": "Christmas Day",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 25
+      },
+      "observed": "none",
+      "regions": [
+        "TX"
+      ]
+    },
+    {
+      "id": "day-after-thanksgiving",
+      "name": "Day after Thanksgiving",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 11,
+        "weekday": 4,
+        "nth": 4,
+        "offset_days": 1
+      },
+      "observed": "none",
+      "regions": [
+        "CA",
+        "DE",
+        "FL",
+        "IA",
+        "IL",
+        "ME",
+        "MI",
+        "MN",
+        "NC",
+        "NE",
+        "NH",
+        "NM",
+        "OR",
+        "PA",
+        "SC",
+        "TN",
+        "TX",
+        "VA"
+      ]
+    },
+    {
+      "id": "native-american-heritage-day",
+      "name": "Native American Heritage Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 11,
+        "weekday": 4,
+        "nth": 4,
+        "offset_days": 1
+      },
+      "observed": "none",
+      "regions": [
+        "MD",
+        "WA"
+      ]
+    },
+    {
+      "id": "family-day-nv",
+      "name": "Family Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 11,
+        "weekday": 4,
+        "nth": 4,
+        "offset_days": 1
+      },
+      "observed": "none",
+      "regions": [
+        "NV"
+      ]
+    },
+    {
+      "id": "lincolns-day-wv",
+      "name": "Lincoln's Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 11,
+        "weekday": 4,
+        "nth": 4,
+        "offset_days": 1
+      },
+      "observed": "none",
+      "regions": [
+        "WV"
+      ]
+    },
+    {
+      "id": "lincolns-birthday",
+      "name": "Lincoln's Birthday",
+      "rule": {
+        "type": "fixed",
+        "month": 2,
+        "day": 12
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "CT",
+        "IL",
+        "MO"
+      ]
+    },
+    {
+      "id": "lincolns-birthday-sun-mon",
+      "name": "Lincoln's Birthday",
+      "rule": {
+        "type": "fixed",
+        "month": 2,
+        "day": 12
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "NY"
+      ]
+    },
+    {
+      "id": "election-day",
+      "name": "Election Day",
+      "rule": {
+        "type": "nth_weekday_after",
+        "month": 11,
+        "day": 2,
+        "weekday": 2
+      },
+      "observed": "none",
+      "regions": [
+        "NJ",
+        "NY",
+        "VA"
+      ]
+    },
+    {
+      "id": "good-friday",
+      "name": "Good Friday",
+      "rule": {
+        "type": "easter",
+        "offset_days": -2
+      },
+      "observed": "none",
+      "regions": [
+        "CT",
+        "DE",
+        "HI",
+        "IN",
+        "LA",
+        "NC",
+        "ND",
+        "NJ",
+        "TN"
+      ]
+    },
+    {
+      "id": "mardi-gras",
+      "name": "Mardi Gras",
+      "rule": {
+        "type": "easter",
+        "offset_days": -47
+      },
+      "observed": "none",
+      "regions": [
+        "LA"
+      ]
+    },
+    {
+      "id": "patriots-day",
+      "name": "Patriots' Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 4,
+        "weekday": 1,
+        "nth": 3
+      },
+      "observed": "none",
+      "regions": [
+        "MA",
+        "ME"
+      ]
+    },
+    {
+      "id": "seward-day",
+      "name": "Seward's Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 3,
+        "weekday": 1,
+        "nth": -1
+      },
+      "observed": "none",
+      "regions": [
+        "AK"
+      ]
+    },
+    {
+      "id": "alaska-day",
+      "name": "Alaska Day",
+      "rule": {
+        "type": "fixed",
+        "month": 10,
+        "day": 18
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "AK"
+      ]
+    },
+    {
+      "id": "confederate-memorial-day-al",
+      "name": "Confederate Memorial Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 4,
+        "weekday": 1,
+        "nth": 4
+      },
+      "observed": "none",
+      "regions": [
+        "AL"
+      ]
+    },
+    {
+      "id": "jefferson-davis-birthday",
+      "name": "Jefferson Davis Birthday",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 6,
+        "weekday": 1,
+        "nth": 1
+      },
+      "observed": "none",
+      "regions": [
+        "AL"
+      ]
+    },
+    {
+      "id": "confederate-memorial-day-ms",
+      "name": "Confederate Memorial Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 4,
+        "weekday": 1,
+        "nth": -1
+      },
+      "observed": "none",
+      "regions": [
+        "MS"
+      ]
+    },
+    {
+      "id": "confederate-memorial-day-sc",
+      "name": "Confederate Memorial Day",
+      "rule": {
+        "type": "fixed",
+        "month": 5,
+        "day": 10
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "SC"
+      ]
+    },
+    {
+      "id": "cabrini-day",
+      "name": "Frances Xavier Cabrini Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 10,
+        "weekday": 1,
+        "nth": 1
+      },
+      "observed": "none",
+      "regions": [
+        "CO"
+      ]
+    },
+    {
+      "id": "cesar-chavez-day-sun-mon",
+      "name": "Cesar Chavez Day",
+      "rule": {
+        "type": "fixed",
+        "month": 3,
+        "day": 31
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "CA"
+      ]
+    },
+    {
+      "id": "dc-emancipation-day",
+      "name": "DC Emancipation Day",
+      "rule": {
+        "type": "fixed",
+        "month": 4,
+        "day": 16
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "DC"
+      ]
+    },
+    {
+      "id": "kuhio-day",
+      "name": "Prince Jonah Kuhio Kalanianaole Day",
+      "rule": {
+        "type": "fixed",
+        "month": 3,
+        "day": 26
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "HI"
+      ]
+    },
+    {
+      "id": "kamehameha-day",
+      "name": "Kamehameha Day",
+      "rule": {
+        "type": "fixed",
+        "month": 6,
+        "day": 11
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "HI"
+      ]
+    },
+    {
+      "id": "statehood-day-hi",
+      "name": "Statehood Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 8,
+        "weekday": 5,
+        "nth": 3
+      },
+      "observed": "none",
+      "regions": [
+        "HI"
+      ]
+    },
+    {
+      "id": "truman-day",
+      "name": "Truman Day",
+      "rule": {
+        "type": "fixed",
+        "month": 5,
+        "day": 8
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "MO"
+      ]
+    },
+    {
+      "id": "arbor-day-ne",
+      "name": "Arbor Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 4,
+        "weekday": 5,
+        "nth": -1
+      },
+      "observed": "none",
+      "regions": [
+        "NE"
+      ]
+    },
+    {
+      "id": "nevada-day",
+      "name": "Nevada Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 10,
+        "weekday": 5,
+        "nth": -1
+      },
+      "observed": "none",
+      "regions": [
+        "NV"
+      ]
+    },
+    {
+      "id": "juneteenth-nj",
+      "name": "Juneteenth",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 6,
+        "weekday": 5,
+        "nth": 3
+      },
+      "observed": "none",
+      "regions": [
+        "NJ"
+      ],
+      "since": 2022
+    },
+    {
+      "id": "ri-independence-day-sun-mon",
+      "name": "Rhode Island Independence Day",
+      "rule": {
+        "type": "fixed",
+        "month": 5,
+        "day": 4
+      },
+      "observed": "sun-mon",
+      "regions": [
+        "RI"
+      ]
+    },
+    {
+      "id": "victory-day",
+      "name": "Victory Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 8,
+        "weekday": 1,
+        "nth": 2
+      },
+      "observed": "none",
+      "regions": [
+        "RI"
+      ]
+    },
+    {
+      "id": "pioneer-day",
+      "name": "Pioneer Day",
+      "rule": {
+        "type": "fixed",
+        "month": 7,
+        "day": 24
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "UT"
+      ]
+    },
+    {
+      "id": "town-meeting-day",
+      "name": "Town Meeting Day",
+      "rule": {
+        "type": "nth_weekday",
+        "month": 3,
+        "weekday": 2,
+        "nth": 1
+      },
+      "observed": "none",
+      "regions": [
+        "VT"
+      ]
+    },
+    {
+      "id": "bennington-battle-day",
+      "name": "Bennington Battle Day",
+      "rule": {
+        "type": "fixed",
+        "month": 8,
+        "day": 16
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "VT"
+      ]
+    },
+    {
+      "id": "west-virginia-day",
+      "name": "West Virginia Day",
+      "rule": {
+        "type": "fixed",
+        "month": 6,
+        "day": 20
+      },
+      "observed": "sat-fri-sun-mon",
+      "regions": [
+        "WV"
+      ]
+    },
+    {
+      "id": "christmas-eve",
+      "name": "Christmas Eve",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 24
+      },
+      "observed": "none",
+      "regions": [
+        "AR",
+        "MI",
+        "TX",
+        "WI"
+      ]
+    },
+    {
+      "id": "day-after-christmas-no-shift",
+      "name": "Day after Christmas",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 26
+      },
+      "observed": "none",
+      "regions": [
+        "TX"
+      ]
+    },
+    {
+      "id": "new-years-eve",
+      "name": "New Year's Eve",
+      "rule": {
+        "type": "fixed",
+        "month": 12,
+        "day": 31
+      },
+      "observed": "none",
+      "regions": [
+        "MI",
+        "WI"
+      ]
+    }
+  ]
+}

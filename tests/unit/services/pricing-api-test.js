@@ -55,6 +55,24 @@ module('Unit | Service | pricing-api', (hooks) => {
         }
     });
 
+    test('the holiday calendars are asked for by country, region and years, and the catalog once', async function (assert) {
+        const { service, calls } = api(this.owner, () => Promise.resolve({ countries: {} }));
+
+        await service.holidayCalendars.catalog();
+        await service.holidayCalendars.catalog();
+        await service.holidayCalendars.holidays('CA', 'QC', [2026, 2027]);
+        await service.holidayCalendars.holidays('US', 'TX', [2026]);
+
+        assert.deepEqual(
+            calls.map((call) => [call.method, call.path, call.data]),
+            [
+                ['get', 'admin/holiday-calendars', {}],
+                ['get', 'admin/holiday-calendars/CA', { region: 'QC', years: '2026,2027' }],
+                ['get', 'admin/holiday-calendars/US', { region: 'TX', years: '2026' }],
+            ]
+        );
+    });
+
     test('a key is escaped in the path', async function (assert) {
         const { service, calls } = api(this.owner, () => Promise.resolve({}));
 

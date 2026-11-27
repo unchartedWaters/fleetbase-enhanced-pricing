@@ -11,6 +11,8 @@ Route::prefix('enhanced-pricing/int/v1')
     ->middleware(['fleetbase.protected'])
     ->group(function (Illuminate\Routing\Router $router) {
         $router->get('admin/form', 'ProfileController@form');
+        $router->get('admin/holiday-calendars', 'HolidayCalendarController@index');
+        $router->get('admin/holiday-calendars/{country}', 'HolidayCalendarController@show');
         $router->get('admin/profiles', 'ProfileController@index');
         $router->post('admin/profiles', 'ProfileController@store');
         $router->get('admin/profiles/{key}', 'ProfileController@show');

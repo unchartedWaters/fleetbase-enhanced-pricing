@@ -62,6 +62,8 @@ screens, arrive in later releases.
   prices an order, overrides, dated changes, limits and errors.
 - [Pricing engine](docs/pricing-engine.md): how to call the engine and read
   its quote, with an example.
+- [Holiday calendars](docs/holidays.md): filling holiday lists by country and
+  state or province, and adding a country.
 - [Setup](docs/SETUP.md): requirements, install and publishing.
 - [Contributing](CONTRIBUTING.md): development setup, tests and conventions.
 

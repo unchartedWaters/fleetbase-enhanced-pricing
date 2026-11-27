@@ -62,6 +62,7 @@ export default class PricingProfileEditorComponent extends Component {
             currency: this.draft.currency,
             readOnly: this.args.readOnly,
             isNew: this.args.isNew,
+            calendars: this.args.calendars,
             onError: this.inputError,
             clearProblems: this.clearProblems,
         };

@@ -125,6 +125,9 @@ enhanced-pricing:
     change-not-allowed: "Only a subtotal fee's percentage or amount can be scheduled here, not {path}."
     field-invalid: This value isn't valid.
     field-required: A value is required here.
+    holiday-unknown-country: "There is no holiday calendar for this country."
+    holiday-unknown-region: "Choose a state or province this country has."
+    holiday-years: "Give between 1 and {max} years, each from {first} to {last}."
     profile-unreadable: "The profile's current version can't be read. Save a new version first."
     row-not-usable: "The row must be one of the customer's rows, from the service rate's rate table, with no problems."
     too-many: "Send at most {max}."
@@ -169,6 +172,20 @@ enhanced-pricing:
         versions: "Versions"
         subtotal-fees: "Subtotal fees"
         customers: "Customers"
+    fill:
+      open: "Fill from a country's holidays"
+      help: "Adds the public holidays of a state or province to this list, keeping the dates already here. A holiday on a weekend also adds the weekday it is observed. Nothing is saved until you save the profile."
+      country: "Country"
+      choose-country: "Choose a country"
+      region: "State or province"
+      choose-region: "Choose a state or province"
+      year: "From year"
+      years: "Years"
+      add: "Add holidays"
+      loading: "Loading the calendars…"
+      year-invalid: "Give a four-digit year; the last year must not pass the calendar's limit."
+      added: "{added, plural, =0 {No dates added} one {Added 1 date} other {Added # dates}}; {existing, plural, =0 {none was} one {1 was} other {# were}} already in the list."
+      too-many: "That would pass the {max} dates a list can hold, so nothing was added. Remove some dates or choose fewer years."
     editor:
       title: "Edit {name}"
       new-title: "New pricing profile"

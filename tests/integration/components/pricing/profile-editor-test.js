@@ -1,5 +1,5 @@
 import { module, test } from 'qunit';
-import { render, click, fillIn, select, findAll, triggerEvent } from '@ember/test-helpers';
+import { render, click, fillIn, select, find, findAll, triggerEvent } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import { setupEngineRenderingTest, fixture } from 'dummy/tests/helpers/engine';
 
@@ -246,6 +246,122 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-save]');
 
         assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-12-25', '2026-12-26'] });
+    });
+
+    // Fill from a calendar: the server works out the dates; the editor only merges them in.
+    function calendars(context, answer) {
+        context.asked = [];
+        context.calendars = {
+            catalog: () =>
+                Promise.resolve({
+                    countries: {
+                        CA: { name: 'Canada', regions: { ON: 'Ontario', QC: 'Quebec' } },
+                        US: { name: 'United States', regions: { CA: 'California', TX: 'Texas' } },
+                    },
+                    limits: { max_years: 5, first_year: 1900, last_year: 2300 },
+                }),
+            holidays: (country, region, years) => {
+                context.asked.push([country, region, years]);
+
+                return answer(country, region, years);
+            },
+        };
+    }
+    const filling = hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @calendars={{this.calendars}} @onSave={{this.save}} @onOpenNewer={{this.openNewer}} />`;
+    const quebec = () =>
+        Promise.resolve({
+            country: 'CA',
+            region: 'QC',
+            holidays: [
+                { date: '2026-06-24', name: 'Saint-Jean-Baptiste Day', observed: false },
+                { date: '2026-12-25', name: 'Christmas Day', observed: false },
+            ],
+        });
+
+    test('a holiday list is filled from a country and region, merged with its dates', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25', '2026-12-31'] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+
+        assert.dom('[data-test-fill-country] option').exists({ count: 3 }, 'a prompt and two countries');
+        assert.dom('[data-test-fill-region]').doesNotExist('a region comes after a country');
+        await select('[data-test-fill-country]', 'CA');
+        assert.dom('[data-test-fill-region] option').exists({ count: 3 }, 'a prompt and two provinces');
+        assert.dom('[data-test-fill-add]').isDisabled('a region is needed');
+        await select('[data-test-fill-region]', 'QC');
+        await fillIn('[data-test-fill-year]', '2026');
+        await select('[data-test-fill-years]', '1');
+        await click('[data-test-fill-add]');
+
+        assert.deepEqual(this.asked, [['CA', 'QC', [2026]]]);
+        assert.dom('[data-test-fill-result]').includesText('Added 1');
+        assert.dom('[data-test-fill-result]').includesText('1 was already in the list');
+        assert.dom('[data-test-fill-added]').includesText('Saint-Jean-Baptiste Day');
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24\n2026-12-25\n2026-12-31');
+        await click('[data-test-save]');
+
+        assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-06-24', '2026-12-25', '2026-12-31'] });
+    });
+
+    test('several years are asked for from the first year', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'US');
+        await select('[data-test-fill-region]', 'TX');
+        await fillIn('[data-test-fill-year]', '2027');
+        await select('[data-test-fill-years]', '3');
+        await click('[data-test-fill-add]');
+
+        assert.deepEqual(this.asked, [['US', 'TX', [2027, 2028, 2029]]]);
+    });
+
+    test('a fill that would pass the 400 dates a list can hold changes nothing', async function (assert) {
+        this.definition.holiday_lists = {};
+        this.definition.holiday_lists.canada = Array.from({ length: 399 }, (_, index) => new Date(Date.UTC(2100, 0, 1 + index)).toISOString().slice(0, 10));
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-add]');
+
+        assert.dom('[data-test-fill-result]').includesText('400');
+        assert.strictEqual(find('[data-test-holiday-list="canada"] textarea').value.split('\n').length, 399);
+    });
+
+    test('a refused or failed fill says why and leaves the list as it was', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25'] };
+        calendars(this, () => Promise.reject({ refused: 'error', message: 'offline' }));
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-add]');
+
+        assert.dom('[data-test-fill-refusal]').exists();
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-12-25');
+    });
+
+    test('a holiday list is not filled when the profile is only being read, or there are no calendars', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        await render(editor);
+        await click('[data-test-section="holiday_lists"]');
+
+        assert.dom('[data-test-fill-open]').doesNotExist();
+        calendars(this, quebec);
+        await render(
+            hbs`<Pricing::ProfileEditor @form={{this.form}} @profile={{this.profile}} @definition={{this.definition}} @builtOn={{2}} @readOnly={{true}} @calendars={{this.calendars}} />`
+        );
+        await click('[data-test-section="holiday_lists"]');
+
+        assert.dom('[data-test-fill-open]').doesNotExist();
     });
 
     test('changes are reported, so leaving can ask first', async function (assert) {
