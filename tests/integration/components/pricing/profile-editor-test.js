@@ -31,12 +31,53 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
 
         assert.deepEqual(
             findAll('[data-test-section]').map((element) => element.dataset.testSection),
-            ['general', 'products', 'attributes', 'entity_types', 'rate_tables', 'service_rates', 'fees', 'subtotal_fees', 'manual_charges', 'holiday_lists']
+            ['general', 'products', 'attributes', 'entity_types', 'rate_tables', 'service_rates', 'fees', 'holiday_lists']
         );
         await click('[data-test-section="fees"]');
 
-        assert.dom('[data-test-item]').exists({ count: 3 });
+        assert.dom('[data-test-fee-group="fees"] [data-test-item]').exists({ count: 3 });
         assert.dom('[data-test-item="fees.2"]').includesText('Peak hours fee');
+    });
+
+    test('fees, subtotal fees and manual charges are one page, each kind of fee chosen when adding', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+
+        assert.dom('[data-test-fee-group="subtotal_fees"] [data-test-item]').exists();
+        assert.dom('[data-test-fee-group="manual_charges"] [data-test-item]').exists();
+        assert.deepEqual(
+            findAll('[data-test-add-fee-type] option').map((option) => option.value),
+            ['fees-peak_hours', 'fees-parcel', 'fees-distance', 'fees-additional', 'subtotal_fees-percentage', 'subtotal_fees-flat', 'manual_charges-amount', 'manual_charges-entered']
+        );
+        assert.dom('[data-test-field="fees.0.code"]').exists();
+        assert.dom('[data-test-field="fees.0.description"]').exists();
+    });
+
+    test('adding a percentage fee adds a subtotal fee with a maximum and a minimum to fill in', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+        const before = this.definition.subtotal_fees.length;
+
+        await select('[data-test-add-fee-type]', 'subtotal_fees-percentage');
+        await click('[data-test-add-fee]');
+
+        assert.dom(`[data-test-item="subtotal_fees.${before}"]`).exists();
+        assert.dom(`[data-test-field="subtotal_fees.${before}.maximum"]`).exists();
+        assert.dom(`[data-test-field="subtotal_fees.${before}.minimum"]`).exists();
+        assert.dom('[data-test-fee-type-help]').includesText('Maximum for a cap');
+    });
+
+    test('adding a mileage premium adds a distance fee', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+        const before = this.definition.fees.length;
+
+        await select('[data-test-add-fee-type]', 'fees-distance');
+        await click('[data-test-add-fee]');
+
+        assert.dom(`[data-test-field="fees.${before}.thresholds"]`).exists();
+        await click('[data-test-save]');
+        assert.strictEqual(this.saved[0].definition.fees[before].kind, 'distance');
     });
 
     test('money is shown and typed in dollars and saved in cents', async function (assert) {
@@ -55,7 +96,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
 
     test('a percent is typed in percent and saved in basis points', async function (assert) {
         await render(editor);
-        await click('[data-test-section="subtotal_fees"]');
+        await click('[data-test-section="fees"]');
 
         assert.dom('[data-test-field="subtotal_fees.0.percentage"] input').hasValue('11');
         await fillIn('[data-test-field="subtotal_fees.0.percentage"] input', '0.31');
@@ -98,8 +139,8 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-item="fees.2"] [data-test-move-up]');
         assert.dom('[data-test-item="fees.1"]').includesText('Peak hours fee');
         await click('[data-test-item="fees.0"] [data-test-remove]');
-        await select('[data-test-add-variant]', 'additional');
-        await click('[data-test-add]');
+        await select('[data-test-add-fee-type]', 'fees-additional');
+        await click('[data-test-add-fee]');
         await click('[data-test-save]');
 
         const fees = this.saved[0].definition.fees;
@@ -317,7 +358,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-section="fees"]');
 
         assert.dom('[data-test-save]').doesNotExist();
-        assert.dom('[data-test-add]').doesNotExist();
+        assert.dom('[data-test-add-fee]').doesNotExist();
         assert.dom('[data-test-field="fees.2.amount"] input').isDisabled();
     });
 
@@ -508,9 +549,6 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
 
     test("a stored fee's empty fields of another mode or basis aren't called unknown", async function (assert) {
         await render(editor);
-        await click('[data-test-section="subtotal_fees"]');
-        assert.dom('[data-test-unknown]').doesNotExist();
-
         await click('[data-test-section="fees"]');
         assert.dom('[data-test-unknown]').doesNotExist();
     });

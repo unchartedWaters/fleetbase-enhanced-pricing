@@ -109,6 +109,7 @@ final class UnitCheck
         $units    = match (true) {
             $kind === 'manual_charges'                            => [$quantity['unit'] ?? null],
             $kind === 'parcel'                                    => [$rule['basis'] ?? null, $rule['unit'] ?? null],
+            $kind === 'distance'                                  => [],
             $section === 'fees' && $rule['charge'] === 'per_unit' => [self::attributeUnit($profile, $rule)],
             default                                               => [],
         };

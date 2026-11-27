@@ -16,6 +16,9 @@ use Fleetbase\EnhancedPricing\Profile\ProfileShapes;
  *   kind);
  * - ref: products, entity_types, rate_tables, columns, text_columns, money_columns,
  *   integer_columns, attributes, choices, holiday_lists or service_rates;
+ * A section may name a `group`: the sections of one group are drawn together as one page, each
+ * still its own list of the profile (the Fees page holds fees, subtotal fees and manual charges).
+ *
  * - fixed: set when the profile is made and never changed by a new version;
  * - when: { field: [values] }, the field is used only while those sibling fields hold one of
  *   the values, and is left out otherwise.
@@ -35,9 +38,12 @@ final class ProfileForm
                 ['key' => 'entity_types', 'kind' => 'entity_type', 'list' => true, 'max' => 20],
                 ['key' => 'rate_tables', 'kind' => 'rate_table', 'list' => true, 'max' => 10],
                 ['key' => 'service_rates', 'kind' => 'service_rate', 'list' => true, 'max' => 20],
-                ['key' => 'fees', 'kind' => 'fee', 'list' => true, 'max' => 50, 'ordered' => true],
-                ['key' => 'subtotal_fees', 'kind' => 'subtotal_fee', 'list' => true, 'max' => 50, 'ordered' => true],
-                ['key' => 'manual_charges', 'kind' => 'manual_charge', 'list' => true, 'max' => 20],
+                ['key' => 'fees', 'kind' => 'fee', 'list' => true, 'max' => 50, 'ordered' => true, 'group' => 'fees'],
+                [
+                    'key'     => 'subtotal_fees', 'kind' => 'subtotal_fee', 'list' => true, 'max' => 50,
+                    'ordered' => true, 'group' => 'fees',
+                ],
+                ['key' => 'manual_charges', 'kind' => 'manual_charge', 'list' => true, 'max' => 20, 'group' => 'fees'],
                 ['key' => 'holiday_lists', 'kind' => 'holiday_list', 'map' => true, 'max' => 10],
             ],
             'kinds'    => self::kinds(),
@@ -206,6 +212,10 @@ final class ProfileForm
                     self::enum('scope', ['entity', 'order']),
                     self::field('thresholds', 'list', ['of' => 'threshold', 'min' => 1, 'max' => 10]),
                 ],
+                'distance'   => [
+                    self::enum('charge', ['per_order', 'per_unit']),
+                    self::field('thresholds', 'list', ['of' => 'threshold', 'min' => 1, 'max' => 10]),
+                ],
                 'additional' => array_merge([self::enum('charge', ['per_entity', 'per_order', 'per_unit'])], $amount, [
                     self::field('attribute', 'ref', ['ref' => 'attributes']),
                     self::optional(self::field('equals', 'ref', ['ref' => 'choices', 'nullable' => true]), null),
@@ -257,6 +267,7 @@ final class ProfileForm
             'fields'        => [
                 self::field('key', 'key'),
                 self::field('name', 'text'),
+                ...self::identity(),
                 self::field('product', 'ref', ['ref' => 'products']),
                 self::optional(self::field('offered', 'boolean'), true),
                 self::optional(self::field('effective_from', 'date', ['nullable' => true]), null),
@@ -280,7 +291,21 @@ final class ProfileForm
         return [
             self::field('key', 'key'),
             self::field('name', 'text'),
+            ...self::identity(),
             self::field('product', 'ref', ['ref' => 'products']),
+        ];
+    }
+
+    /**
+     * The code a rule's lines are billed under (its product's code when blank) and a description.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function identity(): array
+    {
+        return [
+            self::optional(self::field('code', 'code', ['nullable' => true]), null),
+            self::optional(self::field('description', 'text', ['nullable' => true]), null),
         ];
     }
 

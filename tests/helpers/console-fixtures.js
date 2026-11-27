@@ -42,20 +42,23 @@ export default {
                 "kind": "fee",
                 "list": true,
                 "max": 50,
-                "ordered": true
+                "ordered": true,
+                "group": "fees"
             },
             {
                 "key": "subtotal_fees",
                 "kind": "subtotal_fee",
                 "list": true,
                 "max": 50,
-                "ordered": true
+                "ordered": true,
+                "group": "fees"
             },
             {
                 "key": "manual_charges",
                 "kind": "manual_charge",
                 "list": true,
-                "max": 20
+                "max": 20,
+                "group": "fees"
             },
             {
                 "key": "holiday_lists",
@@ -439,6 +442,20 @@ export default {
                         "type": "text"
                     },
                     {
+                        "name": "code",
+                        "type": "code",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
+                    },
+                    {
+                        "name": "description",
+                        "type": "text",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
+                    },
+                    {
                         "name": "product",
                         "type": "ref",
                         "ref": "products"
@@ -606,6 +623,23 @@ export default {
                             "max": 10
                         }
                     ],
+                    "distance": [
+                        {
+                            "name": "charge",
+                            "type": "enum",
+                            "options": [
+                                "per_order",
+                                "per_unit"
+                            ]
+                        },
+                        {
+                            "name": "thresholds",
+                            "type": "list",
+                            "of": "threshold",
+                            "min": 1,
+                            "max": 10
+                        }
+                    ],
                     "additional": [
                         {
                             "name": "charge",
@@ -681,6 +715,20 @@ export default {
                     {
                         "name": "name",
                         "type": "text"
+                    },
+                    {
+                        "name": "code",
+                        "type": "code",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
+                    },
+                    {
+                        "name": "description",
+                        "type": "text",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
                     },
                     {
                         "name": "product",
@@ -812,6 +860,20 @@ export default {
                     {
                         "name": "name",
                         "type": "text"
+                    },
+                    {
+                        "name": "code",
+                        "type": "code",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
+                    },
+                    {
+                        "name": "description",
+                        "type": "text",
+                        "nullable": true,
+                        "optional": true,
+                        "default": null
                     },
                     {
                         "name": "product",

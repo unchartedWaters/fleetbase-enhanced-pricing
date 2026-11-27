@@ -80,16 +80,24 @@ final class RuleSupport
     /**
      * @param array<string, mixed> $rule
      *
-     * @return array{product: string, name: string, quantity: int, unit: int, source: string}
+     * @return array{
+     *     product: string, billing_code?: string, name: string, quantity: int, unit: int, source: string
+     * }
      */
     public function draft(array $rule, int $quantity, int $unit, ?string $name = null): array
     {
-        return [
+        $draft = [
             'product'  => R::text($rule['product']),
             'name'     => $name ?? R::text($rule['name']),
             'quantity' => $quantity,
             'unit'     => $unit,
             'source'   => (isset($rule['kind']) ? 'fee:' : 'subtotal_fee:') . R::text($rule['key']),
         ];
+        // The rule's own code, when it has one; else LineBook bills under the product's code.
+        if (is_string($rule['code'] ?? null)) {
+            $draft['billing_code'] = $rule['code'];
+        }
+
+        return $draft;
     }
 }

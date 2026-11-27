@@ -24,7 +24,7 @@ final class PricingEngine
 
         (new ServiceFee($order, $request->distanceMeters))->price();
         (new ManualCharges($order))->price($request->manualCharges);
-        (new Fees($order))->price();
+        (new Fees($order, $request->distanceMeters))->price();
         (new SubtotalFees($order))->price();
 
         return new Quote(

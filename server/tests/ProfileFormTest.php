@@ -34,10 +34,11 @@ function formSamples(): array
     $attribute = ['key' => 'new_attr', 'name' => 'New', 'scope' => 'order', 'required' => false, 'required_for' => []];
     $rate      = ['key' => 'new_rate'] + $rule
         + ['line_name' => ['text' => 'New'], 'billing_code_column' => null, 'minimum' => null, 'enabled' => true];
-    $fee       = ['key' => 'new_fee'] + $rule + ['applies_to' => ['TIERED']] + $limits;
-    $subtotal  = ['key' => 'new_sub'] + $rule + ['applies_to' => ['TIERED'], 'requires' => [], 'skipped_for' => []]
-        + $limits;
-    $charge    = ['key' => 'new_charge'] + $rule
+    $identity  = ['code' => null, 'description' => null];
+    $fee       = ['key' => 'new_fee'] + $rule + $identity + ['applies_to' => ['TIERED']] + $limits;
+    $subtotal  = ['key' => 'new_sub'] + $rule + $identity
+        + ['applies_to' => ['TIERED'], 'requires' => [], 'skipped_for' => []] + $limits;
+    $charge    = ['key' => 'new_charge'] + $rule + $identity
         + ['offered' => true, 'effective_from' => null, 'effective_until' => null];
 
     return [
@@ -104,6 +105,11 @@ function formSamples(): array
             'unit'       => 'kg',
             'scope'      => 'entity',
             'thresholds' => [['over' => '30', 'amount' => 40]],
+        ]),
+        'distance fee'          => $sample('fees', 'fee', 'distance', $fee + [
+            'kind'       => 'distance',
+            'charge'     => 'per_unit',
+            'thresholds' => [['over' => '50', 'amount' => 40]],
         ]),
         'additional fee'        => $sample('fees', 'fee', 'additional', $fee + [
             'kind'       => 'additional',
@@ -268,7 +274,7 @@ test('a field the form does not have is refused', function (
 })->with(formSamples());
 
 test('the fee, subtotal fee, manual charge, rate table and per meter forms list the checks\' fields', function () {
-    foreach (['peak_hours', 'parcel', 'additional'] as $kind) {
+    foreach (['peak_hours', 'parcel', 'distance', 'additional'] as $kind) {
         expect(array_keys(formFields('fee', $kind)))
             ->toEqualCanonicalizing(array_keys(ProfileShapes::feeFields($kind)));
     }

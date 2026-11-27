@@ -35,8 +35,10 @@ final class ManualCharges
             $definition = $definitions[$charge->key]
                 ?? throw $this->order->fail('unknown-manual-charge', ['charge' => $charge->key]);
             $line       = $charge->isAdded() ? $this->added($charge) : $this->priced($definition, $charge);
+            $code       = $definition['code'] ?? null;
             $this->order->book->add([[
                 ...$line,
+                ...(is_string($code) ? ['billing_code' => $code] : []),
                 'quantity' => 1,
                 'source'   => 'manual_charge:' . $charge->key,
             ]]);

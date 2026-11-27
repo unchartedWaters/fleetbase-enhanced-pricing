@@ -91,6 +91,8 @@
 
         {{#if (eq this.current.key "general")}}
             <Pricing::Fields @env={{this.env}} @kind={{this.current.kind}} @value={{this.draft}} @path="" @ignore={{this.sectionKeys}} @onChange={{this.setGeneral}} />
+        {{else if this.current.grouped}}
+            <Pricing::FeeList @env={{this.env}} @members={{this.current.members}} @draft={{this.draft}} @onChange={{this.setSectionValue}} />
         {{else if this.current.map}}
             <Pricing::HolidayLists @env={{this.env}} @value={{get this.draft this.current.key}} @max={{this.current.max}} @onChange={{fn this.setSectionValue this.current.key}} />
         {{else}}
