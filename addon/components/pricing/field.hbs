@@ -1,6 +1,8 @@
 <div class="pricing-field" data-test-field={{@path}}>
     <div class="mb-1 flex items-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-        {{pricing-label this.field.name}}
+        <span data-test-help={{if this.help "true"}}>
+            <InputLabel @labelText={{pricing-label this.field.name}} @helpText={{this.help}} />
+        </span>
         {{#if this.field.optional}}
             <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.input.optional"}}</span>
         {{/if}}

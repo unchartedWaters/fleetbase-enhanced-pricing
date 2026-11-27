@@ -10,7 +10,8 @@ export default class NewProfileRoute extends Route {
 
     async model() {
         const form = await this.pricingApi.form();
-        const definition = newItem(form, 'profile');
+        // km is the default for a new profile only; a saved profile keeps the unit it was made with.
+        const definition = { ...newItem(form, 'profile'), distance_unit: 'km' };
         for (const section of form.sections) {
             if (section.list) {
                 definition[section.key] = [];

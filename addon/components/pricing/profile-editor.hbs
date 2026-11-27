@@ -71,21 +71,24 @@
             </div>
         {{/if}}
 
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{t (concat "enhanced-pricing.console.section." this.current.key)}}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-300" data-test-section-help>{{t (concat "enhanced-pricing.console.section-help." this.current.key)}}</p>
+
         {{#if (and @isNew (eq this.section "general"))}}
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    {{t "enhanced-pricing.console.profile.key"}}
+                    <span data-test-new-key-label>{{t "enhanced-pricing.console.profile.key"}}</span>
                     <input type="text" class="form-input form-input-sm mt-1 w-full font-mono" value={{this.key}} placeholder="courier" data-test-new-key {{on "input" this.typeKey}} />
                     <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.profile.key-help"}}</span>
                 </label>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
                     {{t "enhanced-pricing.console.profile.name"}}
-                    <input type="text" class="form-input form-input-sm mt-1 w-full" value={{this.name}} data-test-new-name {{on "input" this.typeName}} />
+                    <input type="text" class="form-input form-input-sm mt-1 w-full" value={{this.name}} placeholder="Starter courier" data-test-new-name {{on "input" this.typeName}} />
+                    <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.profile.name-help"}}</span>
                 </label>
             </div>
         {{/if}}
 
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{t (concat "enhanced-pricing.console.section." this.current.key)}}</h2>
         {{#if (eq this.current.key "general")}}
             <Pricing::Fields @env={{this.env}} @kind={{this.current.kind}} @value={{this.draft}} @path="" @ignore={{this.sectionKeys}} @onChange={{this.setGeneral}} />
         {{else if this.current.map}}

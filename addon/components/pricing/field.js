@@ -1,18 +1,27 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
-import { blankFor, newItem, problemsAt, refOptions } from '../../utils/profile-form';
+import { inject as service } from '@ember/service';
+import { blankFor, newItem, problemsAt, refOptions, helpFor } from '../../utils/profile-form';
 
 // One field of a profile element, drawn from its spec: a value, a nested object, a list of
 // elements, or a choice between kinds of value (such as a price typed in or read from a column).
 // @env holds what every field shares: the form spec, the whole draft, the problems, the
 // currency, and whether the profile is read-only or new.
 export default class PricingFieldComponent extends Component {
+    @service intl;
+
     get field() {
         return this.args.field;
     }
 
     get env() {
         return this.args.env;
+    }
+
+    // The hover help: the field's own text for its kind, else the text every field of that name
+    // shares. Nothing is shown for a field with neither.
+    get help() {
+        return helpFor(this.intl, this.args.kind, this.field.name);
     }
 
     get problems() {

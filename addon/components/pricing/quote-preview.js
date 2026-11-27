@@ -158,6 +158,10 @@ export default class PricingQuotePreviewComponent extends Component {
         this.row = '';
     }
 
+    @action setTimezone(value) {
+        this.timezone = value;
+    }
+
     @action setText(name, event) {
         this[name] = event.target.value;
     }

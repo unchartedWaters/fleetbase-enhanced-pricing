@@ -41,7 +41,7 @@
             </label>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
                 {{t "enhanced-pricing.console.preview.timezone"}}
-                <input type="text" class="form-input form-input-sm mt-1 block w-full" value={{this.timezone}} data-test-timezone {{on "change" (fn this.setText "timezone")}} />
+                <div class="mt-1" data-test-timezone><Pricing::Input @type="timezone" @value={{this.timezone}} @onChange={{this.setTimezone}} /></div>
                 <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.preview.timezone-help" timezone=this.definition.scheduling_timezone}}</span>
             </label>
         </div>

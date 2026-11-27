@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
-import { problemsWithin, withoutProblemsWithin } from '../../utils/profile-form';
+import { problemsWithin, withoutProblemsWithin, slug } from '../../utils/profile-form';
 
 // The profile editor: every element of a profile in forms drawn from the server's field spec
 // (@form), each save a new version built on the one opened (@builtOn). @onSave takes
@@ -24,6 +24,7 @@ export default class PricingProfileEditorComponent extends Component {
     @tracked inputErrors = new Set();
     @tracked key = '';
     @tracked name = '';
+    keyTyped = false;
     dirty = false;
     lastBuiltOn = null;
 
@@ -117,11 +118,15 @@ export default class PricingProfileEditorComponent extends Component {
 
     @action typeKey(event) {
         this.key = event.target.value;
+        this.keyTyped = true;
         this.markDirty();
     }
 
     @action typeName(event) {
         this.name = event.target.value;
+        if (!this.keyTyped) {
+            this.key = slug(this.name);
+        }
         this.markDirty();
     }
 

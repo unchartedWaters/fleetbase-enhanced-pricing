@@ -1,5 +1,15 @@
 {{#if this.isMoney}}
     <Pricing::MoneyInput @value={{@value}} @kind={{if (eq this.type "percent") "percent" "money"}} @currency={{@currency}} @disabled={{@disabled}} @onChange={{@onChange}} @onError={{@onError}} />
+{{else if this.isListed}}
+    <input type="text" list={{this.listId}} class="form-input form-input-sm w-full max-w-md" value={{this.textValue}} disabled={{@disabled}} autocomplete="off" spellcheck="false" {{on "change" this.pick}} />
+    <datalist id={{this.listId}}>
+        {{#each this.listOptions as |entry|}}
+            <option value={{entry.value}} label={{entry.label}}></option>
+        {{/each}}
+    </datalist>
+    {{#if this.listWarning}}
+        <p class="mt-1 text-xs text-yellow-700 dark:text-yellow-300" data-test-input-warning>{{t "enhanced-pricing.console.input.not-in-list"}}</p>
+    {{/if}}
 {{else if this.isText}}
     <input type="text" class="form-input form-input-sm w-full max-w-md" value={{this.textValue}} disabled={{@disabled}} data-test-choice-value={{@choiceValue}} {{on "input" this.text}} />
 {{else if (eq this.type "integer")}}
