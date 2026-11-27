@@ -56,11 +56,7 @@ final class ProfileForm
                 self::enum('distance_unit', ['km', 'mi'], ['fixed' => true]),
                 self::field('default_entity_type', 'ref', ['ref' => 'entity_types']),
             ]],
-            'product'       => ['fields' => [
-                self::field('code', 'code'),
-                self::field('name', 'text'),
-                self::optional(self::field('description', 'text', ['nullable' => true]), null),
-            ]],
+            'product'       => ['fields' => [self::field('code', 'code'), self::field('name', 'text')]],
             'attribute'     => self::attribute(),
             'choice'        => ['fields' => [self::field('key', 'key'), self::field('name', 'text')]],
             'entity_type'   => ['fields' => [

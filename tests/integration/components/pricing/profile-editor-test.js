@@ -266,16 +266,6 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.dom(`${card} h3`).includesText('Parcel fee');
     });
 
-    test('a product has an optional description', async function (assert) {
-        await render(editor);
-        await click('[data-test-section="products"]');
-
-        assert.dom('[data-test-field="products.0.description"]').exists();
-        await fillIn('[data-test-field="products.0.description"] input', 'Billed for each parcel');
-        await click('[data-test-save]');
-        assert.strictEqual(this.saved[0].definition.products[0].description, 'Billed for each parcel');
-    });
-
     test('currency and timezone are picked from a searchable list and an unlisted value is flagged', async function (assert) {
         this.blank = { currency: null, scheduling_timezone: null, distance_unit: 'km', products: [], entity_types: [], service_rates: [] };
         await render(hbs`<Pricing::ProfileEditor @form={{this.form}} @definition={{this.blank}} @isNew={{true}} @onSave={{this.save}} />`);

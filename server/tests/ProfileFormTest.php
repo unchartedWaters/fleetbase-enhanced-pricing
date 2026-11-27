@@ -41,7 +41,7 @@ function formSamples(): array
         + ['offered' => true, 'effective_from' => null, 'effective_until' => null];
 
     return [
-        'product'               => $sample('products', 'product', null, ['code' => 'NEWQ', 'name' => 'New', 'description' => 'A note']),
+        'product'               => $sample('products', 'product', null, ['code' => 'NEWQ', 'name' => 'New']),
         'boolean attribute'     => $sample('attributes', 'attribute', 'boolean', $attribute + ['type' => 'boolean']),
         'choice attribute'      => $sample('attributes', 'attribute', 'choice', $attribute + [
             'type'    => 'choice',

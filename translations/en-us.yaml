@@ -248,7 +248,6 @@ enhanced-pricing:
       product:
         code: "The billing code: letters, digits, _, - and ., up to 64 characters, unique. Ledger and your accounting map invoice lines by it."
         name: "The label shown for this product in forms and quotes."
-        description: "A note for people editing this profile, such as when to use the product. It isn't shown on invoices."
       attribute:
         key: "A short code for this attribute, used to refer to it from fees."
         name: "The label shown on the order form."

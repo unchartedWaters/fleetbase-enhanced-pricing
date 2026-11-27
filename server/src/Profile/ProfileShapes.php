@@ -32,9 +32,8 @@ final class ProfileShapes
             'scheduling_timezone' => S::type('timezone'),
             'distance_unit'       => S::enum(['km', 'mi']),
             'products'            => S::listOf(S::object([
-                'code'        => S::type('code'),
-                'name'        => S::type('text'),
-                'description' => S::optional(S::nullable(S::type('text'))),
+                'code' => S::type('code'),
+                'name' => S::type('text'),
             ]), 1, 50),
             'attributes'          => S::optional(S::listOf(S::type('raw'), 0, 20), []),
             'entity_types'        => S::listOf(S::type('raw'), 1, 20),
