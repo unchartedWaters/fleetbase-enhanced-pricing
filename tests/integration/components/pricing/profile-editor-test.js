@@ -289,11 +289,12 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.dom('[data-test-fill-region]').doesNotExist('a region comes after a country');
         await select('[data-test-fill-country]', 'CA');
         assert.dom('[data-test-fill-region] option').exists({ count: 3 }, 'a prompt and two provinces');
-        assert.dom('[data-test-fill-add]').isDisabled('a region is needed');
+        assert.dom('[data-test-fill-find]').isDisabled('a region is needed');
         await select('[data-test-fill-region]', 'QC');
         await fillIn('[data-test-fill-year]', '2026');
         await select('[data-test-fill-years]', '1');
-        await click('[data-test-fill-add]');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
 
         assert.deepEqual(this.asked, [['CA', 'QC', [2026]]]);
         assert.dom('[data-test-fill-result]').includesText('Added 1');
@@ -303,6 +304,47 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-save]');
 
         assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-06-24', '2026-12-25', '2026-12-31'] });
+    });
+
+    test('each found holiday can be left out before it is added, and the list stays editable by hand', async function (assert) {
+        this.definition.holiday_lists = { canada: ['2026-12-25'] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+
+        assert.dom('[data-test-fill-item]').exists({ count: 2 });
+        assert.dom('[data-test-fill-item="2026-12-25"] input').isDisabled('a date already in the list');
+        assert.dom('[data-test-fill-item="2026-06-24"] input').isChecked();
+        await click('[data-test-fill-item="2026-06-24"] input');
+        assert.dom('[data-test-fill-confirm]').isDisabled('nothing is left to add');
+        await click('[data-test-fill-item="2026-06-24"] input');
+        await click('[data-test-fill-confirm]');
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24\n2026-12-25');
+        // By hand: one more date, and a line removed.
+        await fillIn('[data-test-holiday-list="canada"] textarea', '2026-06-24\n2027-01-04');
+        await click('[data-test-save]');
+
+        assert.deepEqual(this.saved[0].definition.holiday_lists, { canada: ['2026-06-24', '2027-01-04'] });
+    });
+
+    test('a holiday left out is not added', async function (assert) {
+        this.definition.holiday_lists = { canada: [] };
+        calendars(this, quebec);
+        await render(filling);
+        await click('[data-test-section="holiday_lists"]');
+        await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
+        await select('[data-test-fill-country]', 'CA');
+        await select('[data-test-fill-region]', 'QC');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-item="2026-12-25"] input');
+        await click('[data-test-fill-confirm]');
+
+        assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-06-24');
+        assert.dom('[data-test-fill-result]').includesText('Added 1');
     });
 
     test('several years are asked for from the first year', async function (assert) {
@@ -315,7 +357,8 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await select('[data-test-fill-region]', 'TX');
         await fillIn('[data-test-fill-year]', '2027');
         await select('[data-test-fill-years]', '3');
-        await click('[data-test-fill-add]');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
 
         assert.deepEqual(this.asked, [['US', 'TX', [2027, 2028, 2029]]]);
     });
@@ -329,7 +372,8 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
         await select('[data-test-fill-country]', 'CA');
         await select('[data-test-fill-region]', 'QC');
-        await click('[data-test-fill-add]');
+        await click('[data-test-fill-find]');
+        await click('[data-test-fill-confirm]');
 
         assert.dom('[data-test-fill-result]').includesText('400');
         assert.strictEqual(find('[data-test-holiday-list="canada"] textarea').value.split('\n').length, 399);
@@ -343,7 +387,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         await click('[data-test-holiday-list="canada"] [data-test-fill-open]');
         await select('[data-test-fill-country]', 'CA');
         await select('[data-test-fill-region]', 'QC');
-        await click('[data-test-fill-add]');
+        await click('[data-test-fill-find]');
 
         assert.dom('[data-test-fill-refusal]').exists();
         assert.dom('[data-test-holiday-list="canada"] textarea').hasValue('2026-12-25');
