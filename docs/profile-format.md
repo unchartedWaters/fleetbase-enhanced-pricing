@@ -633,7 +633,8 @@ until someone removes the charge. An order can have up to 20 manual charges.
 { "main": ["2027-01-01", "2027-07-01", "2027-12-25"] }
 ```
 
-A name (a key) and up to 400 dates. Peak hours fees name a list.
+A name (a key) and up to 400 dates. Peak hours fees name a list. The editor can
+fill a list from a country's holidays: see [Holiday calendars](holidays.md).
 
 ## Invoice lines
 
