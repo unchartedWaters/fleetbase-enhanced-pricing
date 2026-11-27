@@ -181,8 +181,8 @@ test('a pricing message fills every placeholder', function (array $price, string
             'profile' => BillingProfiles::profile(subtotalFees: true),
             'row'     => Orders::ROW_1 + ['billing_code' => 'PEAK'],
         ])],
-        "The billing code in billing_code, row R1 of Example customer's card Main, is another product's code or a fee's code, "
-            . "so Tiered delivery can't bill under it.",
+        "The billing code in billing_code, row R1 of Example customer's card Main, "
+            . "is another product's code or a fee's code, so Tiered delivery can't bill under it.",
     ],
     'a service rate turned off'              => [
         [fn () => Orders::price(['overrides' => ['service_rates.tiered.enabled' => false]])],

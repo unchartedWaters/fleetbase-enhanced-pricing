@@ -152,11 +152,13 @@ final class Fees
             return [];
         }
 
+        $over = Exact::display($distance->minus($thresholds[0]['over']));
+
         return [$this->support->draft(
             $fee,
             1,
             Exact::round(self::bands($thresholds, $distance)),
-            sprintf('%s (%s %s)', R::text($fee['name']), Exact::display($distance->minus($thresholds[0]['over'])), $unit),
+            sprintf('%s (%s %s)', R::text($fee['name']), $over, $unit),
         )];
     }
 

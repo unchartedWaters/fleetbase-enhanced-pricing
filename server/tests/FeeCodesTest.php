@@ -49,7 +49,8 @@ test('a manual charge bills under its own code', function () {
 
 test('a code may be the rule\'s own product code but not another product\'s', function (string $code, bool $valid) {
     $profile = Profiles::set(Profiles::example(), 'fees.2.code', $code);
-    $paths   = array_map(static fn ($problem) => $problem->path . ':' . $problem->key, (new ProfileValidator())->check($profile));
+    $found   = (new ProfileValidator())->check($profile);
+    $paths   = array_map(static fn ($problem) => $problem->path . ':' . $problem->key, $found);
 
     expect($paths === [])->toBe($valid)
         ->and($valid || $paths === ['fees.2.code:enhanced-pricing.profile.code-is-product'])->toBeTrue();
@@ -69,7 +70,7 @@ test('a code must be written like a product code and a description must not be e
     expect($paths)->toContain('fees.2.code')->toContain('fees.2.description');
 });
 
-test('a route\'s billing code from the rate card row may not be a fee, subtotal fee or manual charge code', function (string $section, string $code) {
+test('a route\'s billing code may not be a fee code', function (string $section, string $code) {
     $profile = Profiles::set(BillingProfiles::profile(), "$section.0.code", 'MILEAGE');
 
     Orders::price(['profile' => $profile, 'row' => Orders::ROW_1 + ['billing_code' => $code]]);

@@ -37,7 +37,8 @@ test('per unit charges each distance unit over the threshold, as one named line'
 });
 
 test('bands price each stretch at its own threshold amount', function () {
-    $profile = ($this->premium)(['thresholds' => [['over' => '50', 'amount' => 40], ['over' => '100', 'amount' => 60]]]);
+    $bands   = [['over' => '50', 'amount' => 40], ['over' => '100', 'amount' => 60]];
+    $profile = ($this->premium)(['thresholds' => $bands]);
 
     $quote = Orders::price(['profile' => $profile, 'distance_meters' => 120000]);
 
