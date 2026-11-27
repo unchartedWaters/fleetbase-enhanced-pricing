@@ -85,6 +85,31 @@ test('a unit cannot change under a stored override or live dated change', functi
     'a manual charge quantity unit' => ['manual_charges.hourly.amount', 5000, 'manual_charges.0.quantity.unit', 'min'],
 ]);
 
+test('an amount cannot switch between a number and a table column under an override or dated change', function (
+    string $setup,
+) {
+    $profile = Stores::profile();
+    $column  = ['column' => 'first', 'rate_table' => 'rows'];
+    if ($setup === 'override') {
+        Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);
+    } else {
+        Stores::for()->addDatedChange($profile, 'fees.extra_handling.amount', 1700, '2026-12-01');
+    }
+
+    expect(Stores::refusal(
+        fn () => Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), 'fees.0.amount', $column)),
+    ))->toBe(['unit-changed']);
+})->with(['override', 'dated change']);
+
+test('a number and a column can swap when nothing names the rule', function () {
+    $profile = Stores::profile();
+    $column  = ['column' => 'first', 'rate_table' => 'rows'];
+
+    $version = Stores::for()->addVersion($profile, Profiles::set(Profiles::example(), 'fees.0.amount', $column));
+
+    expect($version->version)->toBe(2);
+});
+
 test('the same unit change is allowed when nothing names the rule', function () {
     $profile = Stores::profile();
     Stores::customer('a', $profile, ['fees.extra_handling.amount' => 2000]);

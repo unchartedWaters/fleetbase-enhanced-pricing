@@ -223,13 +223,43 @@ final class ProfileReferences
         foreach ($fees as $index => $fee) {
             $path = "fees.$index";
             $this->ruleCommon($fee, $path, ['applies_to'], $laterOf[$path]);
+            $this->amountTable($fee['amount'] ?? null, $path);
             $this->kinds->fee($fee, $path);
         }
         foreach ($subtotals as $index => $subtotal) {
             $path = "subtotal_fees.$index";
             $this->ruleCommon($subtotal, $path, ['applies_to', 'requires', 'skipped_for'], $laterOf[$path]);
+            $this->amountTable($subtotal['amount'] ?? null, $path);
             $this->kinds->subtotal($subtotal, $path);
         }
+    }
+
+    /**
+     * A fee amount read from a rate table's column: the table and a money column of it must exist.
+     */
+    private function amountTable(mixed $amount, string $path): void
+    {
+        if (is_array($amount) === false || isset($amount['column']) === false) {
+            return;
+        }
+        $table = self::text($amount['rate_table']);
+        if (isset($this->tables[$table]) === false) {
+            $this->schema->add(Problem::atPath(
+                "$path.amount.rate_table",
+                'unknown-reference',
+                ['kind' => 'rate_table', 'key' => $table],
+            ));
+
+            return;
+        }
+        $used = array_filter(
+            self::items($this->profile['service_rates']),
+            static fn (array $rate): bool => $rate['rate_table'] === $table,
+        );
+        if ($used === []) {
+            $this->schema->add(Problem::atPath("$path.amount.rate_table", 'table-not-used', ['key' => $table]));
+        }
+        $this->reference($amount, $table, 'money', "$path.amount");
     }
 
     /**

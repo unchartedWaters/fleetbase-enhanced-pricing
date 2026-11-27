@@ -59,9 +59,20 @@ export default class PricingFieldComponent extends Component {
         return Object.keys(this.field.choices ?? {});
     }
 
-    get chosen() {
+    // A plain number is a value: profiles saved before amounts could come from a column hold one.
+    get choiceObject() {
         const value = this.args.value;
-        if (value === null || value === undefined || typeof value !== 'object') {
+        if (typeof value === 'number') {
+            return { value };
+        }
+
+        return value !== null && typeof value === 'object' ? value : null;
+    }
+
+    get chosen() {
+        const value = this.choiceObject;
+
+        if (!value) {
             return null;
         }
 
@@ -72,10 +83,23 @@ export default class PricingFieldComponent extends Component {
         return this.chosen ? this.field.choices[this.chosen] : null;
     }
 
+    // A column is chosen after the rate table it is in, which sits beside it (the spec's `with`).
+    get withName() {
+        return this.chosenSpec?.with ?? null;
+    }
+
+    get withOptions() {
+        return refOptions('rate_tables', this.env.definition);
+    }
+
+    get chosenContext() {
+        return this.withName ? { [this.withName]: this.choiceObject?.[this.withName] ?? '' } : this.args.context;
+    }
+
     get chosenOptions() {
         const spec = this.chosenSpec;
 
-        return spec?.type === 'ref' ? refOptions(spec.ref, this.env.definition, this.args.context) : [];
+        return spec?.type === 'ref' ? refOptions(spec.ref, this.env.definition, this.chosenContext) : [];
     }
 
     @action setChoiceKind(event) {
@@ -85,11 +109,23 @@ export default class PricingFieldComponent extends Component {
 
             return;
         }
-        this.args.onChange({ [name]: this.field.choices[name].type === 'text' ? '' : null });
+        const spec = this.field.choices[name];
+        this.args.onChange({ [name]: spec.type === 'text' ? '' : null, ...(spec.with ? { [spec.with]: null } : {}) });
     }
 
     @action setChoiceValue(value) {
-        this.args.onChange({ [this.chosen]: value });
+        // A cleared value box on a field that may be unset means unset, not { value: null }.
+        if (value === null && this.field.nullable && !this.withName) {
+            this.args.onChange(null);
+
+            return;
+        }
+        this.args.onChange({ ...this.choiceObject, [this.chosen]: value });
+    }
+
+    // Changing the table clears the column, which may not be in the new one.
+    @action setWith(value) {
+        this.args.onChange({ [this.chosen]: null, [this.withName]: value });
     }
 
     @action addObject() {

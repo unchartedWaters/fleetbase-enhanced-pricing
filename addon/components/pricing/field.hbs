@@ -33,11 +33,23 @@
                     <option value={{name}} selected={{eq name this.chosen}}>{{t (concat "enhanced-pricing.console.choice." name)}}</option>
                 {{/each}}
             </select>
+            {{#if this.withName}}
+                <div class="flex-1" data-test-choice-table>
+                    <Pricing::Input
+                        @type="ref"
+                        @value={{get this.choiceObject this.withName}}
+                        @options={{this.withOptions}}
+                        @disabled={{this.disabled}}
+                        @onChange={{this.setWith}}
+                        @onError={{this.reportError}}
+                    />
+                </div>
+            {{/if}}
             {{#if this.chosenSpec}}
                 <div class="flex-1">
                     <Pricing::Input
                         @type={{this.chosenSpec.type}}
-                        @value={{get @value this.chosen}}
+                        @value={{get this.choiceObject this.chosen}}
                         @options={{this.chosenOptions}}
                         @currency={{this.env.currency}}
                         @disabled={{this.disabled}}

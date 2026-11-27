@@ -83,6 +83,7 @@ final class Schema
             'list'     => $this->checkList($value, $spec, $path),
             'map'      => $this->checkMap($value, $spec, $path),
             'object'   => $this->checkObject($value, $spec, $path),
+            'amount'   => $this->amount($value, $path),
             'raw'      => $value,
             default    => throw new \LogicException('Unknown field type at ' . $path),
         };
@@ -225,6 +226,30 @@ final class Schema
         }
 
         return $value;
+    }
+
+    /**
+     * A money amount that is a number, { "value": n } (read as the number), or a money column of
+     * a rate table, { "column": key, "rate_table": key }, whose type the profile's own checks
+     * confirm.
+     *
+     * @return int|array<string, mixed>|null
+     */
+    private function amount(mixed $value, string $path): int|array|null
+    {
+        if (is_array($value) === false) {
+            return $this->integerIn($value, 0, self::MAX_MONEY, $path, 'money');
+        }
+        if (array_key_exists('value', $value) === false) {
+            return $this->fields($value, ['column' => self::type('key'), 'rate_table' => self::type('key')], $path);
+        }
+        if (count($value) !== 1) {
+            $this->add(Problem::atPath($path, 'needs-exactly-one', ['fields' => 'value, column']));
+
+            return null;
+        }
+
+        return $this->integerIn($value['value'], 0, self::MAX_MONEY, self::join($path, 'value'), 'money');
     }
 
     /**

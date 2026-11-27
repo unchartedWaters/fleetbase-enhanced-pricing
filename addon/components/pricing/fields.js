@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
-import { kindOf, helpFor, variantNames, variantOf, fieldsFor, switchVariant, unknownFields, withoutKey } from '../../utils/profile-form';
+import { kindOf, helpFor, variantNames, variantOf, fieldsFor, settle, switchVariant, unknownFields, withoutKey } from '../../utils/profile-form';
 
 // The fields of one profile element (or nested object) of a kind, with its variant chooser and
 // any fields the format doesn't know, kept and removable. @context is the top element, which
@@ -51,7 +51,7 @@ export default class PricingFieldsComponent extends Component {
     }
 
     @action setField(name, next) {
-        this.args.onChange({ ...this.value, [name]: next });
+        this.args.onChange(settle(this.kind, { ...this.value, [name]: next }));
     }
 
     @action setVariant(event) {

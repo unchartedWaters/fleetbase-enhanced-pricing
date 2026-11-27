@@ -90,7 +90,9 @@ function formSamples(): array
         'peak hours fee'        => $sample('fees', 'fee', 'peak_hours', $fee + [
             'kind'       => 'peak_hours',
             'charge'     => 'per_order',
+            'mode'       => 'flat',
             'amount'     => 100,
+            'percentage' => null,
             'if_missing' => 'stop',
             'window'     => ['from' => '21:00', 'to' => '06:00'],
             'weekdays'   => [6, 7],
@@ -114,7 +116,9 @@ function formSamples(): array
         'additional fee'        => $sample('fees', 'fee', 'additional', $fee + [
             'kind'       => 'additional',
             'charge'     => 'per_order',
+            'mode'       => 'flat',
             'amount'     => 100,
+            'percentage' => null,
             'if_missing' => 'stop',
             'attribute'  => 'extra',
             'equals'     => null,
@@ -293,9 +297,9 @@ test('every enum offers exactly what the checks accept', function () {
         foreach (formFields($sample['kind'], $sample['variant']) as $field => $spec) {
             foreach ($spec['options'] ?? [] as $option) {
                 $item   = $sample['item'];
-                $linked = in_array($field, ['charge', 'measure', 'basis', 'unit', 'scope'], true);
+                $linked = in_array($field, ['charge', 'measure', 'basis', 'unit', 'scope', 'mode'], true);
                 if ($linked && $sample['kind'] === 'fee') {
-                    continue; // these depend on each other, and are tried in the fee tests
+                    continue; // these depend on each other, and are tried in the fee tests (mode: PercentageFeesTest)
                 }
                 $item[$field] = $option;
                 expect(formProblems($sample['section'], $item))->toBe([], "$name $field $option");

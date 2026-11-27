@@ -251,7 +251,9 @@ final class ProfileShapes
             'enabled'         => S::optional(S::type('boolean'), true),
         ];
         if (in_array($kind, ['parcel', 'distance'], true) === false) {
-            $fields['amount']     = S::nullable(S::type('money'));
+            $fields['mode']       = S::optional(S::enum(['flat', 'percentage']), 'flat');
+            $fields['amount']     = S::optional(S::nullable(S::type('amount')));
+            $fields['percentage'] = S::optional(S::nullable(S::type('percent')));
             $fields['if_missing'] = S::optional(S::enum(['stop', 'skip']), 'stop');
         }
 
@@ -309,7 +311,7 @@ final class ProfileShapes
             'skipped_for'     => S::optional(self::codes(0), []),
             'mode'            => S::enum(['percentage', 'flat']),
             'percentage'      => S::optional(S::nullable(S::type('percent'))),
-            'amount'          => S::optional(S::nullable(S::type('money'))),
+            'amount'          => S::optional(S::nullable(S::type('amount'))),
             'charge'          => S::enum(['per_order', 'per_line', 'per_entity']),
             'if_missing'      => S::optional(S::enum(['stop', 'skip']), 'stop'),
             'minimum'         => S::optional(S::nullable(S::type('money'))),

@@ -513,9 +513,48 @@ export default {
                             ]
                         },
                         {
+                            "name": "mode",
+                            "type": "enum",
+                            "options": [
+                                "flat",
+                                "percentage"
+                            ],
+                            "optional": true,
+                            "default": "flat"
+                        },
+                        {
                             "name": "amount",
-                            "type": "money",
-                            "nullable": true
+                            "type": "choice",
+                            "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            },
+                            "when": {
+                                "mode": [
+                                    "flat"
+                                ]
+                            },
+                            "optional": true,
+                            "default": null
+                        },
+                        {
+                            "name": "percentage",
+                            "type": "percent",
+                            "nullable": true,
+                            "when": {
+                                "mode": [
+                                    "percentage"
+                                ]
+                            },
+                            "optional": true,
+                            "default": null
                         },
                         {
                             "name": "if_missing",
@@ -651,9 +690,48 @@ export default {
                             ]
                         },
                         {
+                            "name": "mode",
+                            "type": "enum",
+                            "options": [
+                                "flat",
+                                "percentage"
+                            ],
+                            "optional": true,
+                            "default": "flat"
+                        },
+                        {
                             "name": "amount",
-                            "type": "money",
-                            "nullable": true
+                            "type": "choice",
+                            "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            },
+                            "when": {
+                                "mode": [
+                                    "flat"
+                                ]
+                            },
+                            "optional": true,
+                            "default": null
+                        },
+                        {
+                            "name": "percentage",
+                            "type": "percent",
+                            "nullable": true,
+                            "when": {
+                                "mode": [
+                                    "percentage"
+                                ]
+                            },
+                            "optional": true,
+                            "default": null
                         },
                         {
                             "name": "if_missing",
@@ -823,8 +901,18 @@ export default {
                     "flat": [
                         {
                             "name": "amount",
-                            "type": "money",
+                            "type": "choice",
                             "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            },
                             "optional": true,
                             "default": null
                         },

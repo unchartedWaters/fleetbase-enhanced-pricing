@@ -3,6 +3,8 @@
 namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
+use Fleetbase\EnhancedPricing\Support\Exact;
+use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * What fees and subtotal fees share: the entities they count, their amount when it may be
@@ -33,13 +35,17 @@ final class RuleSupport
     }
 
     /**
-     * The rule's amount, or null when it is missing and the rule says skip.
+     * The rule's amount: a number, or a money column of the order's rate card row. Null when it is
+     * missing and the rule says skip.
      *
      * @param array<string, mixed> $rule
      */
     public function amount(array $rule, string $field = 'amount'): ?int
     {
         $amount = $rule[$field] ?? null;
+        if (is_array($amount)) {
+            $amount = $this->cell($rule, R::map($amount));
+        }
         if (is_int($amount)) {
             return $amount;
         }
@@ -49,6 +55,67 @@ final class RuleSupport
 
         $params = ['rule' => R::text($rule['name']), 'rule_key' => R::text($rule['key'])];
         throw $this->order->fail('missing-amount', $params);
+    }
+
+    /**
+     * A percentage rule's one line: its percentage of the order's lines for the chosen products,
+     * worked out exactly and rounded once, half up. No line when the percentage is missing and
+     * the rule says skip.
+     *
+     * @param array<string, mixed> $rule
+     * @param list<string>         $chosen
+     *
+     * @return list<array{product: string, name: string, quantity: int, unit: int, source: string}>
+     */
+    public function percentage(array $rule, array $chosen): array
+    {
+        $percentage = $this->amount($rule, 'percentage');
+        if ($percentage === null) {
+            return [];
+        }
+        $base   = $this->order->book->sum($chosen);
+        $amount = Exact::round(Exact::rational($base)->multipliedBy($percentage)->dividedBy(10000));
+        $name   = sprintf(
+            '%s (%s%% of %s)',
+            R::text($rule['name']),
+            Exact::display(Exact::rational($percentage)->dividedBy(100)),
+            MinorUnits::decimal($base, R::text($this->order->profile['currency'])),
+        );
+
+        return [$this->draft($rule, 1, $amount, $name)];
+    }
+
+    /**
+     * The value of the reference's column in the order's row. Pricing stops (or the fee is left off,
+     * with if_missing skip) when the order's rate card is not for the table the fee reads.
+     *
+     * @param array<string, mixed> $rule
+     * @param array<string, mixed> $reference
+     */
+    private function cell(array $rule, array $reference): mixed
+    {
+        $table  = R::text($reference['rate_table'] ?? '');
+        $column = R::text($reference['column'] ?? '');
+        $name   = R::text($rule['name']);
+        $skip   = ($rule['if_missing'] ?? 'stop') === 'skip';
+        if ($this->order->row === null || ($this->order->serviceRate['rate_table'] ?? null) !== $table) {
+            if ($skip) {
+                return null;
+            }
+
+            throw $this->order->fail('row-from-other-table', ['rule' => $name, 'table' => $table]);
+        }
+        $value = $this->order->row[$column] ?? null;
+        if ($value === null || $value === '') {
+            if ($skip) {
+                return null;
+            }
+
+            $params = ['rule' => $name, 'column' => $column, 'column_key' => $column];
+            throw $this->order->fail('missing-row-amount', $params);
+        }
+
+        return $value;
     }
 
     /**

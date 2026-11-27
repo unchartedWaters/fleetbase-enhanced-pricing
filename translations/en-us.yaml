@@ -32,6 +32,7 @@ enhanced-pricing:
     per-unit-needs-number: A per-unit charge needs a number attribute.
     product-in-two-lists: "{code} is in two product lists."
     row-key-not-required: "The row key column {column} must be required."
+    table-not-used: "No service rate uses the rate table {key}, so a fee can't read a column of it."
     tiers-need-rate-table: Tiers need a rate table when an entity type has its own price.
     too-few: "The number of entries must be at least {min}."
     too-large: "The profile is larger than {max} bytes."
@@ -79,6 +80,7 @@ enhanced-pricing:
     overrides-invalid-all: "{customer}'s overrides aren't valid."
     profile-invalid: "The pricing profile isn't valid. Problems found: {problems}."
     profile-invalid-for-order: "With this customer's overrides and changes, the profile isn't valid at {path}."
+    row-from-other-table: "{rule} reads its amount from the rate table {table}, which this order's service rate doesn't use, so there is no row of it to read."
     row-invalid: "Row {row} of {customer}'s card {card} has a value for {column} that isn't valid."
     row-required: "{service_rate} needs a rate card row."
     service-rate-disabled: "{service_rate} is turned off."
@@ -119,7 +121,7 @@ enhanced-pricing:
     too-many-charges: "An order can have at most {max} manual charges."
     too-many-rows: "Send at most {max} rows."
     too-many-rows-on-card: "A rate card holds at most {max} rows."
-    unit-changed: "The unit of {rule} can't change while an override or a dated change uses it. Use a new rule key instead."
+    unit-changed: "The unit of {rule}, or whether its amount is a number or a table column, can't change while an override or a dated change uses it. Use a new rule key instead."
     value-has-change-in-effect: "{path} has a dated change in effect, so its undated value can't change. Add a dated change instead."
     version-outdated: "The profile has a newer version, {current}. Start from the newest version."
   admin:
@@ -282,9 +284,9 @@ enhanced-pricing:
       field:
         key: "A short code for this item, unique within its list: lowercase letters, digits, _ and -. Customer overrides and dated changes find the item by it, so renaming it leaves them stale."
         name: "The label shown in forms, quotes and messages."
+        code: "Optional. The billing code this charge's invoice lines are billed under, instead of its product's code. Leave blank to use the product's code. It can't be another product's code."
+        description: "Optional. A note about this charge, 1 to 255 characters."
         product: "The product this is billed as. Its code becomes the invoice line's billing code."
-        code: "The billing code this charge's invoice lines are billed under in Ledger and your accounting. Leave blank to use the product's code. It can't be another product's code."
-        description: "A note about what this charge is for. It is not shown on invoice lines."
         applies_to: "The products this works on. It counts only lines and packages billed under these products."
         requires: "The charge applies only when the order also has a line (over $0) for every product listed here."
         skipped_for: "The charge is left off when the order has a line (over $0) for any product listed here."
@@ -364,7 +366,9 @@ enhanced-pricing:
       fee:
         kind: "Peak hours: charged by time or day. Parcel: charged by weight or volume. Additional: charged when an order attribute applies."
         charge: "Counted once per order, for each package, or (where offered) for each unit over the limit."
-        amount: "The fee, as money. Leave blank to set it for each customer."
+        mode: "Flat: a fixed amount. Percentage (peak hours and additional fees): a share of the lines for the products it applies to, charged once per order."
+        amount: "The fee, as an amount or a rate card column. Leave blank to set it for each customer."
+        percentage: "The percentage of the lines for the products it applies to. Set a Maximum for a cap and a Minimum for a floor. Leave blank to set it for each customer."
         window: "The pickup times the fee covers, such as 21:00 to 06:00. It may cross midnight. Leave unset to cover all times."
         weekdays: "The days of the week the fee covers (judged on the pickup's local date). Leave unset for every day."
         holidays: "A holiday list: the fee also applies on its dates."

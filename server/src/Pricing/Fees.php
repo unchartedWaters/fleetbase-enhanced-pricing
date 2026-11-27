@@ -425,6 +425,9 @@ final class Fees
         if ($count <= 0) {
             return [];
         }
+        if ($fee['mode'] === 'percentage') {
+            return $this->support->percentage($fee, R::strings($fee['applies_to']));
+        }
         $amount = $this->support->amount($fee);
 
         return $amount === null ? [] : [$this->support->draft($fee, $count, $amount)];
