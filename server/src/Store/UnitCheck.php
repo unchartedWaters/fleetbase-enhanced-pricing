@@ -89,7 +89,7 @@ final class UnitCheck
 
     /**
      * The units a rule's stored values are priced in, and whether its amount is a number or a
-     * table column, as JSON, or null when the profile has no
+     * table column and whether it is flat or a percentage, as JSON, or null when the profile has no
      * such rule.
      *
      * @param array<string, mixed> $profile
@@ -117,7 +117,7 @@ final class UnitCheck
 
         if (array_key_exists('amount', $rule) && in_array($section, ['fees', 'subtotal_fees'], true)) {
             // A stored number can't stand in for a table column, or the reverse.
-            $units[] = is_array($rule['amount']) ? 'column' : 'number';
+            $units[] = [$rule['mode'] ?? 'flat', is_array($rule['amount']) ? 'column' : 'number'];
         }
 
         return (string) json_encode($units);

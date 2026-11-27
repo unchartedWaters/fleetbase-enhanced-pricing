@@ -3,6 +3,8 @@
 namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
+use Fleetbase\EnhancedPricing\Support\Exact;
+use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * What fees and subtotal fees share: the entities they count, their amount when it may be
@@ -53,6 +55,34 @@ final class RuleSupport
 
         $params = ['rule' => R::text($rule['name']), 'rule_key' => R::text($rule['key'])];
         throw $this->order->fail('missing-amount', $params);
+    }
+
+    /**
+     * A percentage rule's one line: its percentage of the order's lines for the chosen products,
+     * worked out exactly and rounded once, half up. No line when the percentage is missing and
+     * the rule says skip.
+     *
+     * @param array<string, mixed> $rule
+     * @param list<string>         $chosen
+     *
+     * @return list<array{product: string, name: string, quantity: int, unit: int, source: string}>
+     */
+    public function percentage(array $rule, array $chosen): array
+    {
+        $percentage = $this->amount($rule, 'percentage');
+        if ($percentage === null) {
+            return [];
+        }
+        $base   = $this->order->book->sum($chosen);
+        $amount = Exact::round(Exact::rational($base)->multipliedBy($percentage)->dividedBy(10000));
+        $name   = sprintf(
+            '%s (%s%% of %s)',
+            R::text($rule['name']),
+            Exact::display(Exact::rational($percentage)->dividedBy(100)),
+            MinorUnits::decimal($base, R::text($this->order->profile['currency'])),
+        );
+
+        return [$this->draft($rule, 1, $amount, $name)];
     }
 
     /**

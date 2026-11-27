@@ -3,8 +3,6 @@
 namespace Fleetbase\EnhancedPricing\Pricing;
 
 use Fleetbase\EnhancedPricing\Profile\ProfileReferences as R;
-use Fleetbase\EnhancedPricing\Support\Exact;
-use Fleetbase\EnhancedPricing\Support\MinorUnits;
 
 /**
  * Subtotal fees, last, in the profile's order: a percentage of the lines for their chosen
@@ -49,20 +47,7 @@ final class SubtotalFees
     private function drafts(array $fee, array $chosen): array
     {
         if ($fee['mode'] === 'percentage') {
-            $percentage = $this->support->amount($fee, 'percentage');
-            if ($percentage === null) {
-                return [];
-            }
-            $base   = $this->order->book->sum($chosen);
-            $amount = Exact::round(Exact::rational($base)->multipliedBy($percentage)->dividedBy(10000));
-            $name   = sprintf(
-                '%s (%s%% of %s)',
-                R::text($fee['name']),
-                Exact::display(Exact::rational($percentage)->dividedBy(100)),
-                MinorUnits::decimal($base, R::text($this->order->profile['currency'])),
-            );
-
-            return [$this->support->draft($fee, 1, $amount, $name)];
+            return $this->support->percentage($fee, $chosen);
         }
         $amount = $this->support->amount($fee);
         if ($amount === null) {

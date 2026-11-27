@@ -366,7 +366,9 @@ enhanced-pricing:
       fee:
         kind: "Peak hours: charged by time or day. Parcel: charged by weight or volume. Additional: charged when an order attribute applies."
         charge: "Counted once per order, for each package, or (where offered) for each unit over the limit."
-        amount: "The fee, as money. Leave blank to set it for each customer."
+        mode: "Flat: a fixed amount. Percentage (peak hours and additional fees): a share of the lines for the products it applies to, charged once per order."
+        amount: "The fee, as an amount or a rate card column. Leave blank to set it for each customer."
+        percentage: "The percentage of the lines for the products it applies to. Set a Maximum for a cap and a Minimum for a floor. Leave blank to set it for each customer."
         window: "The pickup times the fee covers, such as 21:00 to 06:00. It may cross midnight. Leave unset to cover all times."
         weekdays: "The days of the week the fee covers (judged on the pickup's local date). Leave unset for every day."
         holidays: "A holiday list: the fee also applies on its dates."

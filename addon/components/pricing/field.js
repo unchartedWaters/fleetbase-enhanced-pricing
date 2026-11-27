@@ -72,7 +72,11 @@ export default class PricingFieldComponent extends Component {
     get chosen() {
         const value = this.choiceObject;
 
-        return value ? (this.choiceNames.find((name) => name in value) ?? null) : null;
+        if (!value) {
+            return null;
+        }
+
+        return this.choiceNames.find((name) => name in value) ?? null;
     }
 
     get chosenSpec() {

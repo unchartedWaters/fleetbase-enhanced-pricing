@@ -24,6 +24,7 @@ final class RuleKindReferences
      */
     public function fee(array $fee, string $path): void
     {
+        $this->mode($fee, $path);
         match ($fee['kind']) {
             'peak_hours' => $this->peakHours($fee, $path),
             'parcel'     => $this->parcel($fee, $path),
@@ -165,14 +166,28 @@ final class RuleKindReferences
      */
     public function subtotal(array $subtotal, string $path): void
     {
-        $percentage = $subtotal['mode'] === 'percentage';
-        if ($percentage && $subtotal['amount'] !== null) {
+        $this->mode($subtotal, $path);
+    }
+
+    /**
+     * A flat or percentage rule keeps to its own field, and a percentage charges once per order.
+     * Parcel and distance fees have neither field.
+     *
+     * @param array<string, mixed> $rule
+     */
+    private function mode(array $rule, string $path): void
+    {
+        if (array_key_exists('mode', $rule) === false) {
+            return;
+        }
+        $percentage = $rule['mode'] === 'percentage';
+        if ($percentage && $rule['amount'] !== null) {
             $this->schema->add(Problem::atPath("$path.amount", 'not-allowed-for-mode', ['mode' => 'percentage']));
         }
-        if ($percentage === false && $subtotal['percentage'] !== null) {
+        if ($percentage === false && $rule['percentage'] !== null) {
             $this->schema->add(Problem::atPath("$path.percentage", 'not-allowed-for-mode', ['mode' => 'flat']));
         }
-        if ($percentage && $subtotal['charge'] !== 'per_order') {
+        if ($percentage && $rule['charge'] !== 'per_order') {
             $this->schema->add(Problem::atPath("$path.charge", 'not-one-of', ['choices' => 'per_order']));
         }
     }

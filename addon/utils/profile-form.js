@@ -32,16 +32,47 @@ function allFields(kind, variant) {
     return [...(kind.fields ?? []), ...(kind.variants?.[variant] ?? [])];
 }
 
-function applies(field, item) {
+// A field the element leaves out while its condition's field is unset takes that field's default,
+// as the server does, so a profile saved before the field existed still shows the right fields.
+function applies(field, item, siblings = []) {
     if (!field.when) {
         return true;
     }
 
-    return Object.entries(field.when).every(([name, values]) => values.includes(item?.[name]));
+    return Object.entries(field.when).every(([name, values]) => {
+        const sibling = siblings.find((other) => other.name === name);
+        const actual = item?.[name] ?? (sibling?.optional ? sibling.default : undefined);
+
+        return values.includes(actual);
+    });
 }
 
 export function fieldsFor(kind, item) {
-    return allFields(kind, variantOf(kind, item)).filter((field) => applies(field, item));
+    const all = allFields(kind, variantOf(kind, item));
+
+    return all.filter((field) => applies(field, item, all));
+}
+
+// After a field changes, the fields whose condition no longer holds go back to their default
+// (null for an amount beside a percentage), so a value that is hidden is not sent.
+export function settle(kind, item) {
+    const all = allFields(kind, variantOf(kind, item));
+    const next = { ...item };
+    for (const field of all) {
+        if (!applies(field, next, all) && field.name in next) {
+            if (field.optional && 'default' in field) {
+                next[field.name] = structuredCopy(field.default);
+            } else {
+                delete next[field.name];
+            }
+        }
+    }
+    // A percentage is charged once per order, which no other charge choice allows.
+    if (next.mode === 'percentage' && 'charge' in next) {
+        next.charge = 'per_order';
+    }
+
+    return next;
 }
 
 // The value a field starts with: its default when it may be left out, else a blank the person
@@ -87,8 +118,9 @@ function newObject(form, kindName, variant = null) {
     if (kind.discriminator && chosen) {
         item[kind.discriminator] = chosen;
     }
-    for (const field of allFields(kind, chosen)) {
-        if (applies(field, item)) {
+    const all = allFields(kind, chosen);
+    for (const field of all) {
+        if (applies(field, item, all)) {
             item[field.name] = blankFor(form, field);
         }
     }
@@ -118,8 +150,9 @@ export function switchVariant(form, kind, item, variant) {
     for (const field of allFields(kind, variant)) {
         next[field.name] = before.has(field.name) && field.name in (item ?? {}) ? item[field.name] : blankFor(form, field);
     }
-    for (const field of allFields(kind, variant)) {
-        if (!applies(field, next)) {
+    const all = allFields(kind, variant);
+    for (const field of all) {
+        if (!applies(field, next, all)) {
             delete next[field.name];
         }
     }

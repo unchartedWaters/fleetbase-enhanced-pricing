@@ -402,10 +402,10 @@ calculated:
 
 | Kind in the console | Stored as | Calculated as |
 | --- | --- | --- |
-| Peak hours, after hours or holiday | fee `peak_hours` | a fixed amount |
+| Peak hours or holiday | fee `peak_hours` | an amount or a percent |
 | Weight or volume | fee `parcel` | an amount, or an amount per unit over |
 | Mileage premium | fee `distance` | an amount per distance unit over |
-| By attribute | fee `additional` | an amount, or per unit of an attribute |
+| By attribute | fee `additional` | an amount, a percent, or per unit |
 | Fixed charge | subtotal fee, `flat` | a fixed amount |
 | Percentage | subtotal fee, `percentage` | a percent of its products' lines |
 | Manual charge | manual charge | a set or typed amount, on one order |
@@ -435,8 +435,18 @@ Peak hours and additional fees also have:
 
 | Field | Meaning |
 | --- | --- |
-| `amount` | money, a table column (below), or `null` when it must be set per customer |
+| `mode` | optional, default `flat`; `percentage` charges a percent instead |
+| `amount` | flat mode: money, a table column (below), or `null` |
+| `percentage` | percentage mode: percent, or `null` |
 | `if_missing` | optional, default `stop`; `skip` leaves the fee off |
+
+In `percentage` mode the fee is a percent of the order's lines for its
+`applies_to` products, charged once, so `charge` must be `per_order`, `amount`
+must be `null`, and `minimum` and `maximum` cap and floor it as for a
+percentage subtotal fee. The fee's own conditions (its hours, or its attribute)
+decide whether it applies. An additional fee on a package attribute takes the
+percent of all the lines for its products, once, when any package matches. In
+`flat` mode `percentage` must be `null`.
 
 Subtotal fees and manual charges have `code` and `description` too. A `code` is
 written like a product code. When it is `null`, the fee's lines are billed under
@@ -457,8 +467,9 @@ read from the order's rate card row, so the order's service rate must use that
 table; otherwise pricing stops, because there is no row of the table to read. A
 blank cell stops pricing too. With `if_missing: "skip"` the fee is left off
 instead, in both cases. The profile is refused when the table does not exist or
-no service rate uses it, or when the column does not exist or is not money. A profile saved with a plain number keeps working, and overrides and
-dated changes take either form. The "Fee changes" tab lists only fees whose
+no service rate uses it, or when the column does not exist or is not money.
+A profile saved with a plain number keeps working, and overrides and dated
+changes take either form. The "Fee changes" tab lists only fees whose
 amount is a number.
 
 `applies_to` limits the fee to some products. A fee charged per entity counts
@@ -782,9 +793,10 @@ as a whole. `null` is allowed wherever the profile allows it.
 | `allowed_service_rates` | rate keys the customer may order; `[]` allows none |
 
 Every fee's `applies_to`, `minimum`, `maximum` and `enabled` can be
-overridden. So can a peak hours fee's `amount`, `if_missing`, `window`,
-`weekdays` and `holidays`, a parcel fee's `thresholds` and `divisor`, and an
-additional fee's `amount`, `if_missing` and `equals`. A subtotal fee's are
+overridden. So can a peak hours fee's `amount`, `percentage`, `if_missing`,
+`window`, `weekdays` and `holidays`, a parcel fee's `thresholds` and `divisor`,
+and an additional fee's `amount`, `percentage`, `if_missing` and `equals`. A
+fee's `mode` can't be overridden. A subtotal fee's are
 `applies_to`, `requires`, `skipped_for`, `percentage`, `amount`, `if_missing`,
 `minimum`, `maximum` and `enabled`.
 

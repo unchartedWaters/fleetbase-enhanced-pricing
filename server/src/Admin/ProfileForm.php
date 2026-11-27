@@ -187,7 +187,19 @@ final class ProfileForm
     private static function fee(): array
     {
         $amount = [
-            self::field('amount', 'choice', ['nullable' => true, 'choices' => self::amountChoices()]),
+            self::optional(self::enum('mode', ['flat', 'percentage']), 'flat'),
+            self::optional(
+                self::field('amount', 'choice', [
+                    'nullable' => true,
+                    'choices'  => self::amountChoices(),
+                    'when'     => ['mode' => ['flat']],
+                ]),
+                null,
+            ),
+            self::optional(
+                self::field('percentage', 'percent', ['nullable' => true, 'when' => ['mode' => ['percentage']]]),
+                null,
+            ),
             self::optional(self::enum('if_missing', ['stop', 'skip']), 'stop'),
         ];
 

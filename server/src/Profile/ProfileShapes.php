@@ -251,7 +251,9 @@ final class ProfileShapes
             'enabled'         => S::optional(S::type('boolean'), true),
         ];
         if (in_array($kind, ['parcel', 'distance'], true) === false) {
-            $fields['amount']     = S::nullable(S::type('amount'));
+            $fields['mode']       = S::optional(S::enum(['flat', 'percentage']), 'flat');
+            $fields['amount']     = S::optional(S::nullable(S::type('amount')));
+            $fields['percentage'] = S::optional(S::nullable(S::type('percent')));
             $fields['if_missing'] = S::optional(S::enum(['stop', 'skip']), 'stop');
         }
 

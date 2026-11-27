@@ -16,10 +16,10 @@ final class OverridePaths
 
     private const FEE_FIELDS = [
         'common'     => ['applies_to', 'minimum', 'maximum', 'enabled'],
-        'peak_hours' => ['amount', 'if_missing', 'window', 'weekdays', 'holidays'],
+        'peak_hours' => ['amount', 'percentage', 'if_missing', 'window', 'weekdays', 'holidays'],
         'parcel'     => ['thresholds', 'divisor'],
         'distance'   => ['thresholds'],
-        'additional' => ['amount', 'if_missing', 'equals'],
+        'additional' => ['amount', 'percentage', 'if_missing', 'equals'],
     ];
 
     private const SUBTOTAL_FIELDS = [

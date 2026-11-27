@@ -173,6 +173,25 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.deepEqual(this.saved[0].definition.fees[0].amount, { column: 'second', rate_table: 'rows' });
     });
 
+    test('a peak hours fee can charge a percentage instead of an amount', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+        assert.dom('[data-test-field="fees.2.percentage"]').doesNotExist('a saved fee without a mode is flat');
+
+        await select('[data-test-field="fees.2.charge"] select', 'per_entity');
+        await select('[data-test-field="fees.2.mode"] select', 'percentage');
+        assert.dom('[data-test-field="fees.2.charge"] select').hasValue('per_order', 'a percentage is charged per order');
+        assert.dom('[data-test-field="fees.2.amount"]').doesNotExist();
+        await fillIn('[data-test-field="fees.2.percentage"] input', '10');
+        await click('[data-test-save]');
+
+        const fee = this.saved[0].definition.fees[2];
+        assert.strictEqual(fee.mode, 'percentage');
+        assert.strictEqual(fee.charge, 'per_order');
+        assert.strictEqual(fee.percentage, 1000);
+        assert.strictEqual(fee.amount, null, 'the hidden amount is not sent');
+    });
+
     test('clearing a fee amount leaves it unset, to be set per customer', async function (assert) {
         await render(editor);
         await click('[data-test-section="fees"]');
