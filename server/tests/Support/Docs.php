@@ -13,6 +13,7 @@ final class Docs
         'docs/SETUP.md',
         'docs/profile-format.md',
         'docs/pricing-engine.md',
+        'docs/holidays.md',
     ];
 
     public static function path(string $relative): string

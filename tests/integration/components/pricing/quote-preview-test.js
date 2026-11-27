@@ -72,7 +72,7 @@ module('Integration | Component | pricing/quote-preview', (hooks) => {
             );
             await fillOrder(this);
             await fillIn('[data-test-pickup-time]', '22:30');
-            await fillIn('[data-test-timezone]', 'America/Edmonton');
+            await fillIn('[data-test-timezone] input', 'America/Edmonton');
             await click('[data-test-price]');
         } finally {
             Intl.DateTimeFormat = native;

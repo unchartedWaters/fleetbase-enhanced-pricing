@@ -1,0 +1,85 @@
+<div class="mt-2">
+    <button type="button" class="text-xs text-blue-600 hover:underline dark:text-blue-400" aria-expanded={{if this.open "true" "false"}} data-test-fill-open {{on "click" this.toggle}}>
+        {{t "enhanced-pricing.console.fill.open"}}
+    </button>
+    {{#if this.open}}
+        <div class="mt-2 rounded border border-gray-200 p-3 dark:border-gray-700" data-test-fill>
+            <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.fill.help"}}</p>
+            {{#if this.catalog}}
+                <div class="flex flex-wrap items-end gap-3">
+                    <label class="text-xs">
+                        <span class="block">{{t "enhanced-pricing.console.fill.country"}}</span>
+                        <select class="form-select form-input-sm w-48" disabled={{this.busy}} data-test-fill-country {{on "change" this.chooseCountry}}>
+                            <option value="" selected={{eq this.country ""}}>{{t "enhanced-pricing.console.fill.choose-country"}}</option>
+                            {{#each this.countries as |country|}}
+                                <option value={{country.code}} selected={{eq country.code this.country}}>{{country.name}}</option>
+                            {{/each}}
+                        </select>
+                    </label>
+                    {{#if this.country}}
+                        <label class="text-xs">
+                            <span class="block">{{t "enhanced-pricing.console.fill.region"}}</span>
+                            <select class="form-select form-input-sm w-56" disabled={{this.busy}} data-test-fill-region {{on "change" this.chooseRegion}}>
+                                <option value="" selected={{eq this.region ""}}>{{t "enhanced-pricing.console.fill.choose-region"}}</option>
+                                {{#each this.regions as |region|}}
+                                    <option value={{region.code}} selected={{eq region.code this.region}}>{{region.name}}</option>
+                                {{/each}}
+                            </select>
+                        </label>
+                    {{/if}}
+                    <label class="text-xs">
+                        <span class="block">{{t "enhanced-pricing.console.fill.year"}}</span>
+                        <input type="text" inputmode="numeric" class="form-input form-input-sm w-20" value={{this.year}} data-test-fill-year {{on "input" this.typeYear}} />
+                    </label>
+                    <label class="text-xs">
+                        <span class="block">{{t "enhanced-pricing.console.fill.years"}}</span>
+                        <select class="form-select form-input-sm w-20" data-test-fill-years {{on "change" this.chooseCount}}>
+                            {{#each this.counts as |count|}}
+                                <option value={{count}} selected={{eq count this.count}}>{{count}}</option>
+                            {{/each}}
+                        </select>
+                    </label>
+                    {{#unless this.yearValid}}
+                        <p class="text-xs text-red-600 dark:text-red-400" data-test-fill-year-invalid>{{t "enhanced-pricing.console.fill.year-invalid"}}</p>
+                    {{/unless}}
+                    <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.fill.find"}} @disabled={{not this.canAdd}} @onClick={{this.find}} data-test-fill-find />
+                </div>
+            {{else if (not this.refusal)}}
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.fill.loading"}}</p>
+            {{/if}}
+            {{#if this.found}}
+                <div class="mt-2 text-xs" data-test-fill-found>
+                    <p class="mb-1">{{t "enhanced-pricing.console.fill.choose"}}</p>
+                    <ul class="max-h-48 overflow-y-auto font-mono">
+                        {{#each this.items key="date" as |item|}}
+                            <li data-test-fill-item={{item.date}}>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="form-checkbox" checked={{item.chosen}} disabled={{item.present}} {{on "change" (fn this.toggleItem item.date)}} />
+                                    <span>{{item.date}} {{item.name}}{{#if item.present}} <span class="text-gray-500">({{t "enhanced-pricing.console.fill.present"}})</span>{{/if}}</span>
+                                </label>
+                            </li>
+                        {{/each}}
+                    </ul>
+                    <Button class="mt-2" @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.fill.add" count=this.chosen.length}} @disabled={{not this.chosen.length}} @onClick={{this.confirm}} data-test-fill-confirm />
+                </div>
+            {{/if}}
+            {{#if this.refusal}}
+                <p class="mt-2 text-xs text-red-600 dark:text-red-400" data-test-fill-refusal><Pricing::Refusal @refusal={{this.refusal}} /></p>
+            {{/if}}
+            {{#if this.result}}
+                <div class="mt-2 text-xs" data-test-fill-result>
+                    {{#if this.result.tooMany}}
+                        <p class="text-red-600 dark:text-red-400">{{t "enhanced-pricing.console.fill.too-many" max=this.result.max}}</p>
+                    {{else}}
+                        <p>{{t "enhanced-pricing.console.fill.added" added=this.result.added.length existing=this.result.existing}}</p>
+                        <ul class="mt-1 max-h-40 overflow-y-auto font-mono text-gray-600 dark:text-gray-300" data-test-fill-added>
+                            {{#each this.result.added as |holiday|}}
+                                <li>{{holiday.date}} {{holiday.name}}</li>
+                            {{/each}}
+                        </ul>
+                    {{/if}}
+                </div>
+            {{/if}}
+        </div>
+    {{/if}}
+</div>
