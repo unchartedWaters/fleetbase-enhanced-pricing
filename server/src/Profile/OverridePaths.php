@@ -18,6 +18,7 @@ final class OverridePaths
         'common'     => ['applies_to', 'minimum', 'maximum', 'enabled'],
         'peak_hours' => ['amount', 'if_missing', 'window', 'weekdays', 'holidays'],
         'parcel'     => ['thresholds', 'divisor'],
+        'distance'   => ['thresholds'],
         'additional' => ['amount', 'if_missing', 'equals'],
     ];
 

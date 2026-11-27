@@ -32,17 +32,28 @@ export default class PricingProfileEditorComponent extends Component {
         this.draft = JSON.parse(JSON.stringify(this.args.definition ?? {}));
     }
 
+    // The pages of the editor: a section, or the sections that share a group drawn as one page.
     get sections() {
         const sections = this.args.form?.sections ?? [];
         const listed = new Set(sections.filter((section) => section.list || section.map).map((section) => section.key));
+        const pages = [];
+        for (const section of sections) {
+            const key = section.group ?? section.key;
+            const page = pages.find((item) => item.key === key);
+            if (page) {
+                page.members.push(section);
+            } else {
+                pages.push({ ...section, key, grouped: Boolean(section.group), members: [section] });
+            }
+        }
 
-        return sections.map((section) => {
+        return pages.map((page) => {
             const count =
-                section.key === 'general'
+                page.key === 'general'
                     ? this.problems.filter((problem) => problem.path && !listed.has(String(problem.path).split('.')[0])).length
-                    : problemsWithin(this.problems, section.key).length;
+                    : page.members.reduce((sum, member) => sum + problemsWithin(this.problems, member.key).length, 0);
 
-            return { ...section, problems: count, active: section.key === this.section };
+            return { ...page, problems: count, active: page.key === this.section };
         });
     }
 
@@ -50,8 +61,9 @@ export default class PricingProfileEditorComponent extends Component {
         return this.sections.find((section) => section.key === this.section) ?? this.sections[0];
     }
 
+    // Every section's key: the profile fields that have a page of their own, not general fields.
     get sectionKeys() {
-        return this.sections.map((section) => section.key);
+        return (this.args.form?.sections ?? []).map((section) => section.key);
     }
 
     get env() {
@@ -111,7 +123,8 @@ export default class PricingProfileEditorComponent extends Component {
 
     @action selectProblem(path) {
         const first = String(path ?? '').split('.')[0];
-        this.section = this.sectionKeys.includes(first) ? first : 'general';
+        const section = (this.args.form?.sections ?? []).find((item) => item.key === first);
+        this.section = section ? (section.group ?? section.key) : 'general';
     }
 
     @action typeKey(event) {

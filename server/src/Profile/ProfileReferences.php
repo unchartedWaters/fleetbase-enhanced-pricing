@@ -55,6 +55,7 @@ final class ProfileReferences
         $this->rules();
         foreach (self::items($this->profile['manual_charges']) as $index => $charge) {
             $this->product($charge['product'], "manual_charges.$index.product");
+            $this->code($charge, "manual_charges.$index");
             $this->kinds->manualCharge($charge, "manual_charges.$index");
         }
     }
@@ -240,6 +241,7 @@ final class ProfileReferences
     {
         $own = self::text($rule['product']);
         $this->product($own, "$path.product");
+        $this->code($rule, $path);
         $later = array_flip($later);
         $seen  = [];
         foreach ($lists as $list) {
@@ -264,6 +266,26 @@ final class ProfileReferences
         $until = $rule['effective_until'] ?? null;
         if (is_string($from) && is_string($until) && $until < $from) {
             $this->schema->add(Problem::atPath("$path.effective_until", 'until-before-from'));
+        }
+    }
+
+    /**
+     * A rule's own billing code may be its product's code, but never another product's: a line
+     * billed under a product's code would be taken for that product's revenue.
+     *
+     * @param array<string, mixed> $rule
+     */
+    private function code(array $rule, string $path): void
+    {
+        $code = $rule['code'] ?? null;
+        if (is_string($code) === false) {
+            return;
+        }
+        $own = self::text($rule['product']);
+        foreach (array_keys($this->products) as $product) {
+            if ((string) $product !== $own && strtolower((string) $product) === strtolower($code)) {
+                $this->schema->add(Problem::atPath("$path.code", 'code-is-product', ['code' => $code]));
+            }
         }
     }
 

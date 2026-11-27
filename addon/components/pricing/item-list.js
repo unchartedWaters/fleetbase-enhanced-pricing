@@ -29,7 +29,7 @@ export default class PricingItemListComponent extends Component {
     }
 
     get canAdd() {
-        return !this.args.env.readOnly && (this.args.max === undefined || this.items.length < this.args.max);
+        return !this.args.hideAdd && !this.args.env.readOnly && (this.args.max === undefined || this.items.length < this.args.max);
     }
 
     get entries() {

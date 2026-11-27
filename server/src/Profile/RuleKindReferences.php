@@ -27,6 +27,7 @@ final class RuleKindReferences
         match ($fee['kind']) {
             'peak_hours' => $this->peakHours($fee, $path),
             'parcel'     => $this->parcel($fee, $path),
+            'distance'   => $this->distance($fee, $path),
             default      => $this->additional($fee, $path),
         };
     }
@@ -66,6 +67,23 @@ final class RuleKindReferences
             $this->schema->add(Problem::atPath("$path.unit", 'not-one-of', ['choices' => implode(', ', $units)]));
         }
         $this->measure($fee, $weight, $path);
+        $this->thresholds($fee, $path);
+    }
+
+    /**
+     * @param array<string, mixed> $fee
+     */
+    private function distance(array $fee, string $path): void
+    {
+        $this->charge($fee, ['per_order', 'per_unit'], $path);
+        $this->thresholds($fee, $path);
+    }
+
+    /**
+     * @param array<string, mixed> $fee
+     */
+    private function thresholds(array $fee, string $path): void
+    {
         $previous = null;
         foreach (R::items($fee['thresholds']) as $index => $threshold) {
             $over = Exact::rational(R::text($threshold['over']));

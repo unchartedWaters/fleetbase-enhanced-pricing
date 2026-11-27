@@ -27,6 +27,7 @@ enhanced-pricing:
     number-too-large: "The value must be at most {max}."
     number-too-small: "The value must be at least {min}."
     out-of-range: "The value must be from {min} to {max}."
+    code-is-product: "{code} is another product's code, so a fee can't bill under it. Use a code of its own."
     own-product: "A rule can't apply to its own product {code}."
     per-unit-needs-number: A per-unit charge needs a number attribute.
     product-in-two-lists: "{code} is in two product lists."
@@ -52,7 +53,7 @@ enhanced-pricing:
     attribute-invalid: "The value of {attribute} isn't valid."
     attribute-required: "{attribute} is required."
     billing-code-invalid: "{rule} needs a billing code in {column}, row {row} of {customer}'s card {card}, written with letters, digits, _, - and ., up to 64 characters."
-    billing-code-is-product: "The billing code in {column}, row {row} of {customer}'s card {card}, is another product's code, so {rule} can't bill under it."
+    billing-code-is-product: "The billing code in {column}, row {row} of {customer}'s card {card}, is another product's code or a fee's code, so {rule} can't bill under it."
     changes-invalid: "The profile's dated change to {path} isn't valid."
     changes-invalid-all: The profile's dated changes aren't valid.
     distance-required: "{service_rate} needs the order's distance."
@@ -108,7 +109,7 @@ enhanced-pricing:
     order-not-found: The order wasn't found.
     profile-exists: "A profile with the key {key} already exists."
     row-billing-code-invalid: "The billing code in {column} must be written with letters, digits, _, - and ., up to 64 characters, starting with a letter or digit."
-    row-billing-code-is-product: "The billing code in {column} is one of the profile's product codes. Use a code of its own."
+    row-billing-code-is-product: "The billing code in {column} is one of the profile's product or fee codes. Use a code of its own."
     row-key-changed: "The rate table {table} has new key columns, so this row's key no longer matches."
     row-missing-value: "The row needs a value for {column}."
     row-unknown-column: "The rate table has no column {column}."
@@ -167,7 +168,7 @@ enhanced-pricing:
       tabs:
         overview: "Overview"
         versions: "Versions"
-        subtotal-fees: "Subtotal fees"
+        subtotal-fees: "Fee changes"
         customers: "Customers"
     editor:
       title: "Edit {name}"
@@ -198,6 +199,33 @@ enhanced-pricing:
       leave: "You have unsaved changes to this profile. Leave without saving them?"
       saved: "Version {number} saved."
       created: "Profile {name} created."
+    fee-group:
+      fees: "Charged when a condition is met"
+      subtotal_fees: "Charged on the order's totals"
+      manual_charges: "Added to an order by a person"
+    fee-group-help:
+      fees: "Peak hours, mileage, weight or volume and attribute fees. Each sees the lines before it."
+      subtotal_fees: "Fixed charges and percentages of the lines for chosen products. They come last."
+      manual_charges: "Charges that staff or another system add to a single order."
+    fee-type:
+      label: "Add a fee of this type"
+      fees-peak_hours: "Peak hours, after hours or holiday"
+      fees-parcel: "Weight or volume"
+      fees-distance: "Mileage premium (by distance)"
+      fees-additional: "By attribute (signature, waiting time, handling)"
+      subtotal_fees-percentage: "Percentage (optionally capped or floored)"
+      subtotal_fees-flat: "Fixed charge"
+      manual_charges-amount: "Manual charge with a set amount"
+      manual_charges-entered: "Manual charge, amount entered on the order"
+    fee-type-help:
+      fees-peak_hours: "A fixed amount when the pickup is inside a time window, on chosen weekdays or on a holiday."
+      fees-parcel: "A fixed amount, or an amount per unit over a threshold, by weight or volume."
+      fees-distance: "An amount for each distance unit over a threshold, such as $0.40 per km over 50 km."
+      fees-additional: "A fixed amount when an order or entity attribute is set, such as a signature or waiting time."
+      subtotal_fees-percentage: "A percentage of the lines for the products it applies to. Set a Maximum for a cap (10% up to $100) and a Minimum for a floor ($10 minimum, 5%, up to $50)."
+      subtotal_fees-flat: "A fixed amount once per order, per line or per entity, when the order has a line for the products it applies to."
+      manual_charges-amount: "A set amount, optionally per quantity such as per hour, that a person adds to an order."
+      manual_charges-entered: "An amount typed when the charge is added, within a minimum and a maximum."
     section:
       general: "General"
       products: "Products"
@@ -206,8 +234,6 @@ enhanced-pricing:
       rate_tables: "Rate tables"
       service_rates: "Service rates"
       fees: "Fees"
-      subtotal_fees: "Subtotal fees"
-      manual_charges: "Manual charges"
       holiday_lists: "Holiday lists"
     variant:
       boolean: "Yes or no"
@@ -218,6 +244,7 @@ enhanced-pricing:
       fixed_rate: "Fixed rate"
       peak_hours: "Peak hours"
       parcel: "Parcel (weight or volume)"
+      distance: "Mileage premium (distance)"
       additional: "Additional (by attribute)"
       percentage: "Percentage"
       flat: "Flat amount"

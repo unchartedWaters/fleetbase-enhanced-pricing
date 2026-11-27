@@ -181,7 +181,7 @@ test('a pricing message fills every placeholder', function (array $price, string
             'profile' => BillingProfiles::profile(subtotalFees: true),
             'row'     => Orders::ROW_1 + ['billing_code' => 'PEAK'],
         ])],
-        "The billing code in billing_code, row R1 of Example customer's card Main, is another product's code, "
+        "The billing code in billing_code, row R1 of Example customer's card Main, is another product's code or a fee's code, "
             . "so Tiered delivery can't bill under it.",
     ],
     'a service rate turned off'              => [
@@ -292,7 +292,15 @@ test('every console text has English text, including each section, variant and c
     $spec = ProfileForm::spec();
     $keys = consoleKeys();
     foreach ($spec['sections'] as $section) {
-        $keys[] = 'enhanced-pricing.console.section.' . $section['key'];
+        $keys[] = 'enhanced-pricing.console.section.' . ($section['group'] ?? $section['key']);
+        if (isset($section['group'])) {
+            $keys[] = 'enhanced-pricing.console.fee-group.' . $section['key'];
+            $keys[] = 'enhanced-pricing.console.fee-group-help.' . $section['key'];
+            foreach (array_keys($spec['kinds'][$section['kind']]['variants'] ?? []) as $variant) {
+                $keys[] = "enhanced-pricing.console.fee-type.{$section['key']}-$variant";
+                $keys[] = "enhanced-pricing.console.fee-type-help.{$section['key']}-$variant";
+            }
+        }
     }
     foreach ($spec['kinds'] as $kind) {
         foreach (array_keys($kind['variants'] ?? []) as $variant) {

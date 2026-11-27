@@ -8,8 +8,8 @@ use Fleetbase\EnhancedPricing\Profile\Schema;
 /**
  * A service rate's billing code, read from a text column of its rate card row. The engine and the
  * row check judge a code by these rules, so a row that saves is a row that prices: the code is
- * there, is written like a product code, and isn't another product's code in any case, so a
- * route's revenue never lands on a fee's code.
+ * there, is written like a product code, and isn't another product's code, or the code of a fee, a
+ * subtotal fee or a manual charge, in any case, so a route's revenue never lands on a fee's code.
  */
 final class BillingCode
 {
@@ -32,6 +32,13 @@ final class BillingCode
             $code = R::text($product['code']);
             if ($code !== $own && strtolower($code) === strtolower($value)) {
                 return 'is-product';
+            }
+        }
+        foreach (['fees', 'subtotal_fees', 'manual_charges'] as $section) {
+            foreach (R::items($profile[$section] ?? []) as $rule) {
+                if (is_string($rule['code'] ?? null) && strtolower($rule['code']) === strtolower($value)) {
+                    return 'is-product';
+                }
             }
         }
 

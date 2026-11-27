@@ -1,0 +1,30 @@
+<div class="space-y-6" data-test-fee-list>
+    {{#each this.groups as |group|}}
+        {{#if group.items.length}}
+            <div data-test-fee-group={{group.key}}>
+                <h3 class="mb-1 text-sm font-semibold text-gray-900 dark:text-white">{{t (concat "enhanced-pricing.console.fee-group." group.key)}}</h3>
+                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{{t (concat "enhanced-pricing.console.fee-group-help." group.key)}}</p>
+                <Pricing::ItemList @env={{@env}} @kind={{group.kind}} @items={{group.items}} @path={{group.key}} @max={{group.max}} @hideAdd={{true}} @onChange={{fn @onChange group.key}} />
+            </div>
+        {{/if}}
+    {{/each}}
+
+    {{#if this.empty}}
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-test-list-empty>{{t "enhanced-pricing.console.editor.empty-list"}}</p>
+    {{/if}}
+
+    {{#if (and this.type (not @env.readOnly))}}
+        <div class="rounded-lg border border-dashed border-gray-300 p-3 dark:border-gray-600">
+            <div class="flex flex-wrap items-center gap-2">
+                <label class="text-sm font-semibold text-gray-700 dark:text-gray-200" for="pricing-fee-type">{{t "enhanced-pricing.console.fee-type.label"}}</label>
+                <select id="pricing-fee-type" class="form-select form-input-sm w-80" aria-describedby="pricing-fee-type-help" data-test-add-fee-type {{on "change" this.choose}}>
+                    {{#each this.types as |type|}}
+                        <option value={{type.id}} selected={{eq type.id this.type.id}}>{{t (concat "enhanced-pricing.console.fee-type." type.id)}}</option>
+                    {{/each}}
+                </select>
+                <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.editor.add"}} @onClick={{this.add}} data-test-add-fee />
+            </div>
+            <p id="pricing-fee-type-help" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-test-fee-type-help>{{t (concat "enhanced-pricing.console.fee-type-help." this.type.id)}}</p>
+        </div>
+    {{/if}}
+</div>

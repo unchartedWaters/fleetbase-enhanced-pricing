@@ -14,7 +14,7 @@ final class Fees
 {
     private RuleSupport $support;
 
-    public function __construct(private readonly OrderContext $order)
+    public function __construct(private readonly OrderContext $order, private readonly ?int $distanceMeters = null)
     {
         $this->support = new RuleSupport($order);
     }
@@ -28,6 +28,7 @@ final class Fees
             $drafts = match ($fee['kind']) {
                 'peak_hours' => $this->peakHours($fee),
                 'parcel'     => $this->parcel($fee),
+                'distance'   => $this->distance($fee),
                 default      => $this->additional($fee),
             };
             $this->order->book->add($this->support->limits($fee, $drafts));
@@ -121,6 +122,42 @@ final class Fees
         }
 
         return $drafts;
+    }
+
+    /**
+     * A mileage premium: the order's distance over the thresholds, in the profile's distance unit.
+     * It applies when the order has a line for one of its products, and needs the order's distance.
+     *
+     * @param array<string, mixed> $fee
+     *
+     * @return list<array{product: string, name: string, quantity: int, unit: int, source: string}>
+     */
+    private function distance(array $fee): array
+    {
+        if ($this->order->book->hasAny(R::strings($fee['applies_to'])) === false) {
+            return [];
+        }
+        if ($this->distanceMeters === null || $this->distanceMeters <= 0) {
+            throw $this->order->fail('distance-required', ['service_rate' => R::text($fee['name'])]);
+        }
+        $unit       = R::text($this->order->profile['distance_unit']);
+        $distance   = Units::distance($this->distanceMeters, $unit);
+        $thresholds = self::thresholds($fee);
+        if ($fee['charge'] === 'per_order') {
+            $amount = self::highest($thresholds, $distance);
+
+            return $amount === null ? [] : [$this->support->draft($fee, 1, $amount)];
+        }
+        if ($distance->isLessThanOrEqualTo($thresholds[0]['over'])) {
+            return [];
+        }
+
+        return [$this->support->draft(
+            $fee,
+            1,
+            Exact::round(self::bands($thresholds, $distance)),
+            sprintf('%s (%s %s)', R::text($fee['name']), Exact::display($distance->minus($thresholds[0]['over'])), $unit),
+        )];
     }
 
     /**

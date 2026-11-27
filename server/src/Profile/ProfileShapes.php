@@ -220,7 +220,7 @@ final class ProfileShapes
      */
     public function fee(mixed $raw, string $path): ?array
     {
-        $kind = $this->discriminator($raw, 'kind', ['peak_hours', 'parcel', 'additional'], $path);
+        $kind = $this->discriminator($raw, 'kind', ['peak_hours', 'parcel', 'distance', 'additional'], $path);
         if ($kind === null) {
             return null;
         }
@@ -239,6 +239,8 @@ final class ProfileShapes
             'key'             => S::type('key'),
             'kind'            => S::type('raw'),
             'name'            => S::type('text'),
+            'code'            => S::optional(S::nullable(S::type('code'))),
+            'description'     => S::optional(S::nullable(S::type('text'))),
             'product'         => S::type('code'),
             'applies_to'      => self::codes(1),
             'charge'          => S::type('key'),
@@ -248,7 +250,7 @@ final class ProfileShapes
             'effective_until' => S::optional(S::nullable(S::type('date'))),
             'enabled'         => S::optional(S::type('boolean'), true),
         ];
-        if ($kind !== 'parcel') {
+        if (in_array($kind, ['parcel', 'distance'], true) === false) {
             $fields['amount']     = S::nullable(S::type('money'));
             $fields['if_missing'] = S::optional(S::enum(['stop', 'skip']), 'stop');
         }
@@ -267,7 +269,8 @@ final class ProfileShapes
                 'scope'      => S::enum(['entity', 'order']),
                 'thresholds' => self::thresholds(),
             ],
-            default => [
+            'distance' => ['thresholds' => self::thresholds()],
+            default    => [
                 'attribute' => S::type('key'),
                 'equals'    => S::optional(S::nullable(S::type('key'))),
             ],
@@ -298,6 +301,8 @@ final class ProfileShapes
         return [
             'key'             => S::type('key'),
             'name'            => S::type('text'),
+            'code'            => S::optional(S::nullable(S::type('code'))),
+            'description'     => S::optional(S::nullable(S::type('text'))),
             'product'         => S::type('code'),
             'applies_to'      => self::codes(1),
             'requires'        => S::optional(self::codes(0), []),
@@ -323,6 +328,8 @@ final class ProfileShapes
         return [
             'key'             => S::type('key'),
             'name'            => S::type('text'),
+            'code'            => S::optional(S::nullable(S::type('code'))),
+            'description'     => S::optional(S::nullable(S::type('text'))),
             'product'         => S::type('code'),
             'amount'          => S::optional(S::nullable(S::type('money'))),
             'entered'         => S::optional(S::nullable(S::object([

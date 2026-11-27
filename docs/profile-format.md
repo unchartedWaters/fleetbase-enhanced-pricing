@@ -372,8 +372,29 @@ stays $0 and makes no line.
 
 ## Fees
 
-Fees come after the service fee and manual charges. There are three kinds:
-`peak_hours`, `parcel` and `additional`.
+Fees come after the service fee and manual charges. There are four kinds:
+`peak_hours`, `parcel`, `distance` (a mileage premium) and `additional`.
+
+In the console, fees, subtotal fees and manual charges are one Fees page, and
+one "Add" chooses the kind of fee to add. The profile still keeps them in three
+lists, which the engine charges in the order above. The kinds, and how each is
+calculated:
+
+| Kind in the console | Stored as | Calculated as |
+| --- | --- | --- |
+| Peak hours, after hours or holiday | fee `peak_hours` | a fixed amount |
+| Weight or volume | fee `parcel` | a fixed amount, or an amount per unit over thresholds |
+| Mileage premium | fee `distance` | an amount per distance unit over thresholds |
+| By attribute | fee `additional` | a fixed amount, or per unit of a number attribute |
+| Fixed charge | subtotal fee, `flat` | a fixed amount |
+| Percentage | subtotal fee, `percentage` | a percentage of the lines for its products |
+| Manual charge | manual charge | a set or an entered amount, added to one order |
+
+A percentage with a cap, "10% up to $100", is a percentage fee with a `maximum`
+of $100. A percentage with a floor and a cap, "$10 minimum, 5%, up to $50", is
+5% with a `minimum` of $10 and a `maximum` of $50. The percentage is worked out
+exactly and rounded once to the currency's minor unit (half up), then the
+minimum and maximum apply to that amount.
 
 Fields every fee has:
 
@@ -381,6 +402,8 @@ Fields every fee has:
 | --- | --- |
 | `key`, `kind` | unique key among fees, and the kind |
 | `name`, `product` | the line name and the product it is billed as |
+| `code` | optional, default `null`: the code the fee's lines are billed under, see below |
+| `description` | optional, default `null`: a note about the fee, 1 to 255 characters |
 | `applies_to` | 1 or more product codes the fee applies to |
 | `charge` | how it is charged; the choices depend on the kind |
 | `minimum`, `maximum` | optional, default `null`: money, on the fee's total |
@@ -394,6 +417,13 @@ Peak hours and additional fees also have:
 | --- | --- |
 | `amount` | money, or `null` when it must be set per customer |
 | `if_missing` | optional, default `stop`; `skip` leaves the fee off |
+
+Subtotal fees and manual charges have `code` and `description` too. A `code` is
+written like a product code. When it is `null`, the fee's lines are billed under
+the product's code. A `code` may be the fee's own product's code, but never
+another product's code. Fees still find lines by product, never by code. A
+manual charge's code is read from the profile when the order is priced, even for
+a charge added earlier.
 
 A fee's amount is looked up only when the fee matches the order. When it is
 `null`, pricing stops with a message, or, with `if_missing: "skip"`, the fee is
@@ -493,6 +523,36 @@ A measurement must be strictly over a threshold's `over` to match it.
 Weights and dimensions use Fleet-Ops' units (`g`, `oz`, `lb`, `kg`; `mm`, `cm`,
 `m`, `in`, `ft`, `yd`). An entity with no weight, or no dimensions when they
 are needed, is not checked, and the quote notes it.
+
+### Mileage premium (distance fee)
+
+```json
+{
+  "key": "mileage",
+  "kind": "distance",
+  "name": "Mileage premium",
+  "product": "DISTANCE",
+  "applies_to": ["ROUTE"],
+  "charge": "per_unit",
+  "thresholds": [{ "over": 50, "amount": 40 }]
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `charge` | `per_order` or `per_unit` |
+| `thresholds` | 1 to 10 `{ "over", "amount" }`, `over` increasing, in the profile's `distance_unit` |
+
+It applies when the order already has a line of more than $0 for one of
+`applies_to`, and it needs the order's driving distance: pricing stops with a
+message when there is none. The distance is not rounded, and must be strictly
+over a threshold's `over` to match it.
+
+- `per_order`: the amount of the highest threshold the distance is over, once.
+- `per_unit`: each distance unit over the first threshold is charged in bands,
+  like a parcel fee's. With thresholds over 50 at $0.40 and over 100 at $0.60,
+  120 km is 50 × $0.40 + 20 × $0.60 = $32.00. It is one line of quantity 1 named
+  with the units over, for example `Mileage premium (70 km)`.
 
 ### Additional fee
 
