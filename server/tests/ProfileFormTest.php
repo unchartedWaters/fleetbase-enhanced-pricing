@@ -299,7 +299,7 @@ test('every enum offers exactly what the checks accept', function () {
                 $item   = $sample['item'];
                 $linked = in_array($field, ['charge', 'measure', 'basis', 'unit', 'scope', 'mode'], true);
                 if ($linked && $sample['kind'] === 'fee') {
-                    continue; // these depend on each other, and are tried in the fee tests (PercentageFeesTest for mode)
+                    continue; // these depend on each other, and are tried in the fee tests (mode: PercentageFeesTest)
                 }
                 $item[$field] = $option;
                 expect(formProblems($sample['section'], $item))->toBe([], "$name $field $option");
