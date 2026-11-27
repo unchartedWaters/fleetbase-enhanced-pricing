@@ -32,6 +32,7 @@ enhanced-pricing:
     per-unit-needs-number: A per-unit charge needs a number attribute.
     product-in-two-lists: "{code} is in two product lists."
     row-key-not-required: "The row key column {column} must be required."
+    table-not-used: "No service rate uses the rate table {key}, so a fee can't read a column of it."
     tiers-need-rate-table: Tiers need a rate table when an entity type has its own price.
     too-few: "The number of entries must be at least {min}."
     too-large: "The profile is larger than {max} bytes."
@@ -79,6 +80,7 @@ enhanced-pricing:
     overrides-invalid-all: "{customer}'s overrides aren't valid."
     profile-invalid: "The pricing profile isn't valid. Problems found: {problems}."
     profile-invalid-for-order: "With this customer's overrides and changes, the profile isn't valid at {path}."
+    row-from-other-table: "{rule} reads its amount from the rate table {table}, which this order's service rate doesn't use, so there is no row of it to read."
     row-invalid: "Row {row} of {customer}'s card {card} has a value for {column} that isn't valid."
     row-required: "{service_rate} needs a rate card row."
     service-rate-disabled: "{service_rate} is turned off."

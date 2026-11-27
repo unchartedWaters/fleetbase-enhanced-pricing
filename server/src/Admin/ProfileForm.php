@@ -19,6 +19,8 @@ use Fleetbase\EnhancedPricing\Profile\ProfileShapes;
  * A section may name a `group`: the sections of one group are drawn together as one page, each
  * still its own list of the profile (the Fees page holds fees, subtotal fees and manual charges).
  *
+ * - with: on a ref choice, the sibling field in the same object that holds the rate table the
+ *   ref's columns come from, chosen from the profile's rate tables first;
  * - fixed: set when the profile is made and never changed by a new version;
  * - when: { field: [values] }, the field is used only while those sibling fields hold one of
  *   the values, and is left out otherwise.
@@ -185,7 +187,7 @@ final class ProfileForm
     private static function fee(): array
     {
         $amount = [
-            self::field('amount', 'money', ['nullable' => true]),
+            self::field('amount', 'choice', ['nullable' => true, 'choices' => self::amountChoices()]),
             self::optional(self::enum('if_missing', ['stop', 'skip']), 'stop'),
         ];
 
@@ -246,7 +248,10 @@ final class ProfileForm
                     $missing,
                 ],
                 'flat'       => [
-                    self::optional(self::field('amount', 'money', ['nullable' => true]), null),
+                    self::optional(
+                        self::field('amount', 'choice', ['nullable' => true, 'choices' => self::amountChoices()]),
+                        null,
+                    ),
                     self::enum('charge', ['per_order', 'per_line', 'per_entity']),
                     $missing,
                 ],
@@ -320,6 +325,20 @@ final class ProfileForm
             self::optional(self::field('effective_from', 'date', ['nullable' => true]), null),
             self::optional(self::field('effective_until', 'date', ['nullable' => true]), null),
             self::optional(self::field('enabled', 'boolean'), true),
+        ];
+    }
+
+    /**
+     * A fee's amount: a value, or a money column of a rate table chosen after the table (`with`
+     * names the field beside the choice that holds the table).
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function amountChoices(): array
+    {
+        return [
+            'value'  => ['type' => 'money'],
+            'column' => ['type' => 'ref', 'ref' => 'money_columns', 'with' => 'rate_table'],
         ];
     }
 

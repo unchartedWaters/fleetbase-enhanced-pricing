@@ -59,6 +59,9 @@ final class Changes
         $fees = [];
         foreach (R::items($state->normalized['subtotal_fees'] ?? []) as $fee) {
             $field  = $fee['mode'] === 'percentage' ? 'percentage' : 'amount';
+            if (is_array($fee[$field])) {
+                continue; // an amount read from a rate table changes with the table's rows
+            }
             $path   = 'subtotal_fees.' . R::text($fee['key']) . '.' . $field;
             $fees[] = [
                 'key'           => $fee['key'],
@@ -143,7 +146,8 @@ final class Changes
         }
         foreach (R::items($normalized['subtotal_fees'] ?? []) as $fee) {
             if ($fee['key'] === $match[1]) {
-                return ($fee['mode'] === 'percentage') === ($match[2] === 'percentage');
+                return ($fee['mode'] === 'percentage') === ($match[2] === 'percentage')
+                    && is_array($fee[$match[2]]) === false;
             }
         }
 

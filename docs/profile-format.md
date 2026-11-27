@@ -435,7 +435,7 @@ Peak hours and additional fees also have:
 
 | Field | Meaning |
 | --- | --- |
-| `amount` | money, or `null` when it must be set per customer |
+| `amount` | money, a table column (below), or `null` when it must be set per customer |
 | `if_missing` | optional, default `stop`; `skip` leaves the fee off |
 
 Subtotal fees and manual charges have `code` and `description` too. A `code` is
@@ -448,6 +448,18 @@ a charge added earlier.
 A fee's amount is looked up only when the fee matches the order. When it is
 `null`, pricing stops with a message, or, with `if_missing: "skip"`, the fee is
 left off.
+
+An `amount` (on a peak hours fee, an additional fee or a flat subtotal fee) is
+a number of minor units, written as the number or as `{ "value": 2200 }`, or a
+money column of a rate table: `{ "column": "second", "rate_table": "rows" }`.
+Both tables and columns are chosen from lists in the console. The column is
+read from the order's rate card row, so the order's service rate must use that
+table; otherwise pricing stops, because there is no row of the table to read. A
+blank cell stops pricing too. With `if_missing: "skip"` the fee is left off
+instead, in both cases. The profile is refused when the table does not exist or
+no service rate uses it, or when the column does not exist or is not money. A profile saved with a plain number keeps working, and overrides and
+dated changes take either form. The "Fee changes" tab lists only fees whose
+amount is a number.
 
 `applies_to` limits the fee to some products. A fee charged per entity counts
 only entities billed under one of them (see Entity types). A fee charged per
@@ -635,7 +647,7 @@ products, or a flat amount.
 | `skipped_for` | optional, default `[]` |
 | `mode` | `percentage` or `flat` |
 | `percentage` | percentage mode only: percent, or `null` |
-| `amount` | flat mode only: money, or `null` |
+| `amount` | flat mode only: money or a table column, or `null` |
 | `charge` | percentage: `per_order`; flat: also `per_line`, `per_entity` |
 
 `if_missing`, `minimum`, `maximum`, `effective_from`, `effective_until` and

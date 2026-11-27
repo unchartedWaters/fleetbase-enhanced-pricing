@@ -514,8 +514,18 @@ export default {
                         },
                         {
                             "name": "amount",
-                            "type": "money",
-                            "nullable": true
+                            "type": "choice",
+                            "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            }
                         },
                         {
                             "name": "if_missing",
@@ -652,8 +662,18 @@ export default {
                         },
                         {
                             "name": "amount",
-                            "type": "money",
-                            "nullable": true
+                            "type": "choice",
+                            "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            }
                         },
                         {
                             "name": "if_missing",
@@ -823,8 +843,18 @@ export default {
                     "flat": [
                         {
                             "name": "amount",
-                            "type": "money",
+                            "type": "choice",
                             "nullable": true,
+                            "choices": {
+                                "value": {
+                                    "type": "money"
+                                },
+                                "column": {
+                                    "type": "ref",
+                                    "ref": "money_columns",
+                                    "with": "rate_table"
+                                }
+                            },
                             "optional": true,
                             "default": null
                         },

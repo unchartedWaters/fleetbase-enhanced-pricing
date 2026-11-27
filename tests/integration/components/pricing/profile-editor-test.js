@@ -90,7 +90,7 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
         assert.dom('[data-test-field="fees.2.amount"]').includesText('3100 cents');
         await click('[data-test-save]');
 
-        assert.strictEqual(this.saved[0].definition.fees[2].amount, 3100);
+        assert.deepEqual(this.saved[0].definition.fees[2].amount, { value: 3100 });
         assert.strictEqual(this.saved[0].built_on, 2);
         assert.deepEqual(this.saved[0].accept_stale, []);
     });
@@ -150,6 +150,37 @@ module('Integration | Component | pricing/profile-editor', (hooks) => {
             ['peak', 'heavy', '']
         );
         assert.strictEqual(fees[2].kind, 'additional');
+    });
+
+    test('a fee amount is a value, or a column chosen after its rate table, never typed', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+        const field = '[data-test-field="fees.0.amount"]';
+
+        assert.dom(`${field} [data-test-choice-kind]`).hasValue('value', 'a saved plain number shows as a value');
+        assert.dom(`${field} input`).hasValue('16.00');
+
+        await select(`${field} [data-test-choice-kind]`, 'column');
+        assert.dom(`${field} [data-test-choice-table] select`).exists('the table is picked from a list');
+        assert.dom(`${field} select[data-test-choice-value] option`).exists({ count: 1 }, 'no columns before a table');
+
+        await select(`${field} [data-test-choice-table] select`, 'rows');
+        const columns = findAll(`${field} select[data-test-choice-value] option`).map((option) => option.value);
+        assert.deepEqual(columns, ['', 'first', 'second', 'third', 'separate_price'], 'only money columns of that table');
+
+        await select(`${field} select[data-test-choice-value]`, 'second');
+        await click('[data-test-save]');
+        assert.deepEqual(this.saved[0].definition.fees[0].amount, { column: 'second', rate_table: 'rows' });
+    });
+
+    test('clearing a fee amount leaves it unset, to be set per customer', async function (assert) {
+        await render(editor);
+        await click('[data-test-section="fees"]');
+
+        await fillIn('[data-test-field="fees.0.amount"] input', '');
+        await click('[data-test-save]');
+
+        assert.strictEqual(this.saved[0].definition.fees[0].amount, null);
     });
 
     test('a variant switch keeps the shared fields and shows the new ones', async function (assert) {
