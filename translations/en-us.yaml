@@ -282,9 +282,11 @@ enhanced-pricing:
       field:
         key: "A short code for this item, unique within its list: lowercase letters, digits, _ and -. Customer overrides and dated changes find the item by it, so renaming it leaves them stale."
         name: "The label shown in forms, quotes and messages."
+        code: "Optional. The billing code this charge's invoice lines are billed under, instead of its product's code. Leave blank to use the product's code."
+        description: "Optional. A note about this charge, 1 to 255 characters."
         product: "The product this is billed as. Its code becomes the invoice line's billing code."
-        code: "The billing code of this charge's invoice lines. Leave blank to use the product's code. It can't be another product's code."
-        description: "A note about this charge, up to 255 characters. Leave blank for none."
+        code: "The billing code this charge's invoice lines are billed under in Ledger and your accounting. Leave blank to use the product's code. It can't be another product's code."
+        description: "A note about what this charge is for. It is not shown on invoice lines."
         applies_to: "The products this works on. It counts only lines and packages billed under these products."
         requires: "The charge applies only when the order also has a line (over $0) for every product listed here."
         skipped_for: "The charge is left off when the order has a line (over $0) for any product listed here."
