@@ -109,7 +109,7 @@ test('a holiday has first and last years', function () {
         'name'     => 'Test',
         'regions'  => ['AA' => 'A'],
         'holidays' => [[
-            'id' => 'h', 'name' => 'H', 'rule' => ['type' => 'fixed', 'month' => 6, 'day' => 19],
+            'id'       => 'h', 'name' => 'H', 'rule' => ['type' => 'fixed', 'month' => 6, 'day' => 19],
             'observed' => 'none', 'regions' => 'all', 'since' => 2021, 'until' => 2030,
         ]],
     ]]);
@@ -229,7 +229,7 @@ test('Texas, California and Quebec differ from their country', function () {
 test('Canadian provinces differ in their holidays, 2026', function () {
     // Quebec: Saint-Jean-Baptiste, National Patriots' Day instead of Victoria Day, no Family Day.
     expect(holidayDates('CA', 'QC', 2026))->toHaveKey('2026-06-24')
-        ->and(holidayDates('CA', 'QC', 2026)['2026-05-18'])->toContain("Patriots")
+        ->and(holidayDates('CA', 'QC', 2026)['2026-05-18'])->toContain('Patriots')
         ->and(holidayDates('CA', 'QC', 2026))->not->toHaveKey('2026-02-16');
     // Family Day, third Monday of February, in Ontario, Alberta, Saskatchewan, BC, New Brunswick.
     foreach (['ON', 'AB', 'SK', 'BC', 'NB'] as $province) {

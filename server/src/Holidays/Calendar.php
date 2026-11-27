@@ -118,7 +118,7 @@ final class Calendar
                 if ($date === null) {
                     continue;
                 }
-                $found[] = [$date, $holiday['name'], false];
+                $found[]  = [$date, $holiday['name'], false];
                 $observed = $this->observed($date, $holiday['observed']);
                 if ($observed !== null) {
                     $found[] = [$observed, $holiday['name'] . ' (observed)', true];
@@ -131,8 +131,8 @@ final class Calendar
             if (in_array((int) $date->format('Y'), $years, true) === false) {
                 continue;
             }
-            $key = $date->format('Y-m-d');
-            $byDate[$key]['names'][] = $name;
+            $key                      = $date->format('Y-m-d');
+            $byDate[$key]['names'][]  = $name;
             $byDate[$key]['observed'] = ($byDate[$key]['observed'] ?? true) && $observed;
         }
         ksort($byDate);
