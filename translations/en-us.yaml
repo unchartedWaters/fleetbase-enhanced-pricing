@@ -145,7 +145,7 @@ enhanced-pricing:
       title: "Pricing profiles"
       new: "New profile"
       empty: "No pricing profiles yet. Create one to start pricing orders."
-      gst-notice: "Prices here are before GST, so a Ledger invoice for a priced order starts without GST. When invoices sync both ways, QuickBooks is Primary and works out the tax (the QuickBooks plugin's defaults), the next QuickBooks sync copies the GST QuickBooks charges, the new total and the QuickBooks invoice number onto the Ledger invoice. Check that a Ledger invoice shows GST before sending a customer its public link, and don't set up a payment gateway in Ledger."
+      tax-notice: "Prices here are before tax, so a Ledger invoice for a priced order starts without tax. When invoices sync both ways, QuickBooks is Primary and works out the tax (the QuickBooks plugin's defaults), the next QuickBooks sync copies the tax QuickBooks charges, the new total and the QuickBooks invoice number onto the Ledger invoice. Check that a Ledger invoice shows tax before sending a customer its public link, and don't set up a payment gateway in Ledger."
     profile:
       key: "Key"
       key-help: "Lowercase letters, digits, _ and -. It can't change later."
