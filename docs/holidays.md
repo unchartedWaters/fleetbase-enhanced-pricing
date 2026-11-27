@@ -2,8 +2,13 @@
 
 A profile's holiday lists are plain lists of dates (see
 [Profile format](profile-format.md#holiday-lists)). The profile editor can fill
-a list from a country's calendar: choose a country, a state or province, the first year and how many years (1 to 5), then **Add
-holidays**. The dates are merged into the list, sorted, without duplicates. A
+a list from a country's calendar: choose a country, a state or province, the
+first year and how many years (1 to 5), then **Show holidays**. The holidays found are listed with a
+tick box each: untick any you don't want, then add the rest. Dates already in
+the list are marked and left alone. The dates are merged into the list, sorted,
+without duplicates. The list is also an ordinary text box of dates, one per
+line, so a date can be added by hand and any line removed at any time, including
+a filled one. Removing a date is not remembered: filling again shows it again. A
 fill that would pass the 400 dates a list holds changes nothing. Nothing is
 saved until the profile is saved, and nothing is stored or fetched at run time:
 the rules are bundled with the extension and the list is the profile's own data

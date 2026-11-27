@@ -194,7 +194,7 @@ test('every dataset is well formed', function () {
             expect($holiday['observed'])->toBeIn(['none', 'sat-fri-sun-mon', 'sun-mon']);
             $listed = is_array($holiday['regions']) ? ($holiday['regions']['except'] ?? $holiday['regions']) : [];
             foreach ($listed as $region) {
-                expect($data['regions'])->toHaveKey($region, "$code {$holiday['id']} names an unknown region $region");
+                expect(array_key_exists($region, $data['regions']))->toBeTrue("$code {$holiday['id']} names an unknown region $region");
             }
             // Every rule expands in every region, for a long span.
             foreach (array_keys($data['regions']) as $region) {

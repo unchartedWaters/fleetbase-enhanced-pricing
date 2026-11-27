@@ -42,10 +42,26 @@
                     {{#unless this.yearValid}}
                         <p class="text-xs text-red-600 dark:text-red-400" data-test-fill-year-invalid>{{t "enhanced-pricing.console.fill.year-invalid"}}</p>
                     {{/unless}}
-                    <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.fill.add"}} @disabled={{not this.canAdd}} @onClick={{this.add}} data-test-fill-add />
+                    <Button @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.fill.find"}} @disabled={{not this.canAdd}} @onClick={{this.find}} data-test-fill-find />
                 </div>
             {{else if (not this.refusal)}}
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{t "enhanced-pricing.console.fill.loading"}}</p>
+            {{/if}}
+            {{#if this.found}}
+                <div class="mt-2 text-xs" data-test-fill-found>
+                    <p class="mb-1">{{t "enhanced-pricing.console.fill.choose"}}</p>
+                    <ul class="max-h-48 overflow-y-auto font-mono">
+                        {{#each this.items key="date" as |item|}}
+                            <li data-test-fill-item={{item.date}}>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="form-checkbox" checked={{item.chosen}} disabled={{item.present}} {{on "change" (fn this.toggleItem item.date)}} />
+                                    <span>{{item.date}} {{item.name}}{{#if item.present}} <span class="text-gray-500">({{t "enhanced-pricing.console.fill.present"}})</span>{{/if}}</span>
+                                </label>
+                            </li>
+                        {{/each}}
+                    </ul>
+                    <Button class="mt-2" @size="sm" @icon="plus" @text={{t "enhanced-pricing.console.fill.add" count=this.chosen.length}} @disabled={{not this.chosen.length}} @onClick={{this.confirm}} data-test-fill-confirm />
+                </div>
             {{/if}}
             {{#if this.refusal}}
                 <p class="mt-2 text-xs text-red-600 dark:text-red-400" data-test-fill-refusal><Pricing::Refusal @refusal={{this.refusal}} /></p>

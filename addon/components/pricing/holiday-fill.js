@@ -16,6 +16,8 @@ export default class PricingHolidayFillComponent extends Component {
     @tracked busy = false;
     @tracked refusal = null;
     @tracked result = null;
+    @tracked found = null;
+    @tracked left = [];
 
     get countries() {
         return Object.entries(this.catalog?.countries ?? {}).map(([code, country]) => ({ code, name: country.name }));
@@ -56,28 +58,45 @@ export default class PricingHolidayFillComponent extends Component {
     @action chooseCountry(event) {
         this.country = event.target.value;
         this.result = null;
+        this.found = null;
         this.region = '';
     }
 
     @action chooseRegion(event) {
         this.region = event.target.value;
         this.result = null;
+        this.found = null;
     }
 
     @action typeYear(event) {
         this.year = event.target.value.trim();
         this.result = null;
+        this.found = null;
     }
 
     @action chooseCount(event) {
         this.count = event.target.value;
         this.result = null;
+        this.found = null;
     }
 
-    @action async add() {
+    get items() {
+        const present = new Set(this.args.dates ?? []);
+
+        return (this.found ?? []).map((holiday) => ({ ...holiday, present: present.has(holiday.date), chosen: !present.has(holiday.date) && !this.left.includes(holiday.date) }));
+    }
+
+    get chosen() {
+        return this.items.filter((item) => item.chosen);
+    }
+
+    // Finds the holidays; none is added until the person has seen them and left out any they don't want.
+    @action async find() {
         this.busy = true;
         this.refusal = null;
         this.result = null;
+        this.found = null;
+        this.left = [];
         const first = Number(this.year);
         try {
             const answer = await this.args.calendars.holidays(
@@ -85,7 +104,7 @@ export default class PricingHolidayFillComponent extends Component {
                 this.region,
                 Array.from({ length: Number(this.count) }, (_, index) => first + index)
             );
-            this.merge(answer.holidays);
+            this.found = answer.holidays;
         } catch (refusal) {
             this.refusal = refusal ?? {};
         } finally {
@@ -93,16 +112,22 @@ export default class PricingHolidayFillComponent extends Component {
         }
     }
 
-    merge(holidays) {
+    @action toggleItem(date) {
+        this.left = this.left.includes(date) ? this.left.filter((left) => left !== date) : [...this.left, date];
+    }
+
+    // Merges the chosen holidays into the list. One that would pass the list's limit changes nothing.
+    @action confirm() {
         const present = new Set(this.args.dates ?? []);
-        const added = holidays.filter((holiday) => !present.has(holiday.date));
+        const added = this.chosen;
         const merged = [...new Set([...present, ...added.map((holiday) => holiday.date)])].sort();
         if (merged.length > this.args.max) {
             this.result = { tooMany: true, max: this.args.max };
 
             return;
         }
-        this.result = { added, existing: holidays.length - added.length };
+        this.result = { added, existing: this.items.filter((item) => item.present).length };
+        this.found = null;
         this.args.onChange(merged);
     }
 }
